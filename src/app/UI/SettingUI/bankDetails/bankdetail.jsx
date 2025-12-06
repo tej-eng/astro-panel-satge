@@ -13,7 +13,7 @@ export default function Bankdetail() {
   const profileData = data?.profileData || {};
   const accountDetails = data?.accountDetails || {};
   const passbookImgUrl = accountDetails.image
-    ? `https://dhwaniastro.com/public/cms-images/bank-data/${accountDetails.image}`
+    ? `https://webdemonew.dhwaniastro.co.in/public/cms-images/bank-data/${accountDetails.image}`
     : null;
 
   const handleDownloadImage = async () => {

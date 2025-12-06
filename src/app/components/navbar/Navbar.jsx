@@ -19,7 +19,7 @@ export default function Navbar() {
   const profileData = expertData?.profileData || {};
   const expertImageUrl =
     profileData?.image_path && profileData?.image
-      ? `https://dhwaniastro.com/${profileData.image_path}${profileData.image}`
+      ? `https://webdemonew.dhwaniastro.co.in/${profileData.image_path}${profileData.image}`
       : "/user2.png";
 
   const handleLogout = (e) => {

@@ -163,7 +163,7 @@ export default function LoginForm() {
               {isLoading ? "Signing in..." : "SignIN"}
             </button>
             <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.95rem', color: '#555', fontWeight: 500 }}>
-              By signing in, you agree to our <Link href="https://dhwaniastro.com/terms-and-conditions-for-astrologer" style={{ color: '#7e60bf', fontWeight: 500, textDecoration: 'underline' }}>terms and conditions</Link>
+              By signing in, you agree to our <Link href="https://webdemonew.dhwaniastro.co.in/terms-and-conditions-for-astrologer" style={{ color: '#7e60bf', fontWeight: 500, textDecoration: 'underline' }}>terms and conditions</Link>
               <br />
               <span style={{ color: '#222' }}>Don't have an account?</span>
               <Link href="https://docs.google.com/forms/d/1VDdBy2ZPtnXu0ok9V4o0m9M78bk0jdtZ9L5qFmRVY_w/viewform?edit_requested=true#responses" style={{ color: '#7e60bf', fontWeight: 600, marginLeft: 6, textDecoration: 'underline' }}>Sign Up</Link>

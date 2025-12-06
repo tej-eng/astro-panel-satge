@@ -29,7 +29,7 @@ export default function Followers() {
 
       <div className={`${styles["follower-box"]}  grid grid-cols-2 py-5  sm:grid sm:grid-cols-3 xl:grid xl:grid-cols-4  2xl:grid-cols-5 md:gap-[3.6rem] gap-5  sm:item-center`}>
         { filteredData.map((follower) => {
-          const imageUrl = `https://dhwaniastro.com/${imagePath}${follower.image}`;
+          const imageUrl = `https://webdemonew.dhwaniastro.co.in/${imagePath}${follower.image}`;
           return (
             <div key={follower.user_id} className={`${styles["follow-card"]} h-[180px] md:h-[200px]`}>
               <div className="flex flex-col items-center justify-between">

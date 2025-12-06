@@ -1,9 +1,9 @@
-const API_BASE_URL = "https://dhwaniastro.com/api/";
+const API_BASE_URL = "https://webdemonew.dhwaniastro.co.in/api/";
 //  const API_BASE_URL="http://localhost:8000/api/";
-const IMAGE_URL="https://dhwaniastro.com/cms-images/user-images/";
+const IMAGE_URL="https://webdemonew.dhwaniastro.co.in/cms-images/user-images/";
 //for image  upload
-const SENDER_IMG_URL = "https://websocket-service-user-emu6.onrender.com/uploads";
-const RECEIVER_IMG_URL = "https://wbesocket-service-lg10.onrender.com/uploads";
+const SENDER_IMG_URL = "https://websocket-service-user.onrender.com/uploads";
+const RECEIVER_IMG_URL = "https://wbesocket-service.onrender.com/uploads";
 export const getAuthHeaders = () => {
   const token = localStorage.getItem("access_token");
   return {

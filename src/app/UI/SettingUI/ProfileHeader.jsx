@@ -9,7 +9,7 @@ export default function ProfilUI() {
   if (error) return <p>Error fetching profile data.</p>;
 
   const profileData = data?.profileData || {};
-  const imageUrl = `https://dhwaniastro.com/${profileData?.image_path}${profileData?.image}`;
+  const imageUrl = `https://webdemonew.dhwaniastro.co.in/${profileData?.image_path}${profileData?.image}`;
   return (
    
       

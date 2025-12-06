@@ -504,7 +504,7 @@ const AstrologerChat = () => {
 
   const handleOpenKundali = () => {
     const chatId = roomId;
-    const url = `https://dhwaniastro.com/chat-room/generate-kundalinew/${chatId}`;
+    const url = `https://webdemonew.dhwaniastro.co.in/chat-room/generate-kundalinew/${chatId}`;
     window.open(url, '_blank');
   };
 
@@ -517,7 +517,7 @@ const AstrologerChat = () => {
     }
   };
 
-  const PROFILE_IMG_BASE = 'https://dhwaniastro.com/public/cms-images/user-images/';
+  const PROFILE_IMG_BASE = 'https://webdemonew.dhwaniastro.co.in/public/cms-images/user-images/';
   const getProfileImgUrl = (img) => (img ? `/Dhwani-logo.jpg` : '/Dhwani-logo.jpg');
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useGetChatBySessionIdQuery } from "@/app/redux/slice/chatHistoryApi";
 import { useGetExpertProfileDetailsQuery } from "@/app/redux/slice/profileApi";
 
-const PROFILE_IMG_BASE = "https://dhwaniastro.com/public/cms-images/user-images/";
+const PROFILE_IMG_BASE = "https://webdemonew.dhwaniastro.co.in/public/cms-images/user-images/";
 const CHAT_IMG_BASE = "https://socketbackend-hja7.onrender.com/uploads/";
 
 const ViewChat = ({ order_id, user_id }) => {
@@ -18,7 +18,7 @@ const ViewChat = ({ order_id, user_id }) => {
   const { data: expertData } = useGetExpertProfileDetailsQuery();
   const profileData = expertData?.profileData || {};
   const expertImageUrl = profileData?.image_path && profileData?.image
-    ? `https://dhwaniastro.com/${profileData.image_path}${profileData.image}`
+    ? `https://webdemonew.dhwaniastro.co.in/${profileData.image_path}${profileData.image}`
     : "/Dhwani-logo.jpg";
 
   const messages = data?.recordList || data?.messages || [];

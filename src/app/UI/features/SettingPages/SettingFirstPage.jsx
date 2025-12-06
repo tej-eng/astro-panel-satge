@@ -84,7 +84,7 @@ const handleLogout = async (e) => {
           </div>
         </Link>
 
-        <a href="https://dhwaniastro.com/terms-and-conditions-for-astrologer" className={`${styles["set-a"]}`}>
+        <a href="https://webdemonew.dhwaniastro.co.in/terms-and-conditions-for-astrologer" className={`${styles["set-a"]}`}>
           <div className={`${styles["set-card-dash"]} bg-sky-300 bg-opacity-75 gap-[10px] md:gap-[15px] flex flex-col items-center justify-between`}>
             <h1 className={`${styles["card-h1"]}`}>Terms & Conditions</h1>
             <span className={`${styles["set-img"]}`}>

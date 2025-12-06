@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { LOCAL_STORAGE_KEY } from "@/constant";
 const baseQueryWithAuth = fetchBaseQuery({
-    baseUrl: "https://dhwaniastro.com/api/",
+    baseUrl: "https://webdemonew.dhwaniastro.co.in/api/",
     prepareHeaders: (headers, { getState }) => {
         let token;
         try {

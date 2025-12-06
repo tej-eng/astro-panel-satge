@@ -9,7 +9,7 @@ const SocketContext = createContext(null);
 // const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://socketbackend-hja7.onrender.com/dhwani-astro";
 
 //16-8
-const SOCKET_URL = "https://wbesocket-service-lg10.onrender.com/dhwani-astro";
+const SOCKET_URL = "https://wbesocket-service.onrender.com/dhwani-astro";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
