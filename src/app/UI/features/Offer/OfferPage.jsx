@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import styles from "@/app/UI/features/Offer/offer.module.css";
 import { AntSwitch } from "../../SwitchButton/AntSwitch";
-import { useUpdateOfferPriceMutation } from "@/app/redux/slice/offerPrice";
+import { useUpdateOfferPriceMutation,useGetOfferPriceQuery } from "@/app/redux/slice/offerPrice";
 import { toast } from "react-toastify";
 import { LOCAL_STORAGE_KEY } from "@/constant";
 
@@ -12,7 +12,19 @@ const Offers = () => {
   const [astroid, setAstroid] = useState(null); 
   const reduxUserId = useSelector((state) => state.auth?.user_id);
 
-  const [updateOfferPrice, { isLoading }] = useUpdateOfferPriceMutation();
+ const [updateOfferPrice] = useUpdateOfferPriceMutation();
+  const { data, isLoading, error } = useGetOfferPriceQuery(astroid, {
+  skip: !astroid,
+});
+
+useEffect(() => {
+  if (data) {
+    console.log("Fetched offer price data:", data.offer_price_status);
+    setStatus(data.offer_price_status);
+
+  }
+}, [data]);
+
 
   
   useEffect(() => {
@@ -27,11 +39,8 @@ const Offers = () => {
   }, [reduxUserId]);
 
   const handleToggle = async () => {
-    const newStatus = status === 0 ? 1 : 0;
-    setStatus(newStatus);
-
     try {
-      const response = await updateOfferPrice({ astroid, status: newStatus }).unwrap();
+     const response = await updateOfferPrice({ astroid }).unwrap();
       toast.success(response.message || "Offer status updated.");
     } catch (err) {
       toast.error(err?.data?.message || "Something went wrong.");

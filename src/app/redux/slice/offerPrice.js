@@ -1,22 +1,38 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import API_BASE_URL from "../apiConfig";
-import { API_END_POINT } from "@/constant";
-import baseQueryWithErrorHandling from "./baseQuery"; 
+import { createApi } from "@reduxjs/toolkit/query/react";
+import baseQueryWithErrorHandling from "./baseQuery";
+
 export const offerPriceApi = createApi({
   reducerPath: "offerPriceApi",
   baseQuery: baseQueryWithErrorHandling,
+  tagTypes: ["OfferPrice"],
+
   endpoints: (builder) => ({
+
+    // 🔹 GET offer details (call on page load)
+    getOfferPrice: builder.query({
+      query: (astroid) => ({
+        url: "expert-get-offer-price-status",
+        method: "POST",
+        body: { astroid },
+      }),
+      providesTags: ["OfferPrice"],
+    }),
+
+    // 🔹 UPDATE offer status (call on toggle)
     updateOfferPrice: builder.mutation({
       query: ({ astroid, status }) => ({
         url: "expert-offerprice",
         method: "POST",
         body: {
           astroid,
-          status: status.toString(),
         },
       }),
+      invalidatesTags: ["OfferPrice"],
     }),
   }),
 });
 
-export const { useUpdateOfferPriceMutation } = offerPriceApi;
+export const {
+  useGetOfferPriceQuery,
+  useUpdateOfferPriceMutation,
+} = offerPriceApi;
