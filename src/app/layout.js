@@ -3,6 +3,8 @@ import { Providers } from "./redux/provider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SocketProvider } from "@/component/SocketClient";
+import ApolloWrapper from "@/providers/ApolloWrapper";
+
 
 export const metadata = {
   title: "Login - Dhwani Astro",
@@ -40,10 +42,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="antialiased">
         <Providers>
+               <ApolloWrapper>
           <SocketProvider>
             {children}
             <ToastContainer position="top-center" autoClose={2000} />
           </SocketProvider>
+               </ApolloWrapper>
         </Providers>
       </body>
     </html>
