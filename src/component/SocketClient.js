@@ -9,7 +9,7 @@ const SocketContext = createContext(null);
 // const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://socketbackend-hja7.onrender.com/dhwani-astro";
 
 //16-8
-const SOCKET_URL = "https://wbesocket-service.onrender.com/dhwani-astro";
+const SOCKET_URL = "http://localhost:8001/dhwani-astro";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
@@ -18,7 +18,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem("frontendJWT"); 
+    const token = localStorage.getItem("astro_token"); 
     console.log("Connecting to socket with token:", token);
 
     if (!token) {

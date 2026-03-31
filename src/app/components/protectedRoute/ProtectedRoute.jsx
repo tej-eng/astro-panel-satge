@@ -7,7 +7,7 @@ export default function ProtectedRoute({ children }) {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("astro_token");
     if (!token) {
       router.push("/");
     } else {

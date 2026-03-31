@@ -7,7 +7,7 @@ import client, { authTokenVar } from "../../utils/apolloClient";
 export default function ApolloWrapper({ children }) {
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("astro_token");
 
     if (token) {
       authTokenVar(token);
