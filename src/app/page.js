@@ -1,182 +1,232 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setCredentials, logoutSuccess } from "@/app/redux/slice/authSlice";
-import { useLoginMutation } from "./redux/slice/loginSlice";
+import { setCredentials } from "@/app/redux/slice/authSlice";
+import { useMutation } from "@apollo/client/react";
+
 import styles from "@/app/login/login.module.css";
+import PhoneInput from "./login/PhoneInput";
+
+import { toast } from "react-toastify";
+import client, { authTokenVar } from "../../utils/apolloClient";
+import { gql } from "@apollo/client";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { GrFormView, GrFormViewHide } from "react-icons/gr";
+
+// ================= GRAPHQL =================
+
+const REQUEST_OTP = gql`
+  mutation RequestOtp($contactNo: String!) {
+    requestAstrologerOtp(contactNo: $contactNo) {
+      message
+      success
+    }
+  }
+`;
+
+const VERIFY_OTP = gql`
+  mutation ($contactNo: String!, $otp: String!) {
+    verifyAstrologerOtp(contactNo: $contactNo, otp: $otp) {
+      accessToken
+      astrologer {
+        id
+        name
+        contactNo
+      }
+    }
+  }
+`;
+
+// ================= COMPONENT =================
 
 export default function LoginForm() {
-  // State
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Hooks
   const router = useRouter();
   const dispatch = useDispatch();
-  const [login, { isLoading }] = useLoginMutation();
 
+  const [requestOtp] = useMutation(REQUEST_OTP);
+  const [verifyOtp] = useMutation(VERIFY_OTP);
 
+  const getOtpBtnRef = useRef(null);
+  const verifyBtnRef = useRef(null);
 
-  // Handlers
-  const handleMobileChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-    setMobile(value);
-  };
+  const [otpSent, setOtpSent] = useState(1);
+  const [otp, setOtp] = useState(["", "", "", ""]);
 
-  const handlePasswordChange = (e) => setPassword(e.target.value);
+  const [phoneData, setPhoneData] = useState({
+    e164: "",
+    isValid: false,
+  });
 
-  const handleShowPassword = () => setShowPassword((prev) => !prev);
+  // ================= SEND OTP =================
 
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (typeof window !== "undefined") localStorage.clear();
-    dispatch(logoutSuccess());
-
-    console.log("Attempting login with:", { mobile, password });
+  const handleGetOTP = async () => {
+    if (!phoneData.isValid) {
+      toast.error("Invalid number");
+      return;
+    }
 
     try {
-      const result = await login({ mobile, password }).unwrap();
-     
+      const res = await requestOtp({
+        variables: {
+          contactNo: phoneData.raw,
+          countryCode: phoneData.dialCode,
+        },
+      });
 
-      if (result?.access_token) {
-        dispatch(setCredentials({ accessToken: result.access_token, user: result.user }));
-
-        if (typeof window !== "undefined") {
-          console.log("Login successful, storing tokens in localStorage",result);
-          localStorage.setItem("accessToken", result.access_token);
-          localStorage.setItem("USER", result.user.id);
-          localStorage.setItem("frontendJWT", result.jwt_token);
-
-        }
-
-        toast.success("SignIN successful!");
-
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 100);
-      } else {
-        console.log("Login failed (no access_token):", result);
-        setError(result.message || "Invalid credentials.");
-      }
+      toast.success(res.data.requestAstrologerOtp.message);
+      setOtpSent(2);
     } catch (err) {
-      console.log("Login error caught:", err);
-      const errMsg = err?.data?.message || err?.error || "SignIN failed. Please check your credentials.";
-      setError(errMsg);
+      toast.error(err.message);
     }
   };
 
+  // ================= VERIFY OTP =================
 
+  const handleVerifyOTP = async () => {
+    const enteredOtp = otp.join("");
 
-  // Render
+    try {
+    const res = await verifyOtp({
+      variables: {
+        contactNo: phoneData.raw,
+        otp: enteredOtp,
+      },
+      context: {
+        fetchOptions: {
+          credentials: "include", // ✅ MUST
+        },
+      },
+    });
+      const { accessToken, astrologer } = res.data.verifyAstrologerOtp;
+
+      authTokenVar(accessToken);
+
+      localStorage.setItem("astro_token", accessToken);
+      localStorage.setItem("astro_user", JSON.stringify(astrologer));
+      dispatch(
+        setCredentials({ astro_user: astrologer, astro_token: accessToken }),
+      );
+
+      toast.success("Welcome");
+
+      window.location.href = "/dashboard";
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  // ================= OTP INPUT =================
+
+  const handleChange = (e, i) => {
+    const val = e.target.value.replace(/\D/, "");
+    if (!val) return;
+
+    const updated = [...otp];
+    updated[i] = val;
+    setOtp(updated);
+
+    if (i < 3) document.getElementById(`otp-${i + 1}`)?.focus();
+  };
+
+  const handleBackspace = (e, i) => {
+    if (e.key === "Backspace") {
+      const updated = [...otp];
+      if (otp[i]) updated[i] = "";
+      else if (i > 0) document.getElementById(`otp-${i - 1}`)?.focus();
+      setOtp(updated);
+    }
+  };
+
+  // ================= UI =================
+
   return (
-    <div className={styles.nboby}>
-      <div className={styles.container}>
-        <header className={styles.header}>
-          <div className={styles.headerInner}>
-            <div className={styles.mobileHeader}>
-              <div className={styles.logo}>
-                <Image src="/logo.png" alt="Logo" width={130} height={50} className={styles.logoImage} />
-              </div>
-            </div>
-            <nav className={styles.navLinks}>
-              <Link href="#contact" className={styles.profile}>
-                <Image src="/user2.png" width={35} height={35} alt="User Icon" className={styles.profileImage} />
-                <h5 className={styles.signInText}>SignIN</h5>
-              </Link>
-            </nav>
-          </div>
-        </header>
-        <div className={styles.loginContainer}>
-          <div className={styles.loginBox}>
-            <h2>SignIN</h2>
-            <span>Enter your credentials.</span>
-          </div>
-          <form onSubmit={handleSubmit} autoComplete="off">
-            <label htmlFor="mobile">Phone Number:</label>
-            <input
-              type="text"
-              id="mobile"
-              name="mobile"
-              value={mobile}
-              required
-              maxLength={10}
-              pattern="[0-9]{10}"
-              inputMode="numeric"
-              onChange={handleMobileChange}
-              placeholder="Enter phone number"
-              autoComplete="off"
-            />
-            <label htmlFor="password">Password:</label>
-            <div style={{ position: 'relative', width: '100%' }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={password}
-                required
-                onChange={handlePasswordChange}
-                placeholder="Enter password"
-                autoComplete="off"
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-                className={styles.input}
-              />
-              <span
-                onClick={handleShowPassword}
-                style={{
-                  position: 'absolute',
-                  right: '0.75rem',
-                  top: '33%',
-                  transform: 'translateY(-50%)',
-                  cursor: 'pointer',
-                  color: '#888',
-                  fontSize: '1.6rem',
-                  userSelect: 'none',
-                  zIndex: 2,
-                  background: 'transparent',
-                  padding: 0,
-                  border: 'none',
-                  outline: 'none',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                tabIndex={0}
-              >
-                {showPassword ? <GrFormView className="font-semibold" /> : <GrFormViewHide className="font-semibold" />}
-              </span>
-            </div>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "SignIN"}
-            </button>
-            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.95rem', color: '#555', fontWeight: 500 }}>
-              By signing in, you agree to our <Link href="https://webdemonew.dhwaniastro.co.in/terms-and-conditions-for-astrologer" style={{ color: '#7e60bf', fontWeight: 500, textDecoration: 'underline' }}>terms and conditions</Link>
-              <br />
-              <span style={{ color: '#222' }}>Don't have an account?</span>
-              <Link href="https://docs.google.com/forms/d/1VDdBy2ZPtnXu0ok9V4o0m9M78bk0jdtZ9L5qFmRVY_w/viewform?edit_requested=true#responses" style={{ color: '#7e60bf', fontWeight: 600, marginLeft: 6, textDecoration: 'underline' }}>Sign Up</Link>
-            </div>
-          </form>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#120a18e7] relative overflow-hidden">
+      <div className="absolute w-[700px] h-[700px] bg-purple-600 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
+      <div className="absolute w-[500px] h-[500px] bg-violet-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
+
+      <div
+        className="relative z-10 w-full max-w-md p-8 rounded-3xl 
+      bg-black/20 backdrop-blur-xl border border-white/10
+      shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-center space-y-3"
+      >
+        <div className={`${styles.logo} flex items-center justify-center`}>
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={130}
+            height={50}
+            className={styles.logoImage}
+          />
         </div>
-        <footer className={styles.footer}>
-          <div className={styles.footerBox}>
-            <p className={styles.footerText}>
-              Copyright &copy; 2023-2025. Made with ❤️ by Dhwani Astro.
+
+        {otpSent === 1 && (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Astrologer Login
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Enter your number to receive OTP
             </p>
-          </div>
-        </footer>
+
+            <div className="flex flex-col gap-5 items-center">
+              <PhoneInput onChange={setPhoneData} />
+
+              <button
+                onClick={handleGetOTP}
+                className="w-[50%] py-3 rounded-full font-semibold text-white  cursor-pointer
+              bg-gradient-to-r from-purple-600 to-violet-500
+              hover:scale-[1.03] transition-all duration-200
+              shadow-[0_0_20px_rgba(168,85,247,0.6)]
+              active:scale-[0.98]"
+              >
+                Send OTP
+              </button>
+            </div>
+          </>
+        )}
+
+        {otpSent === 2 && (
+          <>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              Verify OTP
+            </h3>
+            <p className="text-gray-400 mb-4">Sent to {phoneData.e164}</p>
+
+            <div className="flex justify-center gap-3 mb-6">
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  id={`otp-${i}`}
+                  value={digit}
+                  maxLength={1}
+                  onChange={(e) => handleChange(e, i)}
+                  onKeyDown={(e) => handleBackspace(e, i)}
+                  className="w-12 h-12 text-lg text-center rounded-xl 
+                bg-white/10 text-white border border-white/20
+                focus:ring-2 focus:ring-purple-500 outline-none
+                shadow-inner"
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handleVerifyOTP}
+              className="w-full py-3 rounded-xl font-semibold text-white 
+            bg-gradient-to-r from-purple-600 to-blue-500
+            hover:scale-[1.03] transition-all duration-200
+            shadow-[0_0_20px_rgba(168,85,247,0.6)]
+            active:scale-[0.98]"
+            >
+              Verify OTP
+            </button>
+          </>
+        )}
+
+        <p className="text-xs text-gray-400 mt-6">
+          Secure Astrologer Access • Dhwani Astro
+        </p>
       </div>
     </div>
   );

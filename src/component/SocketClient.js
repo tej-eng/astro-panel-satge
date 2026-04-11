@@ -1,51 +1,39 @@
-"use client"; // Needed for Next.js App Router
+"use client";
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { io } from 'socket.io-client';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { io } from "socket.io-client";
 
 const SocketContext = createContext(null);
 
-// Example: use environment variable for production vs dev
-// const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://socketbackend-hja7.onrender.com/dhwani-astro";
 
-//16-8
-const SOCKET_URL = "https://wbesocket-service.onrender.com/dhwani-astro";
+const SOCKET_URL = "https://dhwaniastro.com/dhwani-astro";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
-    const token = localStorage.getItem("frontendJWT"); 
-    console.log("Connecting to socket with token:", token);
-
-    if (!token) {
-      console.error("JWT token not found. Cannot connect to socket.");
-      setLoading(false);
-      return;
-    }
+    console.log("Connecting to socket with cookies...");
 
     const socketInstance = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-      withCredentials: true,
-      auth: {
-        token, 
-      },
+      path: "/socket.io", 
+      transports: ["websocket", "polling"],
+      withCredentials: true, 
     });
 
-    socketInstance.on('connect', () => {
+    socketInstance.on("connect", () => {
+      console.log("✅ Socket connected:", socketInstance.id);
       setLoading(false);
-      console.log("Socket connected:", socketInstance.id);
     });
 
-    socketInstance.on('disconnect', () => {
-      console.log("Socket disconnected");
+    socketInstance.on("disconnect", (reason) => {
+      console.log("❌ Socket disconnected:", reason);
     });
 
-    socketInstance.on('connect_error', (err) => {
-      console.error("Socket connection failed:", err.message);
+    socketInstance.on("connect_error", (err) => {
+      console.error("🚨 Socket connection failed:", err.message);
       setLoading(false);
     });
 
@@ -57,7 +45,7 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   if (loading) {
-    return <div>Loading socket...</div>;
+    return <div>Connecting to server...</div>;
   }
 
   return (
