@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { SocketProvider } from "@/component/SocketClient";
 import ApolloWrapper from "@/providers/ApolloWrapper";
 
-
 export const metadata = {
   title: "Login - Dhwani Astro",
   description: "Securely log in to your Dhwani Astro account.",
@@ -42,12 +41,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="antialiased">
         <Providers>
-               <ApolloWrapper>
-          <SocketProvider>
-            {children}
-            <ToastContainer position="top-center" autoClose={2000} />
-          </SocketProvider>
-               </ApolloWrapper>
+          <ApolloWrapper>
+            <SocketProvider>
+              {children}
+              <ToastContainer position="top-center" autoClose={2000} />
+            </SocketProvider>
+          </ApolloWrapper>
         </Providers>
       </body>
     </html>

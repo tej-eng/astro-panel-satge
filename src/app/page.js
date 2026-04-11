@@ -18,9 +18,10 @@ import Link from "next/link";
 // ================= GRAPHQL =================
 
 const REQUEST_OTP = gql`
-  mutation ($contactNo: String!) {
+  mutation RequestOtp($contactNo: String!) {
     requestAstrologerOtp(contactNo: $contactNo) {
       message
+      success
     }
   }
 `;
@@ -68,7 +69,10 @@ export default function LoginForm() {
 
     try {
       const res = await requestOtp({
-        variables: { contactNo: phoneData.raw },
+        variables: {
+          contactNo: phoneData.raw,
+          countryCode: phoneData.dialCode,
+        },
       });
 
       toast.success(res.data.requestAstrologerOtp.message);
@@ -84,25 +88,30 @@ export default function LoginForm() {
     const enteredOtp = otp.join("");
 
     try {
-      const res = await verifyOtp({
-        variables: {
-          contactNo: phoneData.raw,
-          otp: enteredOtp,
+    const res = await verifyOtp({
+      variables: {
+        contactNo: phoneData.raw,
+        otp: enteredOtp,
+      },
+      context: {
+        fetchOptions: {
+          credentials: "include", // ✅ MUST
         },
-      });
-
+      },
+    });
       const { accessToken, astrologer } = res.data.verifyAstrologerOtp;
 
       authTokenVar(accessToken);
 
       localStorage.setItem("astro_token", accessToken);
       localStorage.setItem("astro_user", JSON.stringify(astrologer));
-      document.cookie = `astro_token=${accessToken}; path=/; SameSite=Lax`;
-      dispatch(setCredentials({ astro_user: astrologer, astro_token: accessToken }));
+      dispatch(
+        setCredentials({ astro_user: astrologer, astro_token: accessToken }),
+      );
 
       toast.success("Welcome");
 
-    window.location.href = "/dashboard";
+      window.location.href = "/dashboard";
     } catch (err) {
       toast.error(err.message);
     }
@@ -133,101 +142,92 @@ export default function LoginForm() {
   // ================= UI =================
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-white">
-      {/* ===== HEADER ===== */}
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <div className={styles.mobileHeader}>
-            <div className={styles.logo}>
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={130}
-                height={50}
-                className={styles.logoImage}
-              />
-            </div>
-          </div>
-          <nav className={styles.navLinks}>
-            <Link href="#contact" className={styles.profile}>
-              <Image
-                src="/user2.png"
-                width={35}
-                height={35}
-                alt="User Icon"
-                className={styles.profileImage}
-              />
-              <h5 className={styles.signInText}>SignIN</h5>
-            </Link>
-          </nav>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#120a18e7] relative overflow-hidden">
+      <div className="absolute w-[700px] h-[700px] bg-purple-600 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
+      <div className="absolute w-[500px] h-[500px] bg-violet-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
+
+      <div
+        className="relative z-10 w-full max-w-md p-8 rounded-3xl 
+      bg-black/20 backdrop-blur-xl border border-white/10
+      shadow-[0_8px_32px_rgba(0,0,0,0.6)] text-center space-y-3"
+      >
+        <div className={`${styles.logo} flex items-center justify-center`}>
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={130}
+            height={50}
+            className={styles.logoImage}
+          />
         </div>
-      </header>
 
-      {/* ===== MAIN ===== */}
-      <div className="flex  max-w-2xl flex-1 items-center justify-center px-4">
-        {/* CARD */}
-        <div className="w-full  bg-white shadow-xl rounded-2xl p-6 text-center">
-          {otpSent === 1 && (
-            <>
-              <h2 className="text-2xl font-bold mb-2">Astrologer Login</h2>
-              <p className="text-gray-500 mb-6">
-                Enter your number to receive OTP
-              </p>
+        {otpSent === 1 && (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Astrologer Login
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Enter your number to receive OTP
+            </p>
 
-              <div className="flex flex-col gap-4 items-center">
-                <PhoneInput onChange={setPhoneData} />
-
-                <button
-                  onClick={handleGetOTP}
-                  ref={getOtpBtnRef}
-                  className="w-full cursor-pointer py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 font-semibold transition"
-                >
-                  Send OTP
-                </button>
-              </div>
-            </>
-          )}
-
-          {otpSent === 2 && (
-            <>
-              <h3 className="text-lg font-semibold mb-2">Verify OTP</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Sent to {phoneData.e164}
-              </p>
-
-              <div className="flex justify-center gap-3 mb-5">
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    id={`otp-${i}`}
-                    value={digit}
-                    maxLength={1}
-                    onChange={(e) => handleChange(e, i)}
-                    onKeyDown={(e) => handleBackspace(e, i)}
-                    className="w-12 h-12 text-lg text-center border-2 border-gray-200 rounded-xl shadow focus:border-yellow-400 focus:outline-none"
-                  />
-                ))}
-              </div>
+            <div className="flex flex-col gap-5 items-center">
+              <PhoneInput onChange={setPhoneData} />
 
               <button
-                onClick={handleVerifyOTP}
-                ref={verifyBtnRef}
-                className="w-full py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 font-semibold transition"
+                onClick={handleGetOTP}
+                className="w-[50%] py-3 rounded-full font-semibold text-white  cursor-pointer
+              bg-gradient-to-r from-purple-600 to-violet-500
+              hover:scale-[1.03] transition-all duration-200
+              shadow-[0_0_20px_rgba(168,85,247,0.6)]
+              active:scale-[0.98]"
               >
-                Verify OTP
+                Send OTP
               </button>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          </>
+        )}
 
-      <footer className={`${styles.footer} !fixed bottom-0 left-0 w-full`}>
-        <div className={styles.footerBox}>
-          <p className={styles.footerText}>
-            Copyright &copy; 2023-2025. Made with ❤️ by Dhwani Astro.
-          </p>
-        </div>
-      </footer>
+        {otpSent === 2 && (
+          <>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              Verify OTP
+            </h3>
+            <p className="text-gray-400 mb-4">Sent to {phoneData.e164}</p>
+
+            <div className="flex justify-center gap-3 mb-6">
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  id={`otp-${i}`}
+                  value={digit}
+                  maxLength={1}
+                  onChange={(e) => handleChange(e, i)}
+                  onKeyDown={(e) => handleBackspace(e, i)}
+                  className="w-12 h-12 text-lg text-center rounded-xl 
+                bg-white/10 text-white border border-white/20
+                focus:ring-2 focus:ring-purple-500 outline-none
+                shadow-inner"
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handleVerifyOTP}
+              className="w-full py-3 rounded-xl font-semibold text-white 
+            bg-gradient-to-r from-purple-600 to-blue-500
+            hover:scale-[1.03] transition-all duration-200
+            shadow-[0_0_20px_rgba(168,85,247,0.6)]
+            active:scale-[0.98]"
+            >
+              Verify OTP
+            </button>
+          </>
+        )}
+
+        <p className="text-xs text-gray-400 mt-6">
+          Secure Astrologer Access • Dhwani Astro
+        </p>
+      </div>
     </div>
   );
 }

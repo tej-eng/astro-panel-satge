@@ -45,8 +45,8 @@ export default function PhoneInput({ onChange, handleKeyEnter }) {
     }, [number, country, onChange]);
 
     return (
-        <div className="flex items-center gap-0.5 rounded">
-            <div className="flex w-30 items-center gap-0.5 h-full  px-3 py-2 border border-gray-200 rounded-lg shadow-lg">
+        <div className="flex  gap-0.5 rounded">
+            <div className="flex w-30 items-center gap-0.5 h-full  px-3 py-3 border border-gray-500 text-white rounded-lg shadow-lg">
                 <ReactCountryFlag
                     countryCode={country.iso.toUpperCase()}
                     svg
@@ -61,10 +61,10 @@ export default function PhoneInput({ onChange, handleKeyEnter }) {
                     onChange={(e) =>
                         setCountry(countries.find((c) => c.iso === e.target.value))
                     }
-                    className="bg-transparent outline-none text-sm w-full"
+                    className=" text-white outline-none text-sm w-full"
                 >
                     {countries.map((c) => (
-                        <option key={c.iso} value={c.iso}>
+                        <option className="text-black" key={c.iso} value={c.iso}>
                             ({c.dialCode})  {c.name}
                         </option>
                     ))}
@@ -73,14 +73,13 @@ export default function PhoneInput({ onChange, handleKeyEnter }) {
 
             <input
                 type="tel"
-                className="flex-1 px-3 py-2 border !mb-0 border-gray-200 !rounded-lg placeholder:text-xs shadow-lg outline-none"
+                className="flex-1 px-3 py-2 border !mb-0 text-white border-gray-500 !rounded-lg placeholder:text-xs shadow-lg outline-none"
                 placeholder="Mobile number"
                 value={number}
                 onKeyDown={handleKeyEnter}
                 onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, "");
                     if (val.length <= 15) setNumber(val);
-
                 }}
 
 
