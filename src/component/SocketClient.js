@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 
 const SocketContext = createContext(null);
 
-  const SOCKET_URL = "https://dhwaniastro.com/astro-websocket-service-v2";
+  const SOCKET_URL = "https://dhwaniastro.com";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
@@ -18,7 +18,7 @@ export const SocketProvider = ({ children }) => {
 
 const socketInstance = io(SOCKET_URL + "/dhwani-astro", {
   path: "/astro-websocket-service-v2/socket.io",
-  transports: ["websocket", "polling"],
+  transports: ["websocket"],
   withCredentials: true,
 });
     socketInstance.on("connect", () => {
