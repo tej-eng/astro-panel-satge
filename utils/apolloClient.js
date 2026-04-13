@@ -11,7 +11,7 @@ import { setContext } from "@apollo/client/link/context";
 export const authTokenVar = makeVar(null);
 
 const httpLink = createHttpLink({
-  uri: "http://192.168.1.10:4000/graphql",
+  uri: "https://dhwaniastro.com/astroAuth/graphql",
   credentials: "include", 
 });
 
