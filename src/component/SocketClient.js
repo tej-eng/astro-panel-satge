@@ -5,8 +5,7 @@ import { io } from "socket.io-client";
 
 const SocketContext = createContext(null);
 
-
-const SOCKET_URL = "https://dhwaniastro.com/dhwani-astro";
+  const SOCKET_URL = "https://dhwaniastro.com/astro-websocket-service-v2";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
@@ -17,12 +16,11 @@ export const SocketProvider = ({ children }) => {
 
     console.log("Connecting to socket with cookies...");
 
-    const socketInstance = io(SOCKET_URL, {
-      path: "/socket.io", 
-      transports: ["websocket", "polling"],
-      withCredentials: true, 
-    });
-
+const socketInstance = io(SOCKET_URL + "/dhwani-astro", {
+  path: "/astro-websocket-service-v2/socket.io",
+  transports: ["websocket", "polling"],
+  withCredentials: true,
+});
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
       setLoading(false);
