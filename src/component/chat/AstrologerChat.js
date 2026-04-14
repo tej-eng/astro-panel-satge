@@ -134,7 +134,7 @@ const AstrologerChat = () => {
   }, [token]);
 
   useEffect(() => {
-    const astroId = localStorage.getItem('USER');
+    const astroId = JSON.parse(localStorage.getItem("astro_user"))?.id;
     setToken(astroId || '');
   }, []);
 
