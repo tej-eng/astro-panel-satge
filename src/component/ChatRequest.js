@@ -49,7 +49,9 @@ const ChatRequest = () => {
       console.log("Socket not connected");
       return;
     }
-    const astroId = localStorage.getItem("USER");
+    //const astroId = localStorage.getItem("USER");//astro_user
+    const astroId = JSON.parse(localStorage.getItem("astro_user"))?.id;
+    console.log("Listening for chat requests for astroId:", astroId);
     socket.on("new_chat_request", (data) => {
       if (data.astro_id == astroId) {
         if (audioRef.current) {
