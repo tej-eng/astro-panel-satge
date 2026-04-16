@@ -257,11 +257,9 @@ const ChatRequest = () => {
               exit={{ scale: 0.9, opacity: 0 }}
             >
               <h2 className="mb-3 text-xl font-bold">
-                Chat : Waiting for User
+                Chat : Please Wait ... 
               </h2>
-              <p className="mb-3 text-sm text-gray-600">
-                Thank you! Kindly wait for the User to accept the chat request.
-              </p>
+              
             </motion.div>
           </>
         )}

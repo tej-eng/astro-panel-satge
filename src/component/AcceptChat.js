@@ -56,10 +56,8 @@ const AcceptChat = ({accept}) => {
              animate={{ scale: 1, opacity: 1 }}
              exit={{ scale: 0.9, opacity: 0 }}
            >
-             <h2 className="mb-3 text-xl font-bold">Chat : Waiting for User</h2>
-             <p className="mb-3 text-sm text-gray-600">
-             Thank you! Kindly wait for the User to accept the chat request.
-             </p>
+             <h2 className="mb-3 text-xl font-bold">Chat : Please Wait ... </h2>
+             
              {/* <p className='text-sm text-gray-800'>Name: {currentRequest.userName}</p>
              <p className='mb-6 text-sm text-gray-600'>Chat Id: {currentRequest.room_id}</p> */}
              <div className="flex justify-end gap-3">
