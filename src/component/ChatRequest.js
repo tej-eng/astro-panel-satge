@@ -99,12 +99,12 @@ const ChatRequest = () => {
       console.log("Received chat_rejected_astrologer eventssssssssssssssss:", data);
       if (data.roomid === currentRequest.room_id) {
         console.log("Chat rejected for room:assssssssssssssssssssssssss", currentRequest.room_id);
-        setAcceptChat(false);
-        setReject(true);
+          setIsModalOpen(false);
+          setAcceptChat(false);
 
-        setTimeout(() => {
-          setReject(false);
-        }, 3000);
+        // setTimeout(() => {
+        //   setReject(false);
+        // }, 3000);
       }
     });
 
