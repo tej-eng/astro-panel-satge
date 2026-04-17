@@ -94,10 +94,11 @@ const ChatRequest = () => {
         }
       }
     });
-
+//
     socket.on("chat_rejected_astrologer", async (data) => {
       console.log("Received chat_rejected_astrologer eventssssssssssssssss:", data);
       if (data.roomid === currentRequest.room_id) {
+        console.log("Chat rejected for room:assssssssssssssssssssssssss", currentRequest.room_id);
         setAcceptChat(false);
         setReject(true);
 
