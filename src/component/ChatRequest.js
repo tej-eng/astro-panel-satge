@@ -94,17 +94,24 @@ const ChatRequest = () => {
         }
       }
     });
-//
+
     socket.on("chat_rejected_astrologer", async (data) => {
-      console.log("Received chat_rejected_astrologer eventssssssssssssssss:", data);
       if (data.roomid === currentRequest.room_id) {
-        console.log("Chat rejected for room:assssssssssssssssssssssssss", currentRequest.room_id);
+        setAcceptChat(false);
+        setReject(true);
+
+        setTimeout(() => {
+          setReject(false);
+        }, 3000);
+      }
+    });
+
+    socket.on("chat_cancel_by_user", async (data) => {
+      if (data.roomid === currentRequest.room_id) {
           setIsModalOpen(false);
           setAcceptChat(false);
 
-        // setTimeout(() => {
-        //   setReject(false);
-        // }, 3000);
+    
       }
     });
 
