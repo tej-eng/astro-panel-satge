@@ -328,6 +328,7 @@ const AstrologerChat = () => {
     });
 
     socket.on('typing', (data) => {
+      console.log('Typing event received:', data);
       if (data.user_name !== 'Astrologer') {
         setTypingStatus(data.typing ? `${data.user_name} is typing...` : '');
       }
