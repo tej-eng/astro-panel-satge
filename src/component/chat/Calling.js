@@ -29,7 +29,7 @@ const Calling = () => {
       return;
     }
     const astroId = localStorage.getItem("USER");
-    socket.on("new_call_request", (data) => {
+    socket.on("incoming_call", (data) => {
 
       // console.log("New call request received1:", data);
       if (data.astro_id == astroId) {
@@ -46,13 +46,25 @@ const Calling = () => {
         }, 0);
       }
     });
+
+    socket.on("offer", (data) => {
+
+      // console.log("New call request received1:", data);
+      if (data.astro_id == astroId) {
+        socket.emit("answer", { room_id ,astroId}, (response) => {});
+        
+        
+      }
+    });
+
     return () => {
-      socket.off("new_chat_request");
+      socket.off("incoming_call");
     };
   }, [socket, currentRequest]);
 
   const handleAccept = () => {
     setIsModalOpen(false);
+     socket.emit("callAcceptedByAtrologer", { room_id ,astroId}, (response) => {});
   };
 
   const handleReject = async () => {
