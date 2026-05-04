@@ -24,7 +24,7 @@ const Calling = () => {
 
   const astroId =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("USER"))?.id
+      ? JSON.parse(localStorage.getItem("astro_user"))?.id
       : null;
 
   // =========================
