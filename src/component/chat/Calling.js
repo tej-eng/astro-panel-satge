@@ -84,6 +84,8 @@ const Calling = () => {
 
     // INCOMING CALL
     socket.on("incoming_call", (data) => {
+      console.log("📞 Incoming callAAAAAAAAAAAAAAAAAAA:", data);
+      console.log("Astro IDaaaaaaaaaaaa:", data.receiverId +"=="+ astroId);
       if (data.receiverId == astroId) {
         if (audioRef.current) {
           audioRef.current.play().catch(() => {});
