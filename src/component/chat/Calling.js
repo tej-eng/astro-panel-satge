@@ -2,67 +2,60 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useContext, useRef } from "react";
-import { useRouter } from "next/navigation";
 import SocketContext from "../SocketClient";
 
 const Calling = () => {
-  const router = useRouter();
   const socket = useContext(SocketContext);
 
   const audioRef = useRef(null);
   const remoteAudioRef = useRef(null);
-
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [callState, setCallState] = useState("idle"); 
+  // idle | ringing | connecting | connected
+
   const [currentRequest, setCurrentRequest] = useState(null);
   const roomIdRef = useRef(null);
-
-  const config = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
 
   const astroId =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("astro_user"))?.id
       : null;
 
+  const config = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  };
+
   // =========================
-  // INIT MICROPHONE
+  // INIT MIC
   // =========================
   const initMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: false,
       });
       localStreamRef.current = stream;
     } catch (err) {
       console.error("Mic error:", err);
-      alert("Microphone permission required");
     }
   };
 
   // =========================
-  // CREATE PEER CONNECTION
+  // CREATE PEER
   // =========================
   const createPeerConnection = (roomId) => {
     const pc = new RTCPeerConnection(config);
 
-    // add local tracks
     localStreamRef.current.getTracks().forEach((track) => {
       pc.addTrack(track, localStreamRef.current);
     });
 
-    // receive remote stream
     pc.ontrack = (event) => {
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = event.streams[0];
-      }
+      remoteAudioRef.current.srcObject = event.streams[0];
+      setCallState("connected"); // ✅ CALL CONNECTED
     };
 
-    // ICE candidate
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit("ice-candidate", {
@@ -83,43 +76,46 @@ const Calling = () => {
 
     initMedia();
 
-    // INCOMING CALL
-   socket.on("incoming_call", (data) => {
-  if (data.receiverId == astroId) {
-    console.log("📞 Incoming call from user:", data.callerId);
-    roomIdRef.current = data.room_id; // ✅ store here
-    setCurrentRequest(data);
-    setIsModalOpen(true);
-    console.log("🔔 Ringing...",data);
-  }
-});
+    // 🔔 INCOMING CALL
+    socket.on("incoming_call", (data) => {
+      if (data.receiverId == astroId) {
+        console.log("📞 Incoming call:", data);
 
-  socket.on("offer", async (data) => {
-    console.log("📞 Offer event received:", data);
-  const roomId = roomIdRef.current;
-  if (!roomId) return;
+        roomIdRef.current = data.room_id;
+        setCurrentRequest(data);
+        setCallState("ringing");
 
-  console.log("📞 Offer received");
+        audioRef.current?.play().catch(() => {});
+      }
+    });
 
-  const pc = createPeerConnection(roomId);
-  peerConnectionRef.current = pc;
+    // 📞 OFFER FROM USER
+    socket.on("offer", async (data) => {
+      const roomId = roomIdRef.current;
+      if (!roomId) return;
 
-  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      console.log("📞 Offer received");
 
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
+      const pc = createPeerConnection(roomId);
+      peerConnectionRef.current = pc;
 
-  socket.emit("answer", {
-    room_id: roomId,
-    answer,
-  });
-});
+      await pc.setRemoteDescription(
+        new RTCSessionDescription(data.offer)
+      );
 
-    // ICE FROM USER
-    socket.on("ice-candidate", async (raw) => {
-      console.log("📞 ICE candidate received:", raw);
-      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
 
+      socket.emit("answer", {
+        room_id: roomId,
+        answer,
+      });
+
+      setCallState("connecting"); // ⏳ connecting
+    });
+
+    // ❄ ICE
+    socket.on("ice-candidate", async (data) => {
       try {
         await peerConnectionRef.current?.addIceCandidate(
           new RTCIceCandidate(data.candidate)
@@ -128,11 +124,8 @@ const Calling = () => {
         console.error("ICE error:", err);
       }
     });
-    socket.on("join_call", () => {
-      console.log("📞 Joined call room") ;
-    });
 
-    // CALL END
+    // ❌ CALL END
     socket.on("call_ended_by_user", () => {
       cleanupCall();
     });
@@ -143,44 +136,49 @@ const Calling = () => {
       socket.off("ice-candidate");
       socket.off("call_ended_by_user");
     };
-  }, [socket, currentRequest]);
+  }, [socket]);
 
   // =========================
-  // ACCEPT CALL
+  // ACCEPT
   // =========================
-  const handleAccept = async () => {
-  setIsModalOpen(false);
+  const handleAccept = () => {
+    const roomId = roomIdRef.current;
 
-  const roomId = currentRequest.room_id;
+    setCallState("connecting");
 
-  console.log("📞 Joining room (astrologer):", roomId);
+    socket.emit("join_call", { roomId });
 
-  //  JOIN ROOM (CRITICAL)
-  //socket.emit("join_call", { roomId });
-
-  //  CREATE PEER CONNECTION
-  const pc = createPeerConnection(roomId);
-  peerConnectionRef.current = pc;
-
-  // Notify backend
-  socket.emit("callAcceptedByAstrologer", {
-    roomId,
-    astroId,
-  });
-};
+    socket.emit("callAcceptedByAstrologer", {
+      roomId,
+      astroId,
+    });
+  };
 
   // =========================
-  // REJECT CALL
+  // REJECT
   // =========================
   const handleReject = () => {
-    setIsModalOpen(false);
+    setCallState("idle");
     setCurrentRequest(null);
+  };
+
+  // =========================
+  // END CALL
+  // =========================
+  const handleEndCall = () => {
+    socket.emit("call_ended_by_astrologer", {
+      room_id: roomIdRef.current,
+    });
+
+    cleanupCall();
   };
 
   // =========================
   // CLEANUP
   // =========================
   const cleanupCall = () => {
+    setCallState("idle");
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -189,56 +187,63 @@ const Calling = () => {
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null;
     }
+
+    setCurrentRequest(null);
   };
 
+  // =========================
+  // UI
+  // =========================
   return (
     <>
-      {/* RING SOUND */}
       <audio ref={audioRef} src="/sounds/sound2.mp3" preload="auto" />
-
-      {/* REMOTE AUDIO */}
       <audio ref={remoteAudioRef} autoPlay />
 
       <AnimatePresence>
-        {isModalOpen && currentRequest && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleReject}
-            />
+        {callState === "ringing" && (
+          <motion.div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+            <div className="bg-white p-6 rounded-xl text-center">
+              <h2 className="text-lg font-bold mb-2">Incoming Call</h2>
+              <p>{currentRequest?.callerId}</p>
 
-            <motion.div
-              className="fixed z-50 w-full max-w-sm p-6 bg-white shadow-lg top-1/2 left-1/2 rounded-xl -translate-x-1/2 -translate-y-1/2"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <h2 className="text-xl font-bold mb-3">
-                Incoming Call Request
-              </h2>
-
-              <p className="text-sm">User: {currentRequest.callerId}</p>
-
-              <div className="flex justify-between mt-5">
+              <div className="flex justify-center gap-4 mt-4">
                 <button
                   onClick={handleReject}
-                  className="px-4 py-2 bg-red-500 text-white rounded"
+                  className="bg-red-500 px-4 py-2 text-white rounded"
                 >
                   Reject
                 </button>
 
                 <button
                   onClick={handleAccept}
-                  className="px-4 py-2 bg-green-600 text-white rounded"
+                  className="bg-green-600 px-4 py-2 text-white rounded"
                 >
                   Accept
                 </button>
               </div>
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
+        )}
+
+        {callState === "connecting" && (
+          <motion.div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 text-white">
+            <div className="text-center">
+              <h2 className="text-xl">Connecting...</h2>
+            </div>
+          </motion.div>
+        )}
+
+        {callState === "connected" && (
+          <motion.div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50 text-white">
+            <h2 className="text-xl mb-4">Call Connected</h2>
+
+            <button
+              onClick={handleEndCall}
+              className="bg-red-600 px-6 py-3 rounded-full"
+            >
+              End Call
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
