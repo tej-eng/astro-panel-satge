@@ -17,6 +17,7 @@ const Calling = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRequest, setCurrentRequest] = useState(null);
+  const roomIdRef = useRef(null);
 
   const config = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -83,47 +84,40 @@ const Calling = () => {
     initMedia();
 
     // INCOMING CALL
-    socket.on("incoming_call", (data) => {
-      console.log("📞 Incoming callAAAAAAAAAAAAAAAAAAA:", data);
-      console.log("Astro IDaaaaaaaaaaaa:", data.receiverId +"=="+ astroId);
-      if (data.receiverId == astroId) {
-        if (audioRef.current) {
-          audioRef.current.play().catch(() => {});
-        }
+   socket.on("incoming_call", (data) => {
+  if (data.receiverId == astroId) {
+    console.log("📞 Incoming call from user:", data.callerId);
+    roomIdRef.current = data.room_id; // ✅ store here
+    setCurrentRequest(data);
+    setIsModalOpen(true);
+    console.log("🔔 Ringing...",data);
+  }
+});
 
-        setCurrentRequest(data);
-        setIsModalOpen(true);
-      }
-    });
+  socket.on("offer", async (data) => {
+    console.log("📞 Offer event received:", data);
+  const roomId = roomIdRef.current;
+  if (!roomId) return;
 
-    // OFFER FROM USER
-    socket.on("offer", async (raw) => {
-      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+  console.log("📞 Offer received");
 
-      if (!currentRequest) return;
+  const pc = createPeerConnection(roomId);
+  peerConnectionRef.current = pc;
 
-      const roomId = currentRequest.room_id;
+  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-      console.log("📞 Offer received");
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
 
-      const pc = createPeerConnection(roomId);
-      peerConnectionRef.current = pc;
-
-      await pc.setRemoteDescription(
-        new RTCSessionDescription(data.offer)
-      );
-
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      socket.emit("answer", {
-        room_id: roomId,
-        answer,
-      });
-    });
+  socket.emit("answer", {
+    room_id: roomId,
+    answer,
+  });
+});
 
     // ICE FROM USER
     socket.on("ice-candidate", async (raw) => {
+      console.log("📞 ICE candidate received:", raw);
       const data = typeof raw === "string" ? JSON.parse(raw) : raw;
 
       try {
@@ -151,14 +145,26 @@ const Calling = () => {
   // =========================
   // ACCEPT CALL
   // =========================
-  const handleAccept = () => {
-    setIsModalOpen(false);
+  const handleAccept = async () => {
+  setIsModalOpen(false);
 
-    socket.emit("callAcceptedByAstrologer", {
-      roomId: currentRequest.room_id,
-      astroId,
-    });
-  };
+  const roomId = currentRequest.room_id;
+
+  console.log("📞 Joining room (astrologer):", roomId);
+
+  //  JOIN ROOM (CRITICAL)
+  socket.emit("join_call", { roomId });
+
+  //  CREATE PEER CONNECTION
+  const pc = createPeerConnection(roomId);
+  peerConnectionRef.current = pc;
+
+  // Notify backend
+  socket.emit("callAcceptedByAstrologer", {
+    roomId,
+    astroId,
+  });
+};
 
   // =========================
   // REJECT CALL
