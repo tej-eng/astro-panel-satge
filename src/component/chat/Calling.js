@@ -12,11 +12,13 @@ const Calling = () => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
 
+  const pendingOfferRef = useRef(null);
+  const roomIdRef = useRef(null);
+
   const [callState, setCallState] = useState("idle"); 
   // idle | ringing | connecting | connected
 
   const [currentRequest, setCurrentRequest] = useState(null);
-  const roomIdRef = useRef(null);
 
   const astroId =
     typeof window !== "undefined"
@@ -28,32 +30,52 @@ const Calling = () => {
   };
 
   // =========================
-  // INIT MIC
+  // INIT MEDIA
   // =========================
   const initMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
+
       localStreamRef.current = stream;
+
+      console.log("🎤 Mic ready");
+
+      // ✅ If offer already came → process now
+      if (pendingOfferRef.current) {
+        console.log("⚡ Processing buffered offer");
+        handleOffer(pendingOfferRef.current);
+        pendingOfferRef.current = null;
+      }
+
     } catch (err) {
-      console.error("Mic error:", err);
+      console.error("❌ Mic error:", err);
     }
   };
 
   // =========================
-  // CREATE PEER
+  // CREATE PEER CONNECTION
   // =========================
   const createPeerConnection = (roomId) => {
+    if (peerConnectionRef.current) {
+      console.log("⚠️ Peer already exists");
+      return peerConnectionRef.current;
+    }
+
+    console.log("📞 Creating PeerConnection");
+
     const pc = new RTCPeerConnection(config);
 
-    localStreamRef.current.getTracks().forEach((track) => {
+    // add local tracks
+    localStreamRef.current?.getTracks().forEach((track) => {
       pc.addTrack(track, localStreamRef.current);
     });
 
     pc.ontrack = (event) => {
+      console.log("🔊 Remote stream received");
       remoteAudioRef.current.srcObject = event.streams[0];
-      setCallState("connected"); // ✅ CALL CONNECTED
+      setCallState("connected");
     };
 
     pc.onicecandidate = (event) => {
@@ -65,7 +87,39 @@ const Calling = () => {
       }
     };
 
+    peerConnectionRef.current = pc;
     return pc;
+  };
+
+  // =========================
+  // HANDLE OFFER
+  // =========================
+  const handleOffer = async (data) => {
+    try {
+      console.log("📞 Handling offer:", data);
+
+      const roomId = roomIdRef.current;
+      if (!roomId) return;
+
+      const pc = createPeerConnection(roomId);
+
+      await pc.setRemoteDescription(
+        new RTCSessionDescription(data.offer)
+      );
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit("answer", {
+        room_id: roomId,
+        answer,
+      });
+
+      setCallState("connecting");
+
+    } catch (err) {
+      console.error("❌ Offer handling error:", err);
+    }
   };
 
   // =========================
@@ -76,51 +130,46 @@ const Calling = () => {
 
     initMedia();
 
+    // DEBUG (VERY IMPORTANT)
+    socket.onAny((event, ...args) => {
+      console.log("📡 ASTRO EVENT:", event, args);
+    });
+
     // 🔔 INCOMING CALL
-  socket.on("incoming_call", (data) => {
-  if (data.receiverId == astroId) {
-    console.log("📞 Incoming call:", data);
+    socket.on("incoming_call", (data) => {
+      if (data.receiverId == astroId) {
+        console.log("📞 Incoming call:", data);
 
-    roomIdRef.current = data.room_id;
+        roomIdRef.current = data.room_id;
 
-    // ✅ JOIN ROOM IMMEDIATELY (VERY IMPORTANT)
-    socket.emit("join_call", { roomId: data.room_id });
+        // ✅ JOIN ROOM IMMEDIATELY
+        socket.emit("join_call", { roomId: data.room_id });
 
-    setCurrentRequest(data);
-    setCallState("ringing");
+        setCurrentRequest(data);
+        setCallState("ringing");
 
-    audioRef.current?.play().catch(() => {});
-  }
-});
+        audioRef.current?.play().catch(() => {});
+      }
+    });
 
-   socket.on("offer", async (data) => {
-  console.log("📞 Offer received:", data);
+    // 📞 OFFER
+    socket.on("offer", async (data) => {
+      console.log("📞 Offer received:", data);
 
-  if (data.room_id !== roomIdRef.current) {
-    console.log("❌ Offer for different room, ignoring");
-    return;
-  }
+      if (data.room_id !== roomIdRef.current) {
+        console.log("❌ Wrong room, ignoring offer");
+        return;
+      }
 
-  const roomId = roomIdRef.current;
-  if (!roomId) return;
+      // ❗ If mic not ready → buffer offer
+      if (!localStreamRef.current) {
+        console.log("⏳ Buffering offer (media not ready)");
+        pendingOfferRef.current = data;
+        return;
+      }
 
-  const pc = createPeerConnection(roomId);
-  peerConnectionRef.current = pc;
-
-  await pc.setRemoteDescription(
-    new RTCSessionDescription(data.offer)
-  );
-
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-
-  socket.emit("answer", {
-    room_id: roomId,
-    answer,
-  });
-
-  setCallState("connecting");
-});
+      handleOffer(data);
+    });
 
     // ❄ ICE
     socket.on("ice-candidate", async (data) => {
@@ -129,23 +178,26 @@ const Calling = () => {
           new RTCIceCandidate(data.candidate)
         );
       } catch (err) {
-        console.error("ICE error:", err);
+        console.error("❌ ICE error:", err);
       }
+    });
+
+    // 👥 DEBUG
+    socket.on("peer_joined", () => {
+      console.log("👥 Peer joined");
     });
 
     // ❌ CALL END
     socket.on("call_ended_by_user", () => {
       cleanupCall();
     });
-    socket.on("peer_joined", () => {
-  console.log("👥 Peer joined (astrologer side)");
-});
 
     return () => {
       socket.off("incoming_call");
       socket.off("offer");
       socket.off("ice-candidate");
       socket.off("call_ended_by_user");
+      socket.offAny();
     };
   }, [socket]);
 
@@ -155,9 +207,9 @@ const Calling = () => {
   const handleAccept = () => {
     const roomId = roomIdRef.current;
 
-    setCallState("connecting");
+    console.log("✅ Call accepted");
 
-    socket.emit("join_call", { roomId });
+    setCallState("connecting");
 
     socket.emit("callAcceptedByAstrologer", {
       roomId,
@@ -169,6 +221,8 @@ const Calling = () => {
   // REJECT
   // =========================
   const handleReject = () => {
+    console.log("❌ Call rejected");
+
     setCallState("idle");
     setCurrentRequest(null);
   };
@@ -188,6 +242,8 @@ const Calling = () => {
   // CLEANUP
   // =========================
   const cleanupCall = () => {
+    console.log("🧹 Cleaning call");
+
     setCallState("idle");
 
     if (peerConnectionRef.current) {
@@ -199,7 +255,13 @@ const Calling = () => {
       remoteAudioRef.current.srcObject = null;
     }
 
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+    }
+
     setCurrentRequest(null);
+    pendingOfferRef.current = null;
   };
 
   // =========================
@@ -238,9 +300,7 @@ const Calling = () => {
 
         {callState === "connecting" && (
           <motion.div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 text-white">
-            <div className="text-center">
-              <h2 className="text-xl">Connecting...</h2>
-            </div>
+            <h2 className="text-xl">Connecting...</h2>
           </motion.div>
         )}
 
