@@ -154,7 +154,7 @@ const Calling = () => {
   const handleAccept = () => {
     setIsModalOpen(false);
 
-    socket.emit("callAcceptedByAtrologer", {
+    socket.emit("callAcceptedByAstrologer", {
       roomId: currentRequest.room_id,
       astroId,
     });
