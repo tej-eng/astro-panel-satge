@@ -95,7 +95,7 @@ const Calling = () => {
       roomIdRef.current = data.room_id;
       handledOfferRef.current = false; // reset
 
-      socket.emit("join_call", { roomId: data.room_id });
+      // socket.emit("join_call", { roomId: data.room_id });
 
       setCurrentRequest(data);
       setCallState("ringing");
@@ -116,10 +116,12 @@ const Calling = () => {
       }
 
       // ❌ ignore duplicate
-      if (handledOfferRef.current) {
-        console.log("⚠️ Offer already handled");
-        return;
-      }
+     if (
+  peerConnectionRef.current?.remoteDescription
+) {
+  console.log("Offer already handled");
+  return;
+}
 
       handledOfferRef.current = true; // ✅ lock
 
@@ -169,18 +171,24 @@ const Calling = () => {
   // =========================
   // ACCEPT
   // =========================
-  const handleAccept = () => {
-    const roomId = roomIdRef.current;
+const handleAccept = async () => {
+  const roomId = roomIdRef.current;
 
-    console.log("✅ Call accepted");
+  console.log("✅ Call accepted");
 
+  // JOIN ROOM HERE
+  socket.emit("join_call", { roomId });
+
+  // small delay so room join completes
+  setTimeout(() => {
     socket.emit("callAcceptedByAstrologer", {
       roomId,
       astroId,
     });
 
     setCallState("connecting");
-  };
+  }, 500);
+};
 
   // =========================
   // CLEANUP
