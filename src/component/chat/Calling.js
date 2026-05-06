@@ -128,6 +128,9 @@ const Calling = () => {
         console.error("ICE error:", err);
       }
     });
+    socket.on("join_call", () => {
+      console.log("📞 Joined call room") ;
+    });
 
     // CALL END
     socket.on("call_ended_by_user", () => {
@@ -153,7 +156,7 @@ const Calling = () => {
   console.log("📞 Joining room (astrologer):", roomId);
 
   //  JOIN ROOM (CRITICAL)
-  socket.emit("join_call", { roomId });
+  //socket.emit("join_call", { roomId });
 
   //  CREATE PEER CONNECTION
   const pc = createPeerConnection(roomId);
