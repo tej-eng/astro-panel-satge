@@ -12,13 +12,12 @@ const Calling = () => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  const pendingOfferRef = useRef(null);
-  const roomIdRef = useRef(null);
+  const handledOfferRef = useRef(false); // ✅ NEW
 
-  const [callState, setCallState] = useState("idle"); 
-  // idle | ringing | connecting | connected
-
+  const [callState, setCallState] = useState("idle");
   const [currentRequest, setCurrentRequest] = useState(null);
+
+  const roomIdRef = useRef(null);
 
   const astroId =
     typeof window !== "undefined"
@@ -30,50 +29,36 @@ const Calling = () => {
   };
 
   // =========================
-  // INIT MEDIA
+  // INIT MIC
   // =========================
   const initMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
-
       localStreamRef.current = stream;
-
       console.log("🎤 Mic ready");
-
-      // ✅ If offer already came → process now
-      if (pendingOfferRef.current) {
-        console.log("⚡ Processing buffered offer");
-        handleOffer(pendingOfferRef.current);
-        pendingOfferRef.current = null;
-      }
-
     } catch (err) {
-      console.error("❌ Mic error:", err);
+      console.error("Mic error:", err);
     }
   };
 
   // =========================
-  // CREATE PEER CONNECTION
+  // CREATE PEER (ONLY ONCE)
   // =========================
   const createPeerConnection = (roomId) => {
     if (peerConnectionRef.current) {
-      console.log("⚠️ Peer already exists");
-      return peerConnectionRef.current;
+      return peerConnectionRef.current; // ✅ prevent duplicate
     }
-
-    console.log("📞 Creating PeerConnection");
 
     const pc = new RTCPeerConnection(config);
 
-    // add local tracks
-    localStreamRef.current?.getTracks().forEach((track) => {
+    localStreamRef.current.getTracks().forEach((track) => {
       pc.addTrack(track, localStreamRef.current);
     });
 
     pc.ontrack = (event) => {
-      console.log("🔊 Remote stream received");
+      console.log("🎧 Remote stream received");
       remoteAudioRef.current.srcObject = event.streams[0];
       setCallState("connected");
     };
@@ -92,14 +77,53 @@ const Calling = () => {
   };
 
   // =========================
-  // HANDLE OFFER
+  // SOCKET EVENTS
   // =========================
-  const handleOffer = async (data) => {
-    try {
-      console.log("📞 Handling offer:", data);
+  useEffect(() => {
+    if (!socket) return;
+
+    initMedia();
+
+    // =========================
+    // INCOMING CALL
+    // =========================
+    socket.on("incoming_call", (data) => {
+      if (data.receiverId !== astroId) return;
+
+      console.log("📞 Incoming call:", data);
+
+      roomIdRef.current = data.room_id;
+      handledOfferRef.current = false; // reset
+
+      socket.emit("join_call", { roomId: data.room_id });
+
+      setCurrentRequest(data);
+      setCallState("ringing");
+
+      audioRef.current?.play().catch(() => {});
+    });
+
+    // =========================
+    // OFFER HANDLER (FIXED)
+    // =========================
+    socket.on("offer", async (data) => {
+      console.log("📥 Offer received:", data.room_id);
+
+      // ❌ ignore wrong room
+      if (data.room_id !== roomIdRef.current) {
+        console.log("❌ Ignoring stale offer:", data.room_id);
+        return;
+      }
+
+      // ❌ ignore duplicate
+      if (handledOfferRef.current) {
+        console.log("⚠️ Offer already handled");
+        return;
+      }
+
+      handledOfferRef.current = true; // ✅ lock
 
       const roomId = roomIdRef.current;
-      if (!roomId) return;
 
       const pc = createPeerConnection(roomId);
 
@@ -115,89 +139,30 @@ const Calling = () => {
         answer,
       });
 
+      console.log("✅ Answer sent");
       setCallState("connecting");
-
-    } catch (err) {
-      console.error("❌ Offer handling error:", err);
-    }
-  };
-
-  // =========================
-  // SOCKET EVENTS
-  // =========================
-  useEffect(() => {
-    if (!socket) return;
-
-    initMedia();
-
-    // DEBUG (VERY IMPORTANT)
-    socket.onAny((event, ...args) => {
-      console.log("📡 ASTRO EVENT:", event, args);
     });
 
-    // 🔔 INCOMING CALL
-    socket.on("incoming_call", (data) => {
-      if (data.receiverId == astroId) {
-        console.log("📞 Incoming call:", data);
-
-        roomIdRef.current = data.room_id;
-
-        // ✅ JOIN ROOM IMMEDIATELY
-        socket.emit("join_call", { roomId: data.room_id });
-
-        setCurrentRequest(data);
-        setCallState("ringing");
-
-        audioRef.current?.play().catch(() => {});
-      }
-    });
-
-    // 📞 OFFER
-    socket.on("offer", async (data) => {
-      console.log("📞 Offer received:", data);
-
-      if (data.room_id !== roomIdRef.current) {
-        console.log("❌ Wrong room, ignoring offer");
-        return;
-      }
-
-      // ❗ If mic not ready → buffer offer
-      if (!localStreamRef.current) {
-        console.log("⏳ Buffering offer (media not ready)");
-        pendingOfferRef.current = data;
-        return;
-      }
-
-      handleOffer(data);
-    });
-
-    // ❄ ICE
+    // =========================
+    // ICE
+    // =========================
     socket.on("ice-candidate", async (data) => {
       try {
         await peerConnectionRef.current?.addIceCandidate(
           new RTCIceCandidate(data.candidate)
         );
       } catch (err) {
-        console.error("❌ ICE error:", err);
+        console.error("ICE error:", err);
       }
     });
 
-    // 👥 DEBUG
-    socket.on("peer_joined", () => {
-      console.log("👥 Peer joined");
-    });
-
-    // ❌ CALL END
-    socket.on("call_ended_by_user", () => {
-      cleanupCall();
-    });
+    socket.on("call_ended_by_user", cleanupCall);
 
     return () => {
       socket.off("incoming_call");
       socket.off("offer");
       socket.off("ice-candidate");
       socket.off("call_ended_by_user");
-      socket.offAny();
     };
   }, [socket]);
 
@@ -209,42 +174,21 @@ const Calling = () => {
 
     console.log("✅ Call accepted");
 
-    setCallState("connecting");
-
     socket.emit("callAcceptedByAstrologer", {
       roomId,
       astroId,
     });
-  };
 
-  // =========================
-  // REJECT
-  // =========================
-  const handleReject = () => {
-    console.log("❌ Call rejected");
-
-    setCallState("idle");
-    setCurrentRequest(null);
-  };
-
-  // =========================
-  // END CALL
-  // =========================
-  const handleEndCall = () => {
-    socket.emit("call_ended_by_astrologer", {
-      room_id: roomIdRef.current,
-    });
-
-    cleanupCall();
+    setCallState("connecting");
   };
 
   // =========================
   // CLEANUP
   // =========================
   const cleanupCall = () => {
-    console.log("🧹 Cleaning call");
-
     setCallState("idle");
+
+    handledOfferRef.current = false;
 
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
@@ -255,13 +199,7 @@ const Calling = () => {
       remoteAudioRef.current.srcObject = null;
     }
 
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
-    }
-
     setCurrentRequest(null);
-    pendingOfferRef.current = null;
   };
 
   // =========================
@@ -281,7 +219,7 @@ const Calling = () => {
 
               <div className="flex justify-center gap-4 mt-4">
                 <button
-                  onClick={handleReject}
+                  onClick={cleanupCall}
                   className="bg-red-500 px-4 py-2 text-white rounded"
                 >
                   Reject
@@ -300,16 +238,16 @@ const Calling = () => {
 
         {callState === "connecting" && (
           <motion.div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 text-white">
-            <h2 className="text-xl">Connecting...</h2>
+            <h2>Connecting...</h2>
           </motion.div>
         )}
 
         {callState === "connected" && (
           <motion.div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50 text-white">
-            <h2 className="text-xl mb-4">Call Connected</h2>
+            <h2>Call Connected</h2>
 
             <button
-              onClick={handleEndCall}
+              onClick={cleanupCall}
               className="bg-red-600 px-6 py-3 rounded-full"
             >
               End Call
