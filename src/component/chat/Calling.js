@@ -91,6 +91,7 @@ const Calling = () => {
 
     // 📞 OFFER FROM USER
     socket.on("offer", async (data) => {
+      console.log("📞 Offer received:", data);
       const roomId = roomIdRef.current;
       if (!roomId) return;
 
