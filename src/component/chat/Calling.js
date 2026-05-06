@@ -77,43 +77,50 @@ const Calling = () => {
     initMedia();
 
     // 🔔 INCOMING CALL
-    socket.on("incoming_call", (data) => {
-      if (data.receiverId == astroId) {
-        console.log("📞 Incoming call:", data);
+  socket.on("incoming_call", (data) => {
+  if (data.receiverId == astroId) {
+    console.log("📞 Incoming call:", data);
 
-        roomIdRef.current = data.room_id;
-        setCurrentRequest(data);
-        setCallState("ringing");
+    roomIdRef.current = data.room_id;
 
-        audioRef.current?.play().catch(() => {});
-      }
-    });
+    // ✅ JOIN ROOM IMMEDIATELY (VERY IMPORTANT)
+    socket.emit("join_call", { roomId: data.room_id });
 
-    // 📞 OFFER FROM USER
-    socket.on("offer", async (data) => {
-      console.log("📞 Offer received:", data);
-      const roomId = roomIdRef.current;
-      if (!roomId) return;
+    setCurrentRequest(data);
+    setCallState("ringing");
 
-      console.log("📞 Offer received");
+    audioRef.current?.play().catch(() => {});
+  }
+});
 
-      const pc = createPeerConnection(roomId);
-      peerConnectionRef.current = pc;
+   socket.on("offer", async (data) => {
+  console.log("📞 Offer received:", data);
 
-      await pc.setRemoteDescription(
-        new RTCSessionDescription(data.offer)
-      );
+  if (data.room_id !== roomIdRef.current) {
+    console.log("❌ Offer for different room, ignoring");
+    return;
+  }
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
+  const roomId = roomIdRef.current;
+  if (!roomId) return;
 
-      socket.emit("answer", {
-        room_id: roomId,
-        answer,
-      });
+  const pc = createPeerConnection(roomId);
+  peerConnectionRef.current = pc;
 
-      setCallState("connecting"); // ⏳ connecting
-    });
+  await pc.setRemoteDescription(
+    new RTCSessionDescription(data.offer)
+  );
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  socket.emit("answer", {
+    room_id: roomId,
+    answer,
+  });
+
+  setCallState("connecting");
+});
 
     // ❄ ICE
     socket.on("ice-candidate", async (data) => {
@@ -130,6 +137,9 @@ const Calling = () => {
     socket.on("call_ended_by_user", () => {
       cleanupCall();
     });
+    socket.on("peer_joined", () => {
+  console.log("👥 Peer joined (astrologer side)");
+});
 
     return () => {
       socket.off("incoming_call");
