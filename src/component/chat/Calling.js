@@ -65,6 +65,7 @@ const Calling = () => {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log("📡 ICE candidate:", event.candidate);
         socket.emit("ice-candidate", {
           room_id: roomId,
           candidate: event.candidate,
@@ -150,6 +151,7 @@ const Calling = () => {
     // =========================
     socket.on("ice-candidate", async (data) => {
       try {
+        console.log("📡 ICE candidate received:", data.candidate);
         await peerConnectionRef.current?.addIceCandidate(
           new RTCIceCandidate(data.candidate)
         );
