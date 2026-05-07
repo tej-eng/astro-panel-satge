@@ -2,6 +2,13 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useContext, useRef } from "react";
+import {
+  Phone,
+  PhoneOff,
+  Mic,
+  MicOff,
+} from "lucide-react";
+
 import SocketContext from "../SocketClient";
 
 const Calling = () => {
@@ -27,6 +34,10 @@ const Calling = () => {
   const [callState, setCallState] = useState("idle");
   const [currentRequest, setCurrentRequest] = useState(null);
 
+  const [isMuted, setIsMuted] = useState(false);
+
+  const [callTime, setCallTime] = useState(0);
+
   // =========================
   // USER
   // =========================
@@ -36,6 +47,30 @@ const Calling = () => {
       : null;
 
   // =========================
+  // CALL TIMER
+  // =========================
+  useEffect(() => {
+    let interval;
+
+    if (callState === "connected") {
+      interval = setInterval(() => {
+        setCallTime((prev) => prev + 1);
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [callState]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return `${String(mins).padStart(2, "0")}:${String(
+      secs
+    ).padStart(2, "0")}`;
+  };
+
+  // =========================
   // WEBRTC CONFIG
   // =========================
   const config = {
@@ -43,8 +78,6 @@ const Calling = () => {
       {
         urls: "stun:stun.l.google.com:19302",
       },
-
-      // TURN SERVER
       {
         urls: "turn:openrelay.metered.ca:80",
         username: "openrelayproject",
@@ -76,16 +109,6 @@ const Calling = () => {
       localStreamRef.current = stream;
 
       console.log("✅ Mic ready");
-
-      const tracks = stream.getAudioTracks();
-
-      console.log("🎤 Local tracks:", tracks);
-
-      tracks.forEach((track) => {
-        console.log("Track enabled:", track.enabled);
-        console.log("Track muted:", track.muted);
-        console.log("Track readyState:", track.readyState);
-      });
     } catch (err) {
       console.error("❌ Mic error:", err);
     }
@@ -96,37 +119,25 @@ const Calling = () => {
   // =========================
   const createPeerConnection = (roomId) => {
     if (peerConnectionRef.current) {
-      console.log("⚠️ Reusing existing peer connection");
       return peerConnectionRef.current;
     }
 
-    console.log("🟢 Creating new RTCPeerConnection");
+    console.log("🟢 Creating PeerConnection");
 
     const pc = new RTCPeerConnection(config);
 
-    // =========================
-    // ADD LOCAL TRACKS
-    // =========================
+    // LOCAL TRACKS
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
-        console.log("➕ Adding local track:", track.kind);
-
         pc.addTrack(track, localStreamRef.current);
       });
     }
 
-    // =========================
     // REMOTE TRACK
-    // =========================
     pc.ontrack = async (event) => {
       console.log("🎧 Remote stream received");
 
       const remoteStream = event.streams[0];
-
-      console.log(
-        "🎵 Remote audio tracks:",
-        remoteStream.getAudioTracks()
-      );
 
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = remoteStream;
@@ -143,13 +154,9 @@ const Calling = () => {
       setCallState("connected");
     };
 
-    // =========================
-    // ICE CANDIDATES
-    // =========================
+    // ICE
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log("📡 Sending ICE candidate");
-
         socket.emit("ice-candidate", {
           room_id: roomId,
           candidate: event.candidate,
@@ -157,33 +164,30 @@ const Calling = () => {
       }
     };
 
-    // =========================
-    // CONNECTION STATES
-    // =========================
+    // STATES
     pc.onconnectionstatechange = () => {
       console.log(
-        "🟢 PC Connection State:",
+        "🟢 Connection State:",
         pc.connectionState
       );
+
+      if (
+        pc.connectionState === "disconnected" ||
+        pc.connectionState === "failed" ||
+        pc.connectionState === "closed"
+      ) {
+        cleanupCall();
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log(
-        "🧊 ICE Connection State:",
+        "🧊 ICE State:",
         pc.iceConnectionState
       );
     };
 
-    pc.onsignalingstatechange = () => {
-      console.log(
-        "📶 Signaling State:",
-        pc.signalingState
-      );
-    };
-
-    // =========================
-    // DEBUG RTP AUDIO
-    // =========================
+    // DEBUG STATS
     statsIntervalRef.current = setInterval(async () => {
       try {
         const stats = await pc.getStats();
@@ -194,18 +198,18 @@ const Calling = () => {
             report.kind === "audio"
           ) {
             console.log(
-              "🎵 Audio packets received:",
+              "🎵 packets:",
               report.packetsReceived
             );
 
             console.log(
-              "🎵 Audio bytes received:",
+              "🎵 bytes:",
               report.bytesReceived
             );
           }
         });
       } catch (err) {
-        console.log("Stats error:", err);
+        console.log(err);
       }
     }, 3000);
 
@@ -222,9 +226,7 @@ const Calling = () => {
 
     initMedia();
 
-    // =========================
     // INCOMING CALL
-    // =========================
     socket.on("incoming_call", (data) => {
       if (data.receiverId !== astroId) return;
 
@@ -239,24 +241,20 @@ const Calling = () => {
       setCallState("ringing");
 
       ringtoneRef.current?.play().catch((err) => {
-        console.log("Ringtone play blocked:", err);
+        console.log(err);
       });
     });
 
-    // =========================
     // OFFER
-    // =========================
     socket.on("offer", async (data) => {
       try {
-        console.log("📥 Offer received:", data.room_id);
+        console.log("📥 Offer received");
 
-        // WRONG ROOM
         if (data.room_id !== roomIdRef.current) {
-          console.log("❌ Ignoring stale offer");
+          console.log("❌ Wrong room");
           return;
         }
 
-        // DUPLICATE
         if (peerConnectionRef.current?.remoteDescription) {
           console.log("⚠️ Offer already handled");
           return;
@@ -268,27 +266,18 @@ const Calling = () => {
 
         const pc = createPeerConnection(roomId);
 
-        // =========================
-        // SET REMOTE OFFER
-        // =========================
         await pc.setRemoteDescription(
           new RTCSessionDescription(data.offer)
         );
 
-        console.log("✅ Remote description set");
+        console.log("✅ Remote Description Set");
 
-        // =========================
-        // CREATE ANSWER
-        // =========================
         const answer = await pc.createAnswer();
 
         await pc.setLocalDescription(answer);
 
-        console.log("✅ Local description set");
+        console.log("✅ Local Description Set");
 
-        // =========================
-        // SEND ANSWER
-        // =========================
         socket.emit("answer", {
           room_id: roomId,
           answer,
@@ -298,44 +287,30 @@ const Calling = () => {
 
         setCallState("connecting");
       } catch (err) {
-        console.error("❌ Offer handling error:", err);
+        console.error("❌ Offer Error:", err);
       }
     });
 
-    // =========================
-    // ICE CANDIDATE
-    // =========================
+    // ICE
     socket.on("ice-candidate", async (data) => {
       try {
-        console.log("📡 ICE candidate received");
-
-        if (!peerConnectionRef.current) {
-          console.log("❌ No peer connection yet");
-          return;
-        }
+        if (!peerConnectionRef.current) return;
 
         await peerConnectionRef.current.addIceCandidate(
           new RTCIceCandidate(data.candidate)
         );
 
-        console.log("✅ ICE candidate added");
+        console.log("✅ ICE Added");
       } catch (err) {
-        console.error("❌ ICE error:", err);
+        console.error("❌ ICE Error:", err);
       }
     });
 
-    // =========================
-    // CALL ENDED
-    // =========================
+    // CALL END
     socket.on("call_ended_by_user", () => {
-      console.log("📴 Call ended by user");
-
       cleanupCall();
     });
 
-    // =========================
-    // CLEANUP SOCKETS
-    // =========================
     return () => {
       socket.off("incoming_call");
       socket.off("offer");
@@ -351,17 +326,11 @@ const Calling = () => {
     try {
       const roomId = roomIdRef.current;
 
-      console.log("✅ Call accepted");
-
-      // STOP RINGTONE
       ringtoneRef.current?.pause();
 
-      // JOIN ROOM
       socket.emit("join_call", {
         roomId,
       });
-
-      console.log("🚪 Joined room:", roomId);
 
       setTimeout(() => {
         socket.emit("callAcceptedByAstrologer", {
@@ -369,22 +338,57 @@ const Calling = () => {
           astroId,
         });
 
-        console.log("📤 callAcceptedByAstrologer emitted");
-
         setCallState("connecting");
       }, 500);
     } catch (err) {
-      console.error("Accept error:", err);
+      console.error(err);
     }
+  };
+
+  // =========================
+  // TOGGLE MUTE
+  // =========================
+  const toggleMute = () => {
+    if (!localStreamRef.current) return;
+
+    const audioTrack =
+      localStreamRef.current.getAudioTracks()[0];
+
+    if (!audioTrack) return;
+
+    audioTrack.enabled = !audioTrack.enabled;
+
+    setIsMuted(!audioTrack.enabled);
+
+    console.log(
+      audioTrack.enabled
+        ? "🎤 Mic Unmuted"
+        : "🔇 Mic Muted"
+    );
+  };
+
+  // =========================
+  // END CALL
+  // =========================
+  const handleEndCall = () => {
+    socket.emit("call_ended_by_astrologer", {
+      roomId: roomIdRef.current,
+    });
+
+    cleanupCall();
   };
 
   // =========================
   // CLEANUP
   // =========================
   const cleanupCall = () => {
-    console.log("🧹 Cleaning up call");
+    console.log("🧹 Cleanup Call");
 
     setCallState("idle");
+
+    setCurrentRequest(null);
+
+    setCallTime(0);
 
     handledOfferRef.current = false;
 
@@ -397,16 +401,23 @@ const Calling = () => {
     // CLOSE PEER
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
+
       peerConnectionRef.current = null;
     }
 
-    // CLEAR REMOTE STREAM
+    // REMOTE AUDIO
     if (remoteAudioRef.current) {
       remoteAudioRef.current.pause();
+
       remoteAudioRef.current.srcObject = null;
     }
 
-    setCurrentRequest(null);
+    // STOP RINGTONE
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+
+      ringtoneRef.current.currentTime = 0;
+    }
   };
 
   // =========================
@@ -429,29 +440,42 @@ const Calling = () => {
       />
 
       <AnimatePresence>
-        {/* RINGING */}
+        {/* INCOMING CALL */}
         {callState === "ringing" && (
-          <motion.div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-            <div className="bg-white p-6 rounded-xl text-center">
-              <h2 className="text-lg font-bold mb-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
+          >
+            <div className="bg-white w-[350px] rounded-3xl p-8 text-center shadow-2xl">
+              <div className="w-24 h-24 rounded-full bg-purple-100 mx-auto flex items-center justify-center text-3xl font-bold text-purple-700">
+                {currentRequest?.callerId?.slice(0, 1)}
+              </div>
+
+              <h2 className="text-2xl font-bold mt-5">
                 Incoming Call
               </h2>
 
-              <p>{currentRequest?.callerId}</p>
+              <p className="text-gray-500 mt-2 break-all">
+                {currentRequest?.callerId}
+              </p>
 
-              <div className="flex justify-center gap-4 mt-4">
+              <div className="flex justify-center gap-5 mt-8">
+                {/* REJECT */}
                 <button
                   onClick={cleanupCall}
-                  className="bg-red-500 px-4 py-2 text-white rounded"
+                  className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white"
                 >
-                  Reject
+                  <PhoneOff size={28} />
                 </button>
 
+                {/* ACCEPT */}
                 <button
                   onClick={handleAccept}
-                  className="bg-green-600 px-4 py-2 text-white rounded"
+                  className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-white"
                 >
-                  Accept
+                  <Phone size={28} />
                 </button>
               </div>
             </div>
@@ -460,22 +484,63 @@ const Calling = () => {
 
         {/* CONNECTING */}
         {callState === "connecting" && (
-          <motion.div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 text-white">
-            <h2>Connecting...</h2>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center text-white"
+          >
+            <div className="animate-pulse text-2xl font-semibold">
+              Connecting...
+            </div>
           </motion.div>
         )}
 
         {/* CONNECTED */}
         {callState === "connected" && (
-          <motion.div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50 text-white">
-            <h2>Call Connected</h2>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 bg-gradient-to-b from-black to-gray-900 flex flex-col items-center justify-center text-white"
+          >
+            {/* USER */}
+            <div className="w-32 h-32 rounded-full bg-purple-600 flex items-center justify-center text-5xl font-bold shadow-2xl">
+              {currentRequest?.callerId?.slice(0, 1)}
+            </div>
 
-            <button
-              onClick={cleanupCall}
-              className="bg-red-600 px-6 py-3 rounded-full mt-5"
-            >
-              End Call
-            </button>
+            <h2 className="text-3xl font-bold mt-6">
+              Call Connected
+            </h2>
+
+            <p className="text-gray-300 mt-2">
+              {formatTime(callTime)}
+            </p>
+
+            {/* BUTTONS */}
+            <div className="flex items-center gap-8 mt-12">
+              {/* MUTE */}
+              <button
+                onClick={toggleMute}
+                className={`w-20 h-20 rounded-full flex items-center justify-center transition ${
+                  isMuted
+                    ? "bg-yellow-500"
+                    : "bg-gray-700"
+                }`}
+              >
+                {isMuted ? (
+                  <MicOff size={32} />
+                ) : (
+                  <Mic size={32} />
+                )}
+              </button>
+
+              {/* END CALL */}
+              <button
+                onClick={handleEndCall}
+                className="w-24 h-24 rounded-full bg-red-600 flex items-center justify-center shadow-2xl"
+              >
+                <PhoneOff size={40} />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
