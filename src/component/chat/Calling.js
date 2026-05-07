@@ -119,107 +119,84 @@ const iceConfig = {
   // =========================
   // CREATE PEER CONNECTION
   // =========================
-  const createPeerConnection = (roomId) => {
-    if (peerConnectionRef.current) {
-      return peerConnectionRef.current;
-    }
+  // =========================
+// CREATE PEER CONNECTION
+// =========================
+const createPeerConnection = (roomId) => {
+  if (peerConnectionRef.current) {
+    console.log("⚠️ Reusing existing peer");
+    return peerConnectionRef.current;
+  }
 
-    console.log("🟢 Creating PeerConnection");
+  console.log("🟢 Creating PeerConnection (Astrologer)");
 
-    const pc = new RTCPeerConnection(config);
-
-    // LOCAL TRACKS
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, localStreamRef.current);
-      });
-    }
-
-    // REMOTE TRACK
-    pc.ontrack = async (event) => {
-      console.log("🎧 Remote stream received");
-
-      const remoteStream = event.streams[0];
-
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = remoteStream;
-
-        try {
-          await remoteAudioRef.current.play();
-
-          console.log("🔊 Remote audio playing");
-        } catch (err) {
-          console.error("❌ Audio autoplay blocked:", err);
-        }
-      }
-
-      setCallState("connected");
-    };
-
-    // ICE
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", {
-          room_id: roomId,
-          candidate: event.candidate,
-        });
-      }
-    };
-
-    // STATES
-    pc.onconnectionstatechange = () => {
-      console.log(
-        "🟢 Connection State:",
-        pc.connectionState
-      );
-
-      if (
-        pc.connectionState === "disconnected" ||
-        pc.connectionState === "failed" ||
-        pc.connectionState === "closed"
-      ) {
-        cleanupCall();
-      }
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      console.log(
-        "🧊 ICE State:",
-        pc.iceConnectionState
-      );
-    };
-
-    // DEBUG STATS
-    statsIntervalRef.current = setInterval(async () => {
-      try {
-        const stats = await pc.getStats();
-
-        stats.forEach((report) => {
-          if (
-            report.type === "inbound-rtp" &&
-            report.kind === "audio"
-          ) {
-            console.log(
-              "🎵 packets:",
-              report.packetsReceived
-            );
-
-            console.log(
-              "🎵 bytes:",
-              report.bytesReceived
-            );
-          }
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    }, 3000);
-
-    peerConnectionRef.current = pc;
-
-    return pc;
+  const iceConfig = {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+    ],
+    iceCandidatePoolSize: 10,
   };
 
+  const pc = new RTCPeerConnection(iceConfig);
+  peerConnectionRef.current = pc;
+
+  // Local tracks (already initialized in initMedia)
+  if (localStreamRef.current) {
+    localStreamRef.current.getTracks().forEach((track) => {
+      pc.addTrack(track, localStreamRef.current);
+      console.log("➕ Added local track on astrologer side");
+    });
+  }
+
+  // Remote track
+  pc.ontrack = async (event) => {
+    console.log("🎧 Remote track received (Astrologer)");
+    const remoteStream = event.streams[0];
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      try {
+        await remoteAudioRef.current.play();
+        console.log("🔊 Remote audio playing on astrologer");
+      } catch (err) {
+        console.error("❌ Autoplay blocked:", err);
+      }
+    }
+    setCallState("connected");
+  };
+
+  // ICE
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit("ice-candidate", {
+        room_id: roomId,
+        candidate: event.candidate,
+      });
+    }
+  };
+
+  // States
+  pc.oniceconnectionstatechange = () => {
+    console.log("🧊 ICE State (Astro):", pc.iceConnectionState);
+  };
+  pc.onconnectionstatechange = () => {
+    console.log("🔥 Connection State (Astro):", pc.connectionState);
+  };
+
+  return pc;
+};
   // =========================
   // SOCKET EVENTS
   // =========================
