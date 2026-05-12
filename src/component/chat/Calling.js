@@ -19,6 +19,7 @@ const Calling = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [callTime, setCallTime] = useState(0);
   const [callerName, setCallerName] = useState("Client");
+  const hasEndedRef = useRef(false);
 
   const astroId =
     typeof window !== "undefined"
@@ -26,19 +27,25 @@ const Calling = () => {
       : null;
 
   // ====================== CALL TIMER ======================
-  useEffect(() => {
-    let interval;
+ useEffect(() => {
+  let interval;
 
-    if (callState === "connected") {
-      interval = setInterval(() => {
-        setCallTime((prev) => prev + 1);
-      }, 1000);
-    }
+  if (callState === "connected" && callTime > 0) {
+    interval = setInterval(() => {
+      setCallTime((prev) => prev - 1);
+    }, 1000);
+  }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [callState]);
+  // AUTO END CALL
+  if (callTime <= 0 && !hasEndedRef.current) {
+  hasEndedRef.current = true;
+  handleEndCall();
+  }
+
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [callState, callTime]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -141,6 +148,7 @@ const Calling = () => {
       setCurrentRequest(data);
       setCallerName(data.callerId?.slice(0, 8) || "Client");
       setCallState("ringing");
+      setCallTime(data.callTime || 0);
       ringtoneRef.current?.play().catch(() => {});
     });
 
@@ -190,7 +198,7 @@ const Calling = () => {
     socket?.emit("join_call", { roomId });
 
     setTimeout(() => {
-      socket?.emit("callAcceptedByAstrologer", { roomId, astroId });
+      socket?.emit("callAcceptedByAstrologer", { roomId, astroId ,callTime});
       setCallState("connecting");
     }, 400);
   };
