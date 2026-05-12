@@ -148,7 +148,7 @@ const Calling = () => {
       setCurrentRequest(data);
       setCallerName(data.callerId?.slice(0, 8) || "Client");
       setCallState("ringing");
-      setCallTime(data.callTime || 0);
+      setCallTime(data.callTime*60 || 0);
       ringtoneRef.current?.play().catch(() => {});
     });
 
