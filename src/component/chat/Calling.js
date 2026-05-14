@@ -181,11 +181,16 @@ const Calling = () => {
       cleanupCall();
     });
 
+    socket.on("call_cancel_by_user", () => {
+      cleanupCall();
+    });
+
     return () => {
       socket.off("incoming_call");
       socket.off("offer");
       socket.off("ice-candidate");
       socket.off("call_ended_by_user");
+      socket.off("call_cancel_by_user");
     };
   }, [socket, astroId, currentRequest]);
 
@@ -237,6 +242,9 @@ const Calling = () => {
 
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     ringtoneRef.current?.pause();
+      socket?.emit("call_cancel_by_astrologer", {
+      roomId: currentRequest?.room_id,
+    });
   };
 
   return (
