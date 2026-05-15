@@ -166,7 +166,9 @@ const Calling = () => {
     });
 
     socket.on("ice-candidate", async (data) => {  
-       if (data.room_id === roomId) {
+      console.log("🧊 ICE Candidate received (Astrologer):", data);
+      console.log("Current Room ID:", currentRequest?.room_id,roomId);
+       //if (data.room_id === roomId) {
       try {
         if (peerConnectionRef.current && data.candidate) {
           await peerConnectionRef.current.addIceCandidate(
@@ -176,16 +178,17 @@ const Calling = () => {
       } catch (err) {
         console.error("❌ ICE Error:", err);
       }
-    }
+    //}
     });
 
-    socket.on("call_ended_by_user", () => {
+    socket.on("call_ended_by_user", (data) => {
+      console.log("📞 Call ended by user:", data);
       if (data.room_id === roomId) {
       cleanupCall();
     }
     });
 
-    socket.on("call_cancel_by_user", () => { 
+    socket.on("call_cancel_by_user", (data) => { 
        if (data.roomId === roomId) {
       cleanupCall();
     }
