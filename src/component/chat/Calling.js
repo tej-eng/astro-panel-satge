@@ -167,7 +167,7 @@ const Calling = () => {
 
     socket.on("ice-candidate", async (data) => {  
       console.log("🧊 ICE Candidate received (Astrologer):", data);
-      console.log("Current Room ID:", currentRequest?.room_id,roomId);
+      console.log("Current Room ID:", currentRequest?.room_id);
        //if (data.room_id === roomId) {
       try {
         if (peerConnectionRef.current && data.candidate) {
