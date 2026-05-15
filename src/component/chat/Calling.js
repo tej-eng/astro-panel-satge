@@ -64,7 +64,6 @@ const Calling = () => {
         },
       });
       localStreamRef.current = stream;
-      console.log("✅ Mic initialized on astrologer side");
     } catch (err) {
       console.error("❌ Mic access failed:", err);
     }
@@ -74,7 +73,6 @@ const Calling = () => {
   const createPeerConnection = (roomId) => {
     if (peerConnectionRef.current) return peerConnectionRef.current;
 
-    console.log("🟢 Creating PeerConnection (Astrologer)");
 
     const iceConfig = {
       iceServers: [
@@ -166,9 +164,7 @@ const Calling = () => {
     });
 
     socket.on("ice-candidate", async (data) => {  
-      console.log("🧊 ICE Candidate received (Astrologer):", data);
-      console.log("Current Room ID:", currentRequest?.room_id);
-       //if (data.room_id === roomId) {
+       if (data.room_id === currentRequest?.room_id) {
       try {
         if (peerConnectionRef.current && data.candidate) {
           await peerConnectionRef.current.addIceCandidate(
@@ -178,18 +174,17 @@ const Calling = () => {
       } catch (err) {
         console.error("❌ ICE Error:", err);
       }
-    //}
+    }
     });
 
     socket.on("call_ended_by_user", (data) => {
-      console.log("📞 Call ended by user:", data);
-      if (data.room_id === roomId) {
+      if (data.room_id === currentRequest?.room_id) {
       cleanupCall();
     }
     });
 
     socket.on("call_cancel_by_user", (data) => { 
-       if (data.roomId === roomId) {
+       if (data.roomId === currentRequest?.room_id) {
       cleanupCall();
     }
     });
