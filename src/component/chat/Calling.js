@@ -179,18 +179,24 @@ const Calling = () => {
     });
 
     socket.on("call_ended_by_user", (data) => {
-      console.log("📴 Call ended by user:", JSON.parse(data)?.room_id);
      if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
       cleanupCall();
     }
     });
 
     socket.on("call_cancel_by_user", (data) => { 
-      console.log("📴 Call ended by user:", JSON.parse(data)?.roomId);
        if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
       cleanupCall();
     }
     });
+
+    socket.on("call_reject_auto", (data) => { 
+       if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
+      cleanupCall();
+    }
+    });
+
+    
 
     return () => {
       socket.off("incoming_call");
