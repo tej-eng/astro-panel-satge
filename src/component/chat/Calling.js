@@ -178,6 +178,7 @@ const Calling = () => {
     });
 
     socket.on("call_ended_by_user", (data) => {
+      console.log("📴 Call ended by user:", data, currentRequest?.room_id);
      if (data.room_id === currentRequest?.room_id) {
       cleanupCall();
     }
