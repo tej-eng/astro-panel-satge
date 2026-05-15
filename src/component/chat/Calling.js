@@ -220,6 +220,7 @@ const Calling = () => {
   const handleEndCall = () => {
     socket?.emit("call_ended_by_astrologer", {
       roomId: currentRequest?.room_id,
+      astroId: astroId,
     });
     cleanupCall();
   };
