@@ -178,9 +178,10 @@ const Calling = () => {
     });
 
     socket.on("call_ended_by_user", (data) => {
-    //  if (data.room_id === currentRequest?.room_id) {
+      debugger;
+     if (data.room_id === currentRequest?.room_id) {
       cleanupCall();
-    //}
+    }
     });
 
     socket.on("call_cancel_by_user", (data) => { 
