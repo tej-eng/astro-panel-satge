@@ -186,7 +186,8 @@ const Calling = () => {
     });
 
     socket.on("call_cancel_by_user", (data) => { 
-       if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
+      console.log("📴 Call ended by user:", JSON.parse(data)?.roomId);
+       if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
       cleanupCall();
     }
     });
