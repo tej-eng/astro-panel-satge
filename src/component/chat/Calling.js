@@ -178,8 +178,7 @@ const Calling = () => {
     });
 
     socket.on("call_ended_by_user", (data) => {
-      console.log("📴 Call ended by user:", data, currentRequest?.room_id);
-      console.log("📴 Call ended by user (room check):", typeof data.room_id, typeof currentRequest?.room_id);
+      console.log("📴 Call ended by user:", JSON.parse(data)?.room_id);
      if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
       cleanupCall();
     }
