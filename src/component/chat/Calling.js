@@ -164,7 +164,7 @@ const Calling = () => {
     });
 
     socket.on("ice-candidate", async (data) => {  
-       //if (data.room_id === currentRequest?.room_id) {
+       if (data.room_id === currentRequest?.room_id) {
       try {
         if (peerConnectionRef.current && data.candidate) {
           await peerConnectionRef.current.addIceCandidate(
@@ -174,19 +174,19 @@ const Calling = () => {
       } catch (err) {
         console.error("❌ ICE Error:", err);
       }
-  //  }
+    }
     });
 
     socket.on("call_ended_by_user", (data) => {
-     //if (data.room_id === currentRequest?.room_id) {
+     if (data.room_id === currentRequest?.room_id) {
       cleanupCall();
-    //}
+    }
     });
 
     socket.on("call_cancel_by_user", (data) => { 
-      // if (data.roomId === currentRequest?.room_id) {
+       if (data.roomId === currentRequest?.room_id) {
       cleanupCall();
-    //}
+    }
     });
 
     return () => {
