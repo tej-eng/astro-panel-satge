@@ -166,7 +166,7 @@ const Calling = () => {
     socket.on("ice-candidate", async (data) => { 
       console.log("🧊 ICE Candidate received:", data?.room_id); 
       
-      // if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
+       if (data?.room_id === currentRequest?.room_id) {
       try {
         if (peerConnectionRef.current && data.candidate) {
           await peerConnectionRef.current.addIceCandidate(
@@ -176,7 +176,7 @@ const Calling = () => {
       } catch (err) {
         console.error("❌ ICE Error:", err);
       }
-    //}
+    }
     });
 
     socket.on("call_ended_by_user", (data) => {
