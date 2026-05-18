@@ -1,280 +1,455 @@
 "use client";
-
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useEffect, useState, useContext, useRef } from "react";
-import SocketContext from "./SocketClient";
-import { useRouter } from "next/navigation";
-import PopUp from "@/app/common/PopUp";
-import { encryptParams } from "@/app/utils/crypto";
+import { PhoneOff, Phone, Mic, MicOff, Clock, User } from "lucide-react";
+import SocketContext from "../SocketClient";
 
-const ChatRequest = () => {
-  const router = useRouter();
-  const audioRef = useRef(null);
-
+const Calling = () => {
   const socket = useContext(SocketContext);
-  const [chatRequests, setChatRequests] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Refs
+  const ringtoneRef = useRef(null);
+  const remoteAudioRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+
+  // States
+  const [callState, setCallState] = useState("idle");
   const [currentRequest, setCurrentRequest] = useState(null);
-  const [acceptchat, setAcceptChat] = useState(false);
-  const [userInteracted, setUserInteracted] = useState(false);
-  const [message, setMessage] = useState("");
-  const [reject, setReject] = useState(false);
-  const [autoReject, setAutoReject] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [callTime, setCallTime] = useState(0);
+  const [callerName, setCallerName] = useState("Client");
+  const hasEndedRef = useRef(false);
+  const [waveHeights, setWaveHeights] = useState(Array(20).fill(10));
+  // const remoteAudio = useRef(null);
 
+  // voice waves
+  // voice waves
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!remoteAudioRef.current?.srcObject) return;
 
-    const storedValue = localStorage.getItem("userInteracted");
+    const audioContext = new AudioContext();
 
-    if (storedValue === "true") {
-      setUserInteracted(true);
-      return;
-    }
+    const analyser = audioContext.createAnalyser();
 
-    const handleUserClick = () => {
-      setUserInteracted(true);
-      localStorage.setItem("userInteracted", "true");
-      window.removeEventListener("click", handleUserClick);
+    analyser.fftSize = 64;
+
+    const source = audioContext.createMediaStreamSource(
+      remoteAudioRef.current.srcObject,
+    );
+
+    source.connect(analyser);
+
+    const bufferLength = analyser.frequencyBinCount;
+
+    const dataArray = new Uint8Array(bufferLength);
+
+    const animate = () => {
+      analyser.getByteFrequencyData(dataArray);
+
+      const normalized = Array.from(dataArray)
+        .slice(0, 20)
+        .map((v) => Math.max(10, v / 2));
+
+      setWaveHeights(normalized);
+
+      requestAnimationFrame(animate);
     };
 
-    window.addEventListener("click", handleUserClick);
+    animate();
 
     return () => {
-      window.removeEventListener("click", handleUserClick);
+      audioContext.close();
     };
-  }, []);
+  }, [remoteAudioRef.current?.srcObject]);
 
+  const astroId =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("astro_user") || "{}")?.id
+      : null;
+
+  // ====================== CALL TIMER ======================
   useEffect(() => {
-    if (!socket) {
-      console.log("Socket not connected");
-      return;
+    let interval;
+
+    if (callState === "connected" && callTime > 0) {
+      interval = setInterval(() => {
+        setCallTime((prev) => prev - 1);
+      }, 1000);
     }
-    //const astroId = localStorage.getItem("USER");//astro_user
-    const astroId = JSON.parse(localStorage.getItem("astro_user"))?.id;
-    console.log("Listening for chat requests for astroId:", astroId);
-    socket.on("new_chat_request", (data) => {
-      if (data.astro_id == astroId) {
-        if (audioRef.current) {
-          audioRef.current.play().catch((err) => {
-            console.warn("🔇 Audio play failed:", err.message);
-          });
+
+    // AUTO END CALL
+    if (callTime <= 0 && !hasEndedRef.current) {
+      hasEndedRef.current = true;
+      handleEndCall();
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [callState, callTime]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // ====================== INITIALIZE MIC ======================
+  const initMedia = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      localStreamRef.current = stream;
+    } catch (err) {
+      console.error("❌ Mic access failed:", err);
+    }
+  };
+
+  // ====================== CREATE PEER CONNECTION ======================
+  const createPeerConnection = (roomId) => {
+    if (peerConnectionRef.current) return peerConnectionRef.current;
+
+    const iceConfig = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+      ],
+      iceCandidatePoolSize: 10,
+    };
+
+    const pc = new RTCPeerConnection(iceConfig);
+    peerConnectionRef.current = pc;
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current);
+        console.log("➕ Added local audio track");
+      });
+    }
+
+    pc.ontrack = async (event) => {
+      console.log("🎧 Remote track received (Astrologer)");
+      if (remoteAudioRef.current && event.streams[0]) {
+        remoteAudioRef.current.srcObject = event.streams[0];
+        try {
+          await remoteAudioRef.current.play();
+        } catch (e) {
+          console.error("Autoplay blocked", e);
         }
-        setTimeout(() => {
-          setChatRequests((prevRequests) => [...prevRequests, data]);
-          setCurrentRequest(data);
-          setIsModalOpen(true);
-        }, 10);
+      }
+      setCallState("connected");
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socket) {
+        socket.emit("ice-candidate", {
+          room_id: roomId,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("🧊 ICE State (Astro):", pc.iceConnectionState);
+    };
+    pc.onconnectionstatechange = () => {
+      console.log("🔥 Connection State (Astro):", pc.connectionState);
+    };
+
+    return pc;
+  };
+
+  // ====================== SOCKET EVENTS ======================
+  useEffect(() => {
+    if (!socket) return;
+    initMedia();
+
+    socket.on("incoming_call", (data) => {
+      if (data.receiverId !== astroId) return;
+      console.log("📞 Incoming call:", data);
+      setCurrentRequest(data);
+      setCallerName(data.userName || "Client");
+      setCallState("ringing");
+      setCallTime(data.callTime * 60 || 0);
+      ringtoneRef.current?.play().catch(() => {});
+    });
+
+    socket.on("offer", async (data) => {
+      try {
+        if (data.room_id !== currentRequest?.room_id) return;
+        const pc = createPeerConnection(data.room_id);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("answer", { room_id: data.room_id, answer });
+      } catch (err) {
+        console.error("❌ Offer Error:", err);
       }
     });
 
-   socket.on("chat_started_astrologer", (data) => {
-      if (data.roomid === currentRequest.room_id) {
-        const chatParams = {
-          userName: currentRequest.userName,
-          roomId: currentRequest.room_id,
-          chattime: currentRequest.maximum_time?.toString(),
-          userId: currentRequest.user_id,
-          place: currentRequest.location,
-          time: currentRequest.timeOfBirth?.toString(),
-          bod: currentRequest.dateOfBirth,
-          gender: currentRequest.gender,
-          occupationuser: currentRequest.occupation,
-          userimage: currentRequest.user_image || ''
-        };
-        const encrypted = encryptParams(chatParams);
-        const ischatTransfer = localStorage.getItem("ischatTransfer");
-        if(ischatTransfer == "true"){
-           if (transfer_from ==astroId) {
-            localStorage.setItem("ischatTransfer", false);
-            localStorage.setItem("transfer_from", "");
-           }
-        }
-        else{
-         router.push(`/astrologerchat?data=${encrypted}`);
+    socket.on("ice-candidate", async (data) => {
+      console.log("🧊 ICE Candidate received:", data?.room_id);
+
+      if (data?.room_id === currentRequest?.room_id) {
+        try {
+          if (peerConnectionRef.current && data.candidate) {
+            await peerConnectionRef.current.addIceCandidate(
+              new RTCIceCandidate(data.candidate),
+            );
+          }
+        } catch (err) {
+          console.error("❌ ICE Error:", err);
         }
       }
     });
 
-    socket.on("chat_rejected_astrologer", async (data) => {
-      if (data.roomid === currentRequest.room_id) {
-        setAcceptChat(false);
-        setReject(true);
-
-        setTimeout(() => {
-          setReject(false);
-        }, 3000);
+    socket.on("call_ended_by_user", (data) => {
+      if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
+        cleanupCall();
       }
     });
 
-    socket.on("chat_cancel_by_user", async (data) => {
-      // if (data.roomid === currentRequest.room_id) {
-          setIsModalOpen(false);
-          setAcceptChat(false);
+    socket.on("call_cancel_by_user", (data) => {
+      if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
+        cleanupCall();
+      }
+    });
 
-
+    socket.on("call_reject_auto", (data) => {
+      // if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
+        cleanupCall();
       // }
     });
 
-    socket.on("chat_reject_auto", async (data) => {
-      if (data.roomId === currentRequest?.room_id) {
-        setIsModalOpen(false);
-        setAutoReject(true);
-        setAcceptChat(false);
-        setMessage("The User has rejected the chat request");
-        setTimeout(() => {
-          setAutoReject(false);
-        }, 3000);
-      }
-    });
-
-     socket.on("chat_transfer", async (data) => {
-       if (data.transfer_from ==astroId) {
-        localStorage.setItem("transfer_from", astroId);
-        localStorage.setItem("ischatTransfer", true);
-        setIsModalOpen(false);
-       }
-    });
     return () => {
-      socket.off("new_chat_request");
-      socket.off("chat_started_astrologer");
-      socket.off("chat_reject_auto");
-      socket.off("chat_rejected_astrologer");
-      socket.off("chat_transfer");
-
+      socket.off("incoming_call");
+      socket.off("offer");
+      socket.off("ice-candidate");
+      socket.off("call_ended_by_user");
+      socket.off("call_cancel_by_user");
     };
-  }, [socket, currentRequest]);
+  }, [socket, astroId, currentRequest]);
 
+  // ====================== HANDLERS ======================
+  const handleAccept = async () => {
+    if (!currentRequest?.room_id) return;
+    const roomId = currentRequest.room_id;
 
+    ringtoneRef.current?.pause();
+    socket?.emit("join_call", { roomId });
 
-  const handleAccept = () => {
-    const { room_id } = currentRequest;
-
-
-    socket.emit("chat_accepted_astrologer", { room_id }, (response) => {});
-
-
-
-    setIsModalOpen(false);  
-    setAcceptChat(true);    
+    setTimeout(() => {
+      socket?.emit("callAcceptedByAstrologer", { roomId, astroId, callTime });
+      setCallState("connecting");
+    }, 400);
   };
 
-  const handleReject = async () => {
-    const { room_id, astro_id } = currentRequest;
+  const toggleMute = () => {
+    if (!localStreamRef.current) return;
+    const track = localStreamRef.current.getAudioTracks()[0];
+    if (track) {
+      track.enabled = !track.enabled;
+      setIsMuted(!track.enabled);
+    }
+  };
 
-    socket.emit(
-      "chat_rejected_astrologer",
-      { room_id, astro_id },
-      (response) => {}
-    );
-    setIsModalOpen(false);
-    setAcceptChat(false);
+  const handleEndCall = () => {
+    socket?.emit("call_ended_by_astrologer", {
+      roomId: currentRequest?.room_id,
+      astroId: astroId,
+    });
+    cleanupCall();
+  };
+
+  const cleanupCall = () => {
+    setCallState("idle");
+    setCallTime(0);
+    setCurrentRequest(null);
+    setIsMuted(false);
+
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+    ringtoneRef.current?.pause();
+    socket?.emit("call_cancel_by_astrologer", {
+      roomId: currentRequest?.room_id,
+    });
   };
 
   return (
     <>
-      <div>
-        <audio ref={audioRef} src="/sounds/sound2.mp3" preload="auto" />
+      <audio ref={ringtoneRef} src="/sounds/ringtone.mp3" preload="auto" loop />
+      <audio ref={remoteAudioRef} autoPlay playsInline />
 
-        {!userInteracted && (
-          <PopUp
-            title="Enable Ringtone Notifications "
-            buttontype={1}
-            buttonname="Enable Notifications"
-            onClick={() => setUserInteracted(true)}
-          />
-        )}
-
-        {reject && (
-          <PopUp
-            title="Chat Rejected"
-            subtitle="Chat rejected by User"
-            buttontype={0}
-          />
-        )}
-
-        {autoReject && (
-          <PopUp title="Chat Rejected" subtitle={message} buttontype={0} />
-        )}
-      </div>
-      <AnimatePresence>
-        {isModalOpen && (
-          <>
-            {/* Overlay */}
-            <motion.div
-              className="fixed inset-0 z-40 bg-black bg-opacity-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleReject}
-            />
-
-            {/* Modal box */}
-
-            {currentRequest && (
+      <AnimatePresence mode="wait">
+        {/* Ringing Screen */}
+        {callState === "ringing" && (
+          <motion.div
+            key="ringing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 gap-12 flex items-center justify-center"
+          >
+            <div className="text-center">
               <motion.div
-                className="fixed z-50 w-full max-w-sm p-6 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg top-1/2 left-1/2 rounded-xl"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ repeat: Infinity, duration: 1.8 }}
+                className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-violet-600 flex items-center justify-center text-7xl font-bold shadow-2xl"
               >
-                <h2 className="mb-3 text-xl font-bold">
-                  Incoming Chat Request
-                </h2>
-                <p className="mb-3 text-sm text-gray-600">
-                  Do you want to accept this chat?
-                </p>
-                <p className="text-sm text-gray-800">
-                  Name: {currentRequest.userName}
-                </p>
-                <p className="mb-6 text-sm text-gray-600">
-                  Chat Id: {currentRequest.room_id}
-                </p>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={handleReject}
-                    className="px-4 py-2 text-red-700 bg-red-100 rounded hover:bg-red-200"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={handleAccept}
-                    className="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700"
-                  >
-                    Accept
-                  </button>
-                </div>
+                {callerName[0]}
               </motion.div>
-            )}
-          </>
+
+              <h1 className="text-4xl font-semibold text-white mt-10">
+                Incoming Call
+              </h1>
+              <p className="text-2xl text-purple-300 mt-4">{callerName}</p>
+
+              <div className="flex justify-center gap-12 mt-16">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={cleanupCall}
+                  className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
+                >
+                  <PhoneOff size={42} className="text-white" />
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleAccept}
+                  className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"
+                >
+                  <Phone size={42} className="text-white" />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
         )}
 
-        {acceptchat && (
-          <>
-            {/* Overlay */}
-            <motion.div
-              className="fixed inset-0 z-40 bg-black bg-opacity-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleReject}
-            />
+        {/* Connecting Screen */}
+        {callState === "connecting" && (
+          <motion.div
+            key="connecting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] gap-12 bg-gradient-to-br from-gray-950 to-black flex flex-col items-center justify-center text-white"
+          >
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-6">
+              <User size={60} />
+            </div>
+            <h2 className="text-3xl font-medium">Connecting...</h2>
+            <p className="text-gray-400 mt-3">Please wait</p>
+          </motion.div>
+        )}
 
-            <motion.div
-              className="fixed z-50 w-full max-w-sm p-6 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg top-1/2 left-1/2 rounded-xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <h2 className="mb-3 text-xl font-bold">
-                Chat : Please Wait ... 
-              </h2>
+        {/* Connected Call Screen */}
+        {callState === "connected" && (
+          <motion.div
+            key="connected"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[100] bg-gradient-to-br from-gray-950 via-purple-950 to-black flex flex-col items-center justify-center text-white"
+          >
+            <div className="flex flex-col items-center">
+                 <div className="flex items-center gap-3">
+          {/* <img
+            src="/ds-img/a.jpg"
+            alt={astroData?.astrologer?.name}
+            width={50}
+            height={50}
+            className="rounded-full object-cover"
+          /> */}
 
-            </motion.div>
-          </>
+          {/* <h2 className="text-xl">{astroData?.astrologer?.name}</h2> */}
+        </div>
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2.5, repeat: Infinity }}
+                className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-500 flex items-center justify-center text-2xl font-bold shadow-2xl border-4 border-white/30"
+              >
+                {callerName}
+              </motion.div>
+
+              {/* <h2 className="text-4xl font-semibold mt-8">{callerName}</h2> */}
+              <div className="flex items-center gap-2 mt-4 text-green-400">
+                <span className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                Connected
+              </div>
+            </div>
+
+            <div className="mt-12 flex items-center gap-3 text-3xl font-mono">
+              <Clock size={32} />
+              {formatTime(callTime)}
+            </div>
+
+            <div className="flex items-end justify-center gap-1 h-20 mt-4">
+              {waveHeights.map((height, index) => (
+                <div
+                  key={index}
+                  className="w-2 bg-green-400 rounded-full transition-all duration-75"
+                  style={{
+                    height: `${height}px`,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className=" flex gap-8">
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={toggleMute}
+                className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl transition-all ${
+                  isMuted
+                    ? "bg-yellow-500 text-black"
+                    : "bg-zinc-800 hover:bg-zinc-700"
+                }`}
+              >
+                {isMuted ? <MicOff /> : <Mic />}
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={handleEndCall}
+                className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-2xl"
+              >
+                <PhoneOff size={42} />
+              </motion.button>
+            </div>
+
+            <p className="absolute bottom-6 text-xs text-gray-500">
+              This call may be recorded for quality purposes
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
   );
 };
 
-export default ChatRequest;
+export default Calling;
