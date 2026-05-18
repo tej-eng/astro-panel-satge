@@ -296,6 +296,11 @@ const Calling = () => {
 
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     ringtoneRef.current?.pause();
+    
+  };
+
+  const callCancel = () => {
+    cleanupCall();
     socket?.emit("call_cancel_by_astrologer", {
       roomId: currentRequest?.room_id,
     });
@@ -333,7 +338,7 @@ const Calling = () => {
               <div className="flex justify-center gap-12 mt-16">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
-                  onClick={cleanupCall}
+                  onClick={callCancel}
                   className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
                 >
                   <PhoneOff size={42} className="text-white" />
