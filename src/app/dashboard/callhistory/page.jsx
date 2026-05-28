@@ -19,7 +19,7 @@ const GET_ASTROLOGER_CALL_HISTORY = gql`
   query GetAstrologerCallHistory(
     $page: Int!
     $limit: Int!
-    $status: CallStatus
+    $status: status
   ) {
     getAstrologerCallHistory(
       filter: {
