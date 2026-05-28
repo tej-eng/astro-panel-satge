@@ -12,18 +12,11 @@ import {
   Phone,
   CalendarDays,
 } from "lucide-react";
+import SessionMessagesModal from "./sessionmodal";
 
 const GET_ASTROLOGER_CHAT_HISTORY = gql`
-  query GetAstrologerChatHistory(
-    $page: Int!
-    $limit: Int!
-  ) {
-    getAstrologerChatHistory(
-      filter: {
-        page: $page
-        limit: $limit
-      }
-    ) {
+  query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
+    getAstrologerChatHistory(filter: { page: $page, limit: $limit }) {
       success
       totalCount
       currentPage
@@ -52,28 +45,26 @@ const GET_ASTROLOGER_CHAT_HISTORY = gql`
 
 export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [openModal, setOpenModal] = useState(false);
+
+  const [selectedSession, setSelectedSession] = useState(null);
 
   const [page, setPage] = useState(1);
 
   const limit = 10;
 
   // APOLLO QUERY
-  const { data, loading, error } = useQuery(
-    GET_ASTROLOGER_CHAT_HISTORY,
-    {
-      variables: {
-        page,
-        limit,
-      },
+  const { data, loading, error } = useQuery(GET_ASTROLOGER_CHAT_HISTORY, {
+    variables: {
+      page,
+      limit,
+    },
 
-      fetchPolicy: "network-only",
-    }
-  );
+    fetchPolicy: "network-only",
+  });
 
-  const chatHistory =
-    data?.getAstrologerChatHistory;
+  const chatHistory = data?.getAstrologerChatHistory;
 
   // SEARCH + FILTER
   const filteredChats = useMemo(() => {
@@ -83,34 +74,21 @@ export default function AstrologerChatHistory() {
       const searchValue = search.toLowerCase();
 
       const matchesSearch =
-        item?.userName
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        item?.sessionId
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        item?.roomId
-          ?.toLowerCase()
-          .includes(searchValue) ||
+        item?.userName?.toLowerCase().includes(searchValue) ||
+        item?.sessionId?.toLowerCase().includes(searchValue) ||
+        item?.roomId?.toLowerCase().includes(searchValue) ||
         item?.userMobile?.includes(searchValue) ||
-        item?.lastMessage
-          ?.toLowerCase()
-          .includes(searchValue);
+        item?.lastMessage?.toLowerCase().includes(searchValue);
 
       const matchesStatus =
-        statusFilter === "ALL" ||
-        item?.status === statusFilter;
+        statusFilter === "ALL" || item?.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [chatHistory, search, statusFilter]);
 
   if (error) {
-    return (
-      <div className="p-6 text-red-500">
-        Error loading chat history
-      </div>
-    );
+    return <div className="p-6 text-red-500">Error loading chat history</div>;
   }
 
   return (
@@ -122,8 +100,7 @@ export default function AstrologerChatHistory() {
         </h1>
 
         <p className="text-gray-500 mt-1">
-          View all customer chat sessions &
-          earnings
+          View all customer chat sessions & earnings
         </p>
       </div>
 
@@ -132,9 +109,7 @@ export default function AstrologerChatHistory() {
         {/* TOTAL CHATS */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Total Chats
-            </p>
+            <p className="text-sm text-gray-500">Total Chats</p>
 
             <MessageCircle className="w-5 h-5 text-blue-500" />
           </div>
@@ -147,9 +122,7 @@ export default function AstrologerChatHistory() {
         {/* CURRENT PAGE */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Current Page
-            </p>
+            <p className="text-sm text-gray-500">Current Page</p>
 
             <CalendarDays className="w-5 h-5 text-purple-500" />
           </div>
@@ -162,9 +135,7 @@ export default function AstrologerChatHistory() {
         {/* TOTAL PAGES */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Total Pages
-            </p>
+            <p className="text-sm text-gray-500">Total Pages</p>
 
             <Clock3 className="w-5 h-5 text-orange-500" />
           </div>
@@ -186,9 +157,7 @@ export default function AstrologerChatHistory() {
               type="text"
               placeholder="Search by user, mobile, room ID..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
             />
           </div>
@@ -196,28 +165,18 @@ export default function AstrologerChatHistory() {
           {/* STATUS FILTER */}
           <select
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
           >
             <option value="ALL">All Status</option>
 
-            <option value="COMPLETED">
-              COMPLETED
-            </option>
+            <option value="COMPLETED">COMPLETED</option>
 
-            <option value="ONGOING">
-              ONGOING
-            </option>
+            <option value="ONGOING">ONGOING</option>
 
-            <option value="MISSED">
-              MISSED
-            </option>
+            <option value="MISSED">MISSED</option>
 
-            <option value="CANCELLED">
-              CANCELLED
-            </option>
+            <option value="CANCELLED">CANCELLED</option>
           </select>
         </div>
       </div>
@@ -257,15 +216,7 @@ export default function AstrologerChatHistory() {
                 </th>
 
                 <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Started
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Ended
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Last Message
+                  Action
                 </th>
               </tr>
             </thead>
@@ -273,10 +224,7 @@ export default function AstrologerChatHistory() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={10}
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan={10} className="text-center py-10 text-gray-500">
                     Loading chat history...
                   </td>
                 </tr>
@@ -297,10 +245,7 @@ export default function AstrologerChatHistory() {
                           <Phone className="w-3 h-3" />
 
                           <span>
-                            {
-                              chat.userCountryCode
-                            }{" "}
-                            {chat.userMobile}
+                            {chat.userCountryCode} {chat.userMobile}
                           </span>
                         </div>
                       </div>
@@ -313,9 +258,7 @@ export default function AstrologerChatHistory() {
                           {chat.sessionId}
                         </p>
 
-                        <p className="text-xs text-gray-500">
-                          {chat.roomId}
-                        </p>
+                        <p className="text-xs text-gray-500">{chat.roomId}</p>
                       </div>
                     </td>
 
@@ -323,13 +266,11 @@ export default function AstrologerChatHistory() {
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          chat.status ===
-                          "COMPLETED"
+                          chat.status === "COMPLETED"
                             ? "bg-green-100 text-green-700"
-                            : chat.status ===
-                              "ONGOING"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
+                            : chat.status === "ONGOING"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-red-100 text-red-700"
                         }`}
                       >
                         {chat.status}
@@ -341,12 +282,7 @@ export default function AstrologerChatHistory() {
                       <div className="flex items-center gap-1 text-gray-700">
                         <Clock3 className="w-4 h-4" />
 
-                        <span>
-                          {
-                            chat.durationMinutes
-                          }{" "}
-                          min
-                        </span>
+                        <span>{chat.durationMinutes} min</span>
                       </div>
                     </td>
 
@@ -373,35 +309,22 @@ export default function AstrologerChatHistory() {
                       ₹{chat.commission}
                     </td>
 
-                    {/* STARTED */}
-                    <td className="p-4 text-sm text-gray-600">
-                      {new Date(
-                        chat.startedAt
-                      ).toLocaleString()}
-                    </td>
+                    <td className="p-4 font-semibold text-red-500">
+                      <button
+                        onClick={() => {
+                          setSelectedSession(chat.sessionId);
 
-                    {/* ENDED */}
-                    <td className="p-4 text-sm text-gray-600">
-                      {new Date(
-                        chat.endedAt
-                      ).toLocaleString()}
-                    </td>
-
-                    {/* LAST MESSAGE */}
-                    <td className="p-4">
-                      <div className="max-w-[250px] truncate text-sm text-gray-700">
-                        {chat.lastMessage ||
-                          "-"}
-                      </div>
+                          setOpenModal(true);
+                        }}
+                      >
+                        View Chat
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={10}
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan={10} className="text-center py-10 text-gray-500">
                     No chat history found
                   </td>
                 </tr>
@@ -409,34 +332,31 @@ export default function AstrologerChatHistory() {
             </tbody>
           </table>
         </div>
+        <SessionMessagesModal
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          sessionId={selectedSession}
+        />
 
         {/* PAGINATION */}
         <div className="flex items-center justify-between p-4 border-t bg-gray-50">
           <p className="text-sm text-gray-500">
-            Page{" "}
-            {chatHistory?.currentPage || 1} of{" "}
+            Page {chatHistory?.currentPage || 1} of{" "}
             {chatHistory?.totalPages || 1}
           </p>
 
           <div className="flex items-center gap-2">
             <button
               disabled={page === 1}
-              onClick={() =>
-                setPage((prev) => prev - 1)
-              }
+              onClick={() => setPage((prev) => prev - 1)}
               className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
             >
               Previous
             </button>
 
             <button
-              disabled={
-                page ===
-                chatHistory?.totalPages
-              }
-              onClick={() =>
-                setPage((prev) => prev + 1)
-              }
+              disabled={page === chatHistory?.totalPages}
+              onClick={() => setPage((prev) => prev + 1)}
               className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
             >
               Next
