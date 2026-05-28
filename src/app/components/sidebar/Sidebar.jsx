@@ -44,7 +44,7 @@ const menuItems = [
       },
     ],
   },
-  { href: "/dashboard/earningdash", label: "Earnings", icon: <FaMoneyCheck /> },
+  { href: "/dashboard/earnings", label: "Earnings", icon: <FaMoneyCheck /> },
   { href: "/dashboard/wallet", label: "Wallet", icon: <FaWallet /> },
   { href: "/dashboard/offer", label: "Offers", icon: <IoIosGift /> },
   { href: "/dashboard/remedy", label: "Remedies", icon: <GiRemedy /> },

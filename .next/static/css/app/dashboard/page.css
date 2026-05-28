@@ -1,0 +1,300 @@
+/*!********************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[3]!./src/app/UI/features/buttonui/buttonui.module.css ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************/
+.buttonui_buttonTile__MdjG8 {
+    /* width: 14rem; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background-image: linear-gradient(43deg, #8b60bfe4 30%, #c850c08a 46%, #7e60bf79 80%);
+    border-radius: 10px;
+    color: rgb(19, 19, 19);
+    font-weight: 600;
+    border: none;
+    position: relative;
+    cursor: pointer;
+    transition-duration: .5s;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.116);
+    padding: 1rem 1rem;
+    transition-duration: 1s;
+}
+
+.buttonui_buttonTile__MdjG8:hover {
+    background-color: rgba(212, 20, 255, 0.471);
+    transition-duration: .5s;
+}
+
+.buttonui_buttonTile__MdjG8:active {
+    transform: scale(0.97);
+    transition-duration: .2s;
+}
+
+.buttonui_buttonTile__MdjG8:hover .buttonui_svgIcon__mXvZE {
+    transform: rotate(360deg);
+    transition-duration: 2.8s;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[3]!./src/app/UI/features/CardBox/cardbox.module.css ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************/
+.cardbox_cardTopSmBox__iKVYD{
+    /* padding: 1rem 1rem; */
+    gap: 2rem;
+    width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.cardbox_cardDash__PzVAl{
+    /* width: 200px; */
+    height: 130px;
+    padding: 0.8rem;
+    background-color: #7E60BF;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.280);
+    transform: skewX(0deg);
+    transition: .4s;
+    overflow: hidden;
+    color: white;
+}
+
+.cardbox_cardDash__PzVAl:hover {
+    /* transform: skew(0deg); */
+    background: #855bb1 !important;
+}
+
+.cardbox_cardH1__n_XSL{
+    margin: .5rem;
+    color: rgb(255, 255, 255);
+    text-shadow: -10px 5px 10px rgba(0, 0, 0, 0.573);
+    font-size: 0.92rem;
+    text-align: center;
+}
+.cardbox_cardBtn__BiSq5 {
+    background: #00000027;
+    color: #fff;
+    /* box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.2), -1px -1px 10px rgba(255, 255, 255, 0.7);  */
+    border: none;
+    border-radius: 10px;
+
+    font-size: .8rem;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.cardbox_cardBtn__BiSq5:hover {
+    background: #00000075;
+    color: #fff;
+
+}
+
+.cardbox_starRatingRev__81p_p input[type="radio"] {
+    display: none;
+}
+
+.cardbox_starRatingRev__81p_p label {
+    color: #f5c518;
+    cursor: pointer;
+    font-size: 30px;
+}
+
+.cardbox_starRatingRev__81p_p input[type="radio"]:checked~label,
+.cardbox_starRatingRev__81p_p label:hover,
+.cardbox_starRatingRev__81p_p label:hover~label {
+    color: #f5c518;
+}
+
+@media(max-width:768px){
+    .cardbox_cardTopSmBox__iKVYD{
+         gap:1rem;
+         justify-content:flex-start;
+         /* padding: 2; */
+    }
+}
+
+@media(max-width:520px){
+    .cardbox_cardTopSmBox__iKVYD{
+         gap:1rem;
+         flex-direction: row;
+         justify-content: center;
+         align-items: center;
+         /* padding: 2; */
+         /* width: 20rem; */
+    }
+    .cardbox_cardDash__PzVAl{
+        /* width: 8rem; */
+        height: 7rem;
+        padding: 0.8rem;
+        background-color: #7E60BF;
+        border-radius: 8px;
+        backdrop-filter: blur(5px);
+        box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.280);
+        transform: skewX(0deg);
+        transition: .4s;
+        overflow: hidden;
+        color: white;
+    }
+    .cardbox_starRatingRev__81p_p label {
+        color: #f5c518;
+        cursor: pointer;
+        font-size: 1.5rem;
+    }
+    
+.cardbox_cardH1__n_XSL{
+    margin: .5rem;
+    color: rgb(255, 255, 255);
+    text-shadow: -10px 5px 10px rgba(0, 0, 0, 0.573);
+    font-size: 0.6rem;
+    text-align: center;
+}
+.cardbox_cardBtn__BiSq5 {
+    background: #00000027;
+    color: #fff;
+    /* box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.2), -1px -1px 10px rgba(255, 255, 255, 0.7);  */
+    border: none;
+    border-radius: 10px;
+
+    font-size: .6rem;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+}
+@media(max-width:322px){
+    .cardbox_cardTopSmBox__iKVYD{
+         gap:.5rem;
+         /* flex-direction: column; */
+         justify-content: center;
+         align-items: center;
+         /* padding: 2; */
+         /* width: 21rem; */
+         /* padding-right: 2rem; */
+    }
+}
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[12].oneOf[7].use[3]!./src/app/UI/features/ManageServices/manageservices.module.css ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************/
+.manageservices_cardPanelPermi__ozxnA {
+  background: rgba(255, 255, 255, 0.54);
+
+  box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.2),
+    -8px -8px -8px 16px rgba(255, 255, 255, 0.7);
+  border-radius: 15px;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  justify-self: center;
+}
+.manageservices_innerbutton__B4_ff {
+  align-items: center;
+}
+.manageservices_walletHead__JyoXa {
+  font-size: 1rem;
+  background-color: #2f1254;
+  border-radius: 10px;
+  color: #f5c518;
+  padding: 0.5rem 1rem;
+  width: fit-content;
+}
+.manageservices_astroMainSer__cdVSU {
+  padding-top: 1rem;
+  gap: 2rem;
+}
+.manageservices_panelAccessCard__lF8Wu {
+  padding: 1rem;
+  gap: 1rem !important;
+  background-color: #7e60bf;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.44);
+  border-left: 0.5px rgba(255, 255, 255, 0.545) outset;
+  border-radius: 8px;
+}
+.manageservices_panelAccessCard__lF8Wu:hover {
+  background: #855bb1 !important;
+}
+.manageservices_manTop__0ChhP {
+  width: 100vw !important;
+}
+.manageservices_pAT__uRpbs {
+  gap: 0.5rem;
+}
+.manageservices_pAType__SXXKT {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: black;
+}
+.manageservices_topGreet__tQoNu {
+  font-size: 0.88rem;
+  color: #fff;
+}
+.manageservices_onlineType__cVCfg {
+  border-radius: 5px;
+}
+.manageservices_bg-success__v6vTO {
+  background-color: green;
+}
+.manageservices_bg-danger__HsyIz {
+  background-color: red;
+}
+@media (max-width: 1395px) {
+  .manageservices_astroMainSer__cdVSU {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .manageservices_cardPanelPermi__ozxnA {
+    margin: 0;
+  }
+  .manageservices_astroMainSer__cdVSU {
+    justify-content: center;
+  }
+}
+@media (max-width: 520px) {
+  .manageservices_cardPanelPermi__ozxnA {
+    padding-top: 5px;
+
+    margin: 0;
+  }
+
+  .manageservices_astroMainSer__cdVSU {
+    padding: 0.3rem 0.3rem;
+    gap: 1rem;
+  }
+  .manageservices_pAType__SXXKT {
+    font-size: 0.7rem;
+    color: #cfb0f8;
+  }
+  .manageservices_topGreet__tQoNu {
+    font-size: 0.5rem;
+    color: #fff;
+  }
+}
+@media (max-width: 376px) {
+  .manageservices_cardPanelPermi__ozxnA {
+    padding-top: 5px;
+    margin: 0;
+  }
+
+  .manageservices_astroMainSer__cdVSU {
+    padding: 0.3rem 0.3rem;
+    gap: 1rem;
+  }
+  .manageservices_pAType__SXXKT {
+    font-size: 0.7rem;
+    color: #cfb0f8;
+  }
+  .manageservices_topGreet__tQoNu {
+    font-size: 0.7rem;
+    color: #fff;
+  }
+  .manageservices_innerbutton__B4_ff {
+    width: 50px;
+  }
+}
+
