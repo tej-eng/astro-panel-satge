@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import {
   Search,
   MessageCircle,
@@ -11,95 +13,89 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-const GRAPHQL_URL = "http://localhost:4000/graphql";
+const GET_ASTROLOGER_CHAT_HISTORY = gql`
+  query GetAstrologerChatHistory(
+    $page: Int!
+    $limit: Int!
+  ) {
+    getAstrologerChatHistory(
+      filter: {
+        page: $page
+        limit: $limit
+      }
+    ) {
+      success
+      totalCount
+      currentPage
+      totalPages
+
+      data {
+        sessionId
+        roomId
+        userName
+        userMobile
+        userCountryCode
+        startedAt
+        endedAt
+        createdAt
+        status
+        durationSec
+        durationMinutes
+        ratePerMin
+        coinsEarned
+        commission
+        lastMessage
+      }
+    }
+  }
+`;
 
 export default function AstrologerChatHistory() {
-  const [loading, setLoading] = useState(true);
-  const [chatData, setChatData] = useState([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] =
+    useState("ALL");
 
-  // Pagination
   const [page, setPage] = useState(1);
+
   const limit = 10;
 
-  // Replace with your token logic
-  const token = "YOUR_ASTROLOGER_TOKEN";
+  // APOLLO QUERY
+  const { data, loading, error } = useQuery(
+    GET_ASTROLOGER_CHAT_HISTORY,
+    {
+      variables: {
+        page,
+        limit,
+      },
 
-  const fetchChatHistory = async () => {
-    try {
-      setLoading(true);
-
-      const res = await fetch(GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: `
-            query GetAstrologerChatHistory {
-              getAstrologerChatHistory(
-                filter: {
-                  page: ${page},
-                  limit: ${limit}
-                }
-              ) {
-                success
-                totalCount
-                currentPage
-                totalPages
-                data {
-                  sessionId
-                  roomId
-                  userName
-                  userMobile
-                  userCountryCode
-                  startedAt
-                  endedAt
-                  createdAt
-                  status
-                  durationSec
-                  durationMinutes
-                  ratePerMin
-                  coinsEarned
-                  commission
-                  lastMessage
-                }
-              }
-            }
-          `,
-        }),
-      });
-
-      const data =
-        data?.data?.getAstrologerChatHistory;
-
-      setChatData(data || {});
-    } catch (error) {
-      console.error("Chat history fetch error:", error);
-    } finally {
-      setLoading(false);
+      fetchPolicy: "network-only",
     }
-  };
+  );
 
-  useEffect(() => {
-    fetchChatHistory();
-  }, [page]);
+  const chatHistory =
+    data?.getAstrologerChatHistory;
 
   // SEARCH + FILTER
   const filteredChats = useMemo(() => {
-    if (!chatData?.data) return [];
+    if (!chatHistory?.data) return [];
 
-    return chatData.data.filter((item) => {
+    return chatHistory.data.filter((item) => {
       const searchValue = search.toLowerCase();
 
       const matchesSearch =
-        item?.userName?.toLowerCase().includes(searchValue) ||
-        item?.sessionId?.toLowerCase().includes(searchValue) ||
-        item?.roomId?.toLowerCase().includes(searchValue) ||
+        item?.userName
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        item?.sessionId
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        item?.roomId
+          ?.toLowerCase()
+          .includes(searchValue) ||
         item?.userMobile?.includes(searchValue) ||
-        item?.lastMessage?.toLowerCase().includes(searchValue);
+        item?.lastMessage
+          ?.toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "ALL" ||
@@ -107,7 +103,15 @@ export default function AstrologerChatHistory() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [chatData, search, statusFilter]);
+  }, [chatHistory, search, statusFilter]);
+
+  if (error) {
+    return (
+      <div className="p-6 text-red-500">
+        Error loading chat history
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -118,13 +122,14 @@ export default function AstrologerChatHistory() {
         </h1>
 
         <p className="text-gray-500 mt-1">
-          View all customer chat sessions & earnings
+          View all customer chat sessions &
+          earnings
         </p>
       </div>
 
       {/* TOP STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {/* Total Chats */}
+        {/* TOTAL CHATS */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
@@ -135,11 +140,11 @@ export default function AstrologerChatHistory() {
           </div>
 
           <h2 className="text-3xl font-bold mt-3 text-gray-800">
-            {chatData?.totalCount || 0}
+            {chatHistory?.totalCount || 0}
           </h2>
         </div>
 
-        {/* Current Page */}
+        {/* CURRENT PAGE */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
@@ -150,11 +155,11 @@ export default function AstrologerChatHistory() {
           </div>
 
           <h2 className="text-3xl font-bold mt-3 text-gray-800">
-            {chatData?.currentPage || 1}
+            {chatHistory?.currentPage || 1}
           </h2>
         </div>
 
-        {/* Total Pages */}
+        {/* TOTAL PAGES */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
@@ -165,7 +170,7 @@ export default function AstrologerChatHistory() {
           </div>
 
           <h2 className="text-3xl font-bold mt-3 text-gray-800">
-            {chatData?.totalPages || 1}
+            {chatHistory?.totalPages || 1}
           </h2>
         </div>
       </div>
@@ -179,14 +184,16 @@ export default function AstrologerChatHistory() {
 
             <input
               type="text"
-              placeholder="Search by user, mobile, room ID, session ID..."
+              placeholder="Search by user, mobile, room ID..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="w-full border rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
             />
           </div>
 
-          {/* FILTER */}
+          {/* STATUS FILTER */}
           <select
             value={statusFilter}
             onChange={(e) =>
@@ -195,13 +202,19 @@ export default function AstrologerChatHistory() {
             className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
           >
             <option value="ALL">All Status</option>
+
             <option value="COMPLETED">
               COMPLETED
             </option>
+
             <option value="ONGOING">
               ONGOING
             </option>
-            <option value="MISSED">MISSED</option>
+
+            <option value="MISSED">
+              MISSED
+            </option>
+
             <option value="CANCELLED">
               CANCELLED
             </option>
@@ -284,7 +297,9 @@ export default function AstrologerChatHistory() {
                           <Phone className="w-3 h-3" />
 
                           <span>
-                            {chat.userCountryCode}{" "}
+                            {
+                              chat.userCountryCode
+                            }{" "}
                             {chat.userMobile}
                           </span>
                         </div>
@@ -308,9 +323,11 @@ export default function AstrologerChatHistory() {
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          chat.status === "COMPLETED"
+                          chat.status ===
+                          "COMPLETED"
                             ? "bg-green-100 text-green-700"
-                            : chat.status === "ONGOING"
+                            : chat.status ===
+                              "ONGOING"
                             ? "bg-blue-100 text-blue-700"
                             : "bg-red-100 text-red-700"
                         }`}
@@ -325,7 +342,10 @@ export default function AstrologerChatHistory() {
                         <Clock3 className="w-4 h-4" />
 
                         <span>
-                          {chat.durationMinutes} min
+                          {
+                            chat.durationMinutes
+                          }{" "}
+                          min
                         </span>
                       </div>
                     </td>
@@ -370,7 +390,8 @@ export default function AstrologerChatHistory() {
                     {/* LAST MESSAGE */}
                     <td className="p-4">
                       <div className="max-w-[250px] truncate text-sm text-gray-700">
-                        {chat.lastMessage || "-"}
+                        {chat.lastMessage ||
+                          "-"}
                       </div>
                     </td>
                   </tr>
@@ -392,14 +413,17 @@ export default function AstrologerChatHistory() {
         {/* PAGINATION */}
         <div className="flex items-center justify-between p-4 border-t bg-gray-50">
           <p className="text-sm text-gray-500">
-            Page {chatData?.currentPage || 1} of{" "}
-            {chatData?.totalPages || 1}
+            Page{" "}
+            {chatHistory?.currentPage || 1} of{" "}
+            {chatHistory?.totalPages || 1}
           </p>
 
           <div className="flex items-center gap-2">
             <button
               disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
+              onClick={() =>
+                setPage((prev) => prev - 1)
+              }
               className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
             >
               Previous
@@ -407,9 +431,12 @@ export default function AstrologerChatHistory() {
 
             <button
               disabled={
-                page === chatData?.totalPages
+                page ===
+                chatHistory?.totalPages
               }
-              onClick={() => setPage((prev) => prev + 1)}
+              onClick={() =>
+                setPage((prev) => prev + 1)
+              }
               className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
             >
               Next
