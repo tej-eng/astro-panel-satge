@@ -303,17 +303,7 @@ export default function AstrologerCallHistory() {
                   Commission
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Started At
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Ended At
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Last Message
-                </th>
+             
               </tr>
             </thead>
 
@@ -445,27 +435,7 @@ export default function AstrologerCallHistory() {
                         }
                       </td>
 
-                      {/* STARTED */}
-                      <td className="p-4 text-sm text-gray-600">
-                        {new Date(
-                          call.startedAt
-                        ).toLocaleString()}
-                      </td>
-
-                      {/* ENDED */}
-                      <td className="p-4 text-sm text-gray-600">
-                        {new Date(
-                          call.endedAt
-                        ).toLocaleString()}
-                      </td>
-
-                      {/* LAST MESSAGE */}
-                      <td className="p-4">
-                        <div className="max-w-[250px] truncate text-sm text-gray-700">
-                          {call.lastMessage ||
-                            "-"}
-                        </div>
-                      </td>
+                     
                     </tr>
                   )
                 )

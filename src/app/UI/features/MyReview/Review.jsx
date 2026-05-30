@@ -1,416 +1,420 @@
 "use client";
-import styles from "@/app/UI/features/MyReview/review.module.css";
-import { FaFlag, FaReply } from "react-icons/fa6";
-import { MdPushPin } from "react-icons/md";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Rating from "@mui/material/Rating";
-import Stack from "@mui/material/Stack";
-import BasicPagination from "../../PaginationUI/Pagination";
-import useFilteredSearch from "@/hooks/useFilteredSearch";
-import { toast } from "react-toastify";
+
+import { useMemo, useState } from "react";
+
+import { gql } from "@apollo/client";
+import {
+  useMutation,
+  useQuery,
+} from "@apollo/client/react";
 
 import {
-  useGetReviewApiQuery,
-  usePostReplyMutation,
-  useDeleteReplyMutation,
-} from "@/app/redux/slice/getReviewSlice";
-import { FadeLoader } from "react-spinners";
+  Search,
+  Star,
+  MessageSquare,
+  Send,
+  CalendarDays,
+} from "lucide-react";
 
-export default function Review() {
-  const [postReply, { isLoading: isSubmitting }] = usePostReplyMutation();
-  const [deleteReply] = useDeleteReplyMutation();
+const GET_ASTROLOGER_REVIEWS = gql`
+  query GetAstrologerReviews(
+    $page: Int!
+    $limit: Int!
+  ) {
+    getAstrologerReviews(
+      filter: {
+        page: $page
+        limit: $limit
+      }
+    ) {
+      success
+      totalCount
+
+      data {
+        id
+        userName
+        rating
+        comment
+        reply
+        createdAt
+      }
+    }
+  }
+`;
+
+const REPLY_TO_REVIEW = gql`
+  mutation ReplyToReview(
+    $reviewId: String!
+    $reply: String!
+  ) {
+    replyToReview(
+      reviewId: $reviewId
+      reply: $reply
+    ) {
+      success
+      message
+    }
+  }
+`;
+
+export default function AstrologerReviews() {
+  const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const [perPage] = useState(12);
+
+  const [replyInputs, setReplyInputs] =
+    useState({});
+
+  const limit = 10;
+
+  // GET REVIEWS
   const {
-    data = [],
-    isLoading,
-    isFetching,
+    data,
+    loading,
     refetch,
-  } = useGetReviewApiQuery({ page, per_page: perPage });
-  const recordList = data?.data || [];
-  const filteredData = useFilteredSearch(recordList, [
-    "user.name",
-    "user_id",
-    "orderid",
-    "item_type",
-  ]);
-  const pagination = data || {};
+  } = useQuery(
+    GET_ASTROLOGER_REVIEWS,
+    {
+      variables: {
+        page,
+        limit,
+      },
 
-  const [filter, setFilter] = useState("all");
-  const [isMounted, setIsMounted] = useState(false);
-  const [showReplyBox, setShowReplyBox] = useState({});
-  const [replies, setReplies] = useState({});
-  const [editingReply, setEditingReply] = useState({});
-  const [replyTimestamps, setReplyTimestamps] = useState({});
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (Array.isArray(data?.data)) {
-      const initialReplies = {};
-      data.data.forEach((review) => {
-        initialReplies[review.id] = review.Astroreply || "";
-      });
-
-      setReplies((prevReplies) => {
-        const isSame =
-          JSON.stringify(prevReplies) === JSON.stringify(initialReplies);
-        return isSame ? prevReplies : initialReplies;
-      });
+      fetchPolicy: "network-only",
     }
-  }, [data]);
-  const handleReplyClick = (reviewId) => {
-    setShowReplyBox((prev) => ({ ...prev, [reviewId]: true }));
-    setEditingReply((prev) => ({ ...prev, [reviewId]: false }));
-  };
+  );
 
-  const handleCancelReply = (reviewId) => {
-    setShowReplyBox((prev) => ({ ...prev, [reviewId]: false }));
-    setEditingReply((prev) => ({ ...prev, [reviewId]: false }));
-  };
+  // REPLY MUTATION
+  const [replyToReview, { loading: replying }] =
+    useMutation(REPLY_TO_REVIEW);
 
-  const handleReplyChange = (reviewId, text) => {
-    const currentTime = new Date().toLocaleString();
-    setReplies((prev) => ({ ...prev, [reviewId]: text }));
-    setReplyTimestamps((prev) => ({ ...prev, [reviewId]: currentTime }));
-  };
-  const handleSubmitReply = async (reviewId) => {
-    const replyText = replies[reviewId]?.trim();
+  const reviews =
+    data?.getAstrologerReviews;
 
-    if (!replyText) {
-      return toast.error("Please enter a reply before submitting.");
-    }
+  // SEARCH FILTER
+  const filteredReviews = useMemo(() => {
+    if (!reviews?.data) return [];
 
-    // console.log("Reply to send:", replyText);
+    return reviews.data.filter(
+      (item) => {
+        const searchValue =
+          search.toLowerCase();
 
-    try {
-      const response = await postReply({
-        review_id: reviewId,
-        astroreply: replyText,
-      }).unwrap();
-
-      setReplies((prev) => ({
-        ...prev,
-        [reviewId]: replyText,
-      }));
-
-      setShowReplyBox((prev) => ({ ...prev, [reviewId]: false }));
-
-      toast.success("Reply submitted successfully!");
-    } catch (error) {
-      // console.error("RTK error submitting reply:", error);
-      toast.error("Failed to submit reply. Please try again.");
-    }
-  };
-
-  const handleEditReply = (reviewId) => {
-    setEditingReply((prev) => ({ ...prev, [reviewId]: true }));
-    setShowReplyBox((prev) => ({ ...prev, [reviewId]: true }));
-    setReplies((prev) => ({ ...prev, [reviewId]: prev[reviewId] || "" }));
-  };
-
-  const handleDeleteReply = async (reviewId) => {
-    if (!reviewId) return toast.error("Invalid reply ID.");
-    if (confirmingDeleteId !== reviewId) {
-      setConfirmingDeleteId(reviewId);
-      toast.info("Click Delete again to confirm.");
-      return;
-    }
-    setConfirmingDeleteId(null);
-    setReplies((prev) => ({ ...prev, [reviewId]: "" }));
-    try {
-      await deleteReply({ review_id: reviewId }).unwrap();
-      setReplies((prev) => ({ ...prev, [reviewId]: "" }));
-      await refetch();
-      toast.success("Reply deleted successfully!");
-    } catch (err) {
-      setReplies((prev) => ({
-        ...prev,
-        [reviewId]: recordList.find((r) => r.id === reviewId)?.Astroreply || "",
-      }));
-      toast.error("Failed to delete reply.");
-    }
-  };
-
-  if (!isMounted) return null;
-  if (isLoading)
-    return (
-      <div className="h-screen flex flex-col justify-center items-center">
-        <FadeLoader color="#2f1254" height={17} width={5} />
-        <div className="mt-2">Loading call history...</div>
-      </div>
+        return (
+          item?.userName
+            ?.toLowerCase()
+            .includes(
+              searchValue
+            ) ||
+          item?.comment
+            ?.toLowerCase()
+            .includes(
+              searchValue
+            )
+        );
+      }
     );
+  }, [reviews, search]);
+
+  // HANDLE REPLY
+  const handleReply = async (
+    reviewId
+  ) => {
+    try {
+      const reply =
+        replyInputs[reviewId];
+
+      if (!reply?.trim()) return;
+
+      await replyToReview({
+        variables: {
+          reviewId,
+          reply,
+        },
+      });
+
+      await refetch();
+
+      setReplyInputs((prev) => ({
+        ...prev,
+        [reviewId]: "",
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // RENDER STARS
+  const renderStars = (rating) => {
+    return [...Array(5)].map(
+      (_, index) => (
+        <Star
+          key={index}
+          className={`w-5 h-5 ${
+            index < rating
+              ? "fill-yellow-400 text-yellow-400"
+              : "text-gray-300"
+          }`}
+        />
+      )
+    );
+  };
 
   return (
-    <div
-      className={`${styles["my-review-main"]} flex flex-col items-center justify-center `}
-    >
-      <h2 className={`${styles["wallet-head"]} text-center`}>My Reviews</h2>
+    <div className="min-h-screen bg-[#f7f3fb] p-4 md:p-6">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#4b1d74]">
+            My Reviews
+          </h1>
 
-      <div className={`${styles["top-down"]} flex items-center flex-col`}>
-        <div
-          className={`${styles["review-select"]} flex gap-2 md:gap-[15rem]  justify-between p-0`}
-        >
-          <select
-            className={`${styles["custom-select"]} bg-white border border-gray-300 rounded p-2`}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">Show All Reviews</option>
-            <option value="Chat">Chat</option>
-            <option value="Call">Call</option>
-          </select>
-          <select
-            className={`${styles["custom-select"]} bg-white border border-gray-300 rounded p-2`}
-            defaultValue="all"
-          >
-            <option>My Reviews</option>
-            <option value="Positive">Positive</option>
-            <option value="Negative">Negative</option>
-          </select>
+          <p className="text-gray-500 mt-1">
+            Customer feedback &
+            ratingss
+          </p>
+        </div>
+
+        {/* SEARCH */}
+        <div className="relative w-full md:w-[350px]">
+          <Search className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+
+          <input
+            type="text"
+            placeholder="Search reviews..."
+            value={search}
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
+            className="w-full bg-white border border-purple-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+          />
         </div>
       </div>
 
-      <div className={`${styles["review-cond"]}`}>
-        <span className="flex items-center justify-between">
-          <span className={`${styles["fl-spn"]}`}>Flagged Review</span>
-          <span className={`${styles["fl-spn"]}`}>Excluded PO & SO</span>
-          <span className={`${styles["fl-spn"]}`}>3</span>
-        </span>
-        <span className="flex items-center justify-between">
-          <span className={`${styles["fl-spn"]}`}>
-            Missed Call & Chat Review
-          </span>
-          <span className={`${styles["fl-spn"]}`}>13</span>
-        </span>
-        <span className="flex items-center justify-between">
-          <span className={`${styles["fl-spn"]}`}>
-            <b>Used Balance</b>
-          </span>
-          <span className={`${styles["fl-spn"]}`}>
-            <b>15/16</b>
-          </span>
-        </span>
-        <span className="flex items-center justify-between">
-          <span className={`${styles["fl-spn"]}`}>
-            <b>Note:</b> System gives you a maximum of 90 flags. Inclusive of
-            missed call and chat.
-          </span>
-        </span>
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {/* TOTAL */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              Total Reviews
+            </p>
+
+            <MessageSquare className="w-5 h-5 text-purple-500" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+            {reviews?.totalCount ||
+              0}
+          </h2>
+        </div>
+
+        {/* AVG RATING */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              Average Rating
+            </p>
+
+            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+            {filteredReviews.length >
+            0
+              ? (
+                  filteredReviews.reduce(
+                    (acc, item) =>
+                      acc +
+                      item.rating,
+                    0
+                  ) /
+                  filteredReviews.length
+                ).toFixed(1)
+              : "0"}
+          </h2>
+        </div>
+
+        {/* CURRENT PAGE */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              Current Page
+            </p>
+
+            <CalendarDays className="w-5 h-5 text-purple-500" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+            {page}
+          </h2>
+        </div>
       </div>
 
-      <div
-        className={`${styles["store-his-box"]} flex items-start flex-wrap py-3 gap-10`}
-      >
-        {filteredData.map((review) => {
-          const finalRating = parseFloat(review.rating) || 0;
-          const ratingColor =
-            finalRating < 3 ? "red" : finalRating > 3.5 ? "#32cd32" : "default";
-          return (
-            <div
-              key={review.id}
-              className={`${styles["card-review"]} flex flex-col`}
-            >
-              <div
-                className={`${styles["call-top"]} flex items-center justify-between`}
-              >
-                <div className="flex items-start justify-between flex-col">
-                  <span className={`${styles["store-top"]} flex items-center`}>
-                    <span className={`${styles["odr-sp"]}`}>Name:</span>{" "}
-                    <span className={`${styles["id-nm"]}`}>
-                      {review.user?.name || "Unknown"} ({review.user_id})
-                    </span>
-                  </span>
-                  <span className={`${styles["store-top"]} flex items-center`}>
-                    <span className={`${styles["odr-sp"]}`}>Order ID :</span>{" "}
-                    <span className={`${styles["id-nm"]}`}>
-                      {review.orderid || "N/A"}
-                    </span>
-                  </span>
-                </div>
-                <div
-                  className={`${styles["cal-od-id"]} flex items-end justify-between flex-col`}
-                >
-                  <Link href="#" className={`${styles["rev-det"]}`}>
-                    <FaFlag />
-                  </Link>
-                  <Link href="#" className={`${styles["rev-det"]}`}>
-                    <MdPushPin />
-                  </Link>
-                </div>
-              </div>
-              <hr style={{ margin: ".1rem" }} />
-              <div
-                className={`${styles["cal-od-rev"]}  flex items-center justify-between`}
-              >
-                <div className="">
-                  <span className={`${styles["odr-sp"]} `}>Type :</span>{" "}
-                  <span className={`${styles["id-nm"]} `}>
-                    {review.item_type}
-                  </span>
-                </div>
-                <div>
-                  <Stack spacing={1}>
-                    <Rating
-                      name="half-rating-read"
-                      value={finalRating}
-                      precision={0.5}
-                      readOnly
-                      sx={{
-                        "& .MuiRating-iconFilled": { color: ratingColor },
-                      }}
-                    />
-                  </Stack>
-                </div>
-              </div>
-              <div
-                className={`${styles["cal-od-id"]} flex items-center justify-between`}
-              >
-                <span className={`${styles["odr-sp"]}`}>
-                  {review.updated_at
-                    ? new Date(review.updated_at).toLocaleString("en-IN", {
-                        year: "numeric",
-                        month: "short",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })
-                    : "N/A"}
-                  {/* {console.log(review.user?.updated_at)} */}
-                </span>
-              </div>
-              <div className={`${styles["call-card-det"]} flex flex-col`}>
-                <span className={`${styles["rev-span"]}`}>
-                  <b>Comment:</b>
-                </span>
-                <div
-                  className={`${styles["rev-astro"]} mb-0 max-h-16 overflow-y-auto break-words text-xs p-1 `}
-                  style={{ wordBreak: "break-word", minHeight: "1.5rem" }}
-                >
-                  {(!review.comments || review.comments === "Null")
-                    ? "No comments available."
-                    : review.comments}
-                </div>
-              </div>
-              <div
-                className={`${styles["xtra-rem"]} flex items-center justify-between w-[100%]`}
-              >
-                {!replies[review.id] && !showReplyBox[review.id] && (
-                  <button
-                    onClick={() => handleReplyClick(review.id)}
-                    className={`${styles["xtra-rev23"]} mt-2 bg-success cursor-pointer text-xs text-white py-1 px-3 rounded-lg bg-[#7e60bf] `}
+      {/* LOADING */}
+      {loading ? (
+        <div className="text-center py-20 text-gray-500">
+          Loading reviews...
+        </div>
+      ) : (
+        <>
+          {/* CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredReviews.length >
+            0 ? (
+              filteredReviews.map(
+                (review) => (
+                  <div
+                    key={review.id}
+                    className="bg-white rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition p-5"
                   >
-                    Reply
-                  </button>
-                )}
+                    {/* TOP */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold text-[#4b1d74] text-lg">
+                          {
+                            review.userName
+                          }
+                        </h3>
 
-                {(review.Astroreply || replies[review.id]) && (
-                  <>
-                    {!showReplyBox[review.id] && (
-                      <div
-                        className={`${styles["reply-section"]} mt-1 p-2 pt-0 rounded w-full bg-gray-300`}
-                      >
-                        <span className="font-semibold text-[.75rem]">
-                          Reply:{" "}
-                          <span className="font-light text-[.7rem]">
-                            {replyTimestamps[review.id]
-                              ? new Date(replyTimestamps[review.id]).toLocaleString(
-                                  "en-IN",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  }
-                                )
-                              : new Date(review.updated_at).toLocaleString("en-IN", {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                })}
-                          </span>
-                        </span>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {new Date(
+                            review.createdAt
+                          ).toLocaleString()}
+                        </p>
+                      </div>
 
-                        <div className="text-[.75rem] p-1 w-full overflow-x-auto break-words h-[3rem] ">
-                          {replies[review.id] || review.Astroreply}
-                        </div>
+                      {/* STARS */}
+                      <div className="flex items-center gap-1">
+                        {renderStars(
+                          review.rating
+                        )}
+                      </div>
+                    </div>
 
-                        <div className="flex justify-between">
-                          <button
-                            onClick={() => handleEditReply(review.id)}
-                            className="mt-2 cursor-pointer text-xs text-white py-1 px-3 rounded-lg bg-[#7e60bf]"
-                          >
-                            Edit Reply
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReply(review.id)}
-                            className={`mt-2 cursor-pointer text-xs text-white py-1 px-3 rounded-lg bg-gray-400 ${
-                              confirmingDeleteId === review.id
-                                ? "ring-2 ring-red-500"
-                                : ""
-                            }`}
-                          >
-                            {confirmingDeleteId === review.id
-                              ? "Confirm Delete"
-                              : "Delete"}
-                          </button>
+                    {/* COMMENT */}
+                    <div className="mt-5">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                        Comment
+                      </p>
+
+                      <div className="bg-gray-50 border rounded-xl p-3 text-gray-700 text-sm min-h-[90px]">
+                        {
+                          review.comment
+                        }
+                      </div>
+                    </div>
+
+                    {/* REPLY */}
+                    {review.reply ? (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold text-[#4b1d74] mb-2">
+                          Your Reply
+                        </p>
+
+                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-sm text-gray-700">
+                          {
+                            review.reply
+                          }
                         </div>
                       </div>
-                    )}
-                  </>
-                )}
+                    ) : (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold text-[#4b1d74] mb-2">
+                          Reply
+                        </p>
 
-                {showReplyBox[review.id] && (
-                  <div className="mt-2 w-full">
-                    <textarea
-                      className="w-full bg-white border p-2 rounded"
-                      rows="3"
-                      placeholder="Write your reply here..."
-                      value={replies[review.id]}
-                      onChange={(e) =>
-                        handleReplyChange(review.id, e.target.value)
-                      }
-                    />
-                    <button
-                      onClick={() => handleSubmitReply(review.id)}
-                      className="mt-2 bg-success cursor-pointer text-xs text-white py-1 px-3 rounded-lg bg-[#7e60bf]"
-                    >
-                      Submit
-                    </button>
-                    <button
-                      onClick={() => handleCancelReply(review.id)}
-                      className="bg-gray-400 cursor-pointer text-xs text-white py-1 px-3 mx-2 rounded-lg"
-                    >
-                      Cancel
-                    </button>
+                        <textarea
+                          rows={3}
+                          placeholder="Write your reply..."
+                          value={
+                            replyInputs[
+                              review.id
+                            ] || ""
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            setReplyInputs(
+                              (
+                                prev
+                              ) => ({
+                                ...prev,
+                                [review.id]:
+                                  e
+                                    .target
+                                    .value,
+                              })
+                            )
+                          }
+                          className="w-full border border-purple-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-none"
+                        />
+
+                        <button
+                          onClick={() =>
+                            handleReply(
+                              review.id
+                            )
+                          }
+                          disabled={
+                            replying
+                          }
+                          className="mt-3 flex items-center gap-2 bg-[#6d35a3] hover:bg-[#572987] text-white px-4 py-2 rounded-xl text-sm transition"
+                        >
+                          <Send className="w-4 h-4" />
+
+                          {replying
+                            ? "Replying..."
+                            : "Send Reply"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                )
+              )
+            ) : (
+              <div className="col-span-full text-center py-20 text-gray-500">
+                No reviews found
               </div>
+            )}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="flex items-center justify-between mt-10 bg-white border border-purple-100 rounded-2xl p-4">
+            <p className="text-sm text-gray-500">
+              Page {page}
+            </p>
+
+            <div className="flex items-center gap-3">
+              <button
+                disabled={page === 1}
+                onClick={() =>
+                  setPage(
+                    (prev) =>
+                      prev - 1
+                  )
+                }
+                className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
+              >
+                Previous
+              </button>
+
+              <button
+                onClick={() =>
+                  setPage(
+                    (prev) =>
+                      prev + 1
+                  )
+                }
+                className="px-4 py-2 bg-[#6d35a3] text-white rounded-xl hover:bg-[#572987]"
+              >
+                Next
+              </button>
             </div>
-          );
-        })}
-      </div>
-      <BasicPagination
-        currentPage={pagination?.current_page || 1}
-        totalPages={pagination?.last_page || 1}
-        onPageChange={(newPage) => setPage(newPage)}
-        siblingCount={1}
-        boundaryCount={1}
-        showInfo={true}
-        isLoading={isFetching}
-      />
-      {isFetching && (
-        <div className="mt-2 text-sm text-gray-500">Loading Page...</div>
+          </div>
+        </>
       )}
     </div>
   );
