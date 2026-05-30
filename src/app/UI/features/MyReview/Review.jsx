@@ -171,7 +171,7 @@ export default function AstrologerReviews() {
 
           <p className="text-gray-500 mt-1">
             Customer feedback &
-            ratings
+            ratingss
           </p>
         </div>
 
