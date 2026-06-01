@@ -20,22 +20,30 @@ const GET_ASTROLOGER_REVIEWS = gql`
   query GetAstrologerReviews(
     $page: Int!
     $limit: Int!
+    $rating: Int
   ) {
     getAstrologerReviews(
       filter: {
         page: $page
         limit: $limit
+        rating: $rating
       }
     ) {
       success
       totalCount
+      currentPage
+      totalPages
+      limit
 
       data {
         id
-        userName
+        sessionId
+        sessionType
+        sessionStatus
         rating
         comment
         reply
+        isFlagged
         createdAt
       }
     }
@@ -60,61 +68,64 @@ const REPLY_TO_REVIEW = gql`
 export default function AstrologerReviews() {
   const [search, setSearch] = useState("");
 
-  const [page, setPage] = useState(1);
+const [page, setPage] = useState(1);
+
+const limit = 10;
+const rating = 3; // optional filter
 
   const [replyInputs, setReplyInputs] =
     useState({});
 
-  const limit = 10;
+
 
   // GET REVIEWS
-  const {
-    data,
-    loading,
-    refetch,
-  } = useQuery(
-    GET_ASTROLOGER_REVIEWS,
-    {
-      variables: {
-        page,
-        limit,
-      },
-
-      fetchPolicy: "network-only",
-    }
-  );
+const {
+  data,
+  loading,
+  refetch,
+} = useQuery(
+  GET_ASTROLOGER_REVIEWS,
+  {
+    variables: {
+      page,
+      limit,
+      rating,
+    },
+    fetchPolicy: "network-only",
+  }
+);
 
   // REPLY MUTATION
   const [replyToReview, { loading: replying }] =
     useMutation(REPLY_TO_REVIEW);
 
-  const reviews =
-    data?.getAstrologerReviews;
+const reviewsData =
+  data?.getAstrologerReviews;
+
+const reviews =
+  reviewsData?.data || [];
 
   // SEARCH FILTER
-  const filteredReviews = useMemo(() => {
-    if (!reviews?.data) return [];
+const filteredReviews = useMemo(() => {
+  if (!reviews.length) return [];
 
-    return reviews.data.filter(
-      (item) => {
-        const searchValue =
-          search.toLowerCase();
+  return reviews.filter((item) => {
+    const searchValue =
+      search.toLowerCase();
 
-        return (
-          item?.userName
-            ?.toLowerCase()
-            .includes(
-              searchValue
-            ) ||
-          item?.comment
-            ?.toLowerCase()
-            .includes(
-              searchValue
-            )
-        );
-      }
+    return (
+      item?.sessionType
+        ?.toLowerCase()
+        ?.includes(searchValue) ||
+      item?.sessionStatus
+        ?.toLowerCase()
+        ?.includes(searchValue) ||
+      item?.comment
+        ?.toLowerCase()
+        ?.includes(searchValue)
     );
-  }, [reviews, search]);
+  });
+}, [reviews, search]);
 
   // HANDLE REPLY
   const handleReply = async (
@@ -194,7 +205,7 @@ export default function AstrologerReviews() {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         {/* TOTAL */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
           <div className="flex items-center justify-between">
@@ -206,8 +217,7 @@ export default function AstrologerReviews() {
           </div>
 
           <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
-            {reviews?.totalCount ||
-              0}
+         {reviewsData?.totalCount || 0}
           </h2>
         </div>
 
@@ -247,9 +257,9 @@ export default function AstrologerReviews() {
             <CalendarDays className="w-5 h-5 text-purple-500" />
           </div>
 
-          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
-            {page}
-          </h2>
+       <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+  {reviewsData?.currentPage || 1}
+</h2>
         </div>
       </div>
 
@@ -261,7 +271,7 @@ export default function AstrologerReviews() {
       ) : (
         <>
           {/* CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {filteredReviews.length >
             0 ? (
               filteredReviews.map(
@@ -273,17 +283,23 @@ export default function AstrologerReviews() {
                     {/* TOP */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-semibold text-[#4b1d74] text-lg">
-                          {
-                            review.userName
-                          }
-                        </h3>
+                    <h3 className="font-semibold text-[#4b1d74] text-lg">
+  {review.sessionType}
+</h3>
 
-                        <p className="text-sm text-gray-500 mt-1">
-                          {new Date(
-                            review.createdAt
-                          ).toLocaleString()}
-                        </p>
+<p className="text-xs text-gray-500 mt-1">
+  Session ID: {review.sessionId}
+</p>
+
+<p className="text-xs text-gray-500">
+  Status: {review.sessionStatus}
+</p>
+
+<p className="text-sm text-gray-500 mt-2">
+  {new Date(
+    review.createdAt
+  ).toLocaleString()}
+</p>
                       </div>
 
                       {/* STARS */}
@@ -382,38 +398,39 @@ export default function AstrologerReviews() {
           </div>
 
           {/* PAGINATION */}
-          <div className="flex items-center justify-between mt-10 bg-white border border-purple-100 rounded-2xl p-4">
-            <p className="text-sm text-gray-500">
-              Page {page}
-            </p>
+       <div className="flex items-center justify-between mt-10 bg-white border border-purple-100 rounded-2xl p-4">
+  <p className="text-sm text-gray-500">
+    Page {reviewsData?.currentPage || 1} of{" "}
+    {reviewsData?.totalPages || 1}
+  </p>
 
-            <div className="flex items-center gap-3">
-              <button
-                disabled={page === 1}
-                onClick={() =>
-                  setPage(
-                    (prev) =>
-                      prev - 1
-                  )
-                }
-                className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
-              >
-                Previous
-              </button>
+  <div className="flex items-center gap-3">
+    <button
+      disabled={
+        page <= 1
+      }
+      onClick={() =>
+        setPage((prev) => prev - 1)
+      }
+      className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
+    >
+      Previous
+    </button>
 
-              <button
-                onClick={() =>
-                  setPage(
-                    (prev) =>
-                      prev + 1
-                  )
-                }
-                className="px-4 py-2 bg-[#6d35a3] text-white rounded-xl hover:bg-[#572987]"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+    <button
+      disabled={
+        page >=
+        (reviewsData?.totalPages || 1)
+      }
+      onClick={() =>
+        setPage((prev) => prev + 1)
+      }
+      className="px-4 py-2 bg-[#6d35a3] text-white rounded-xl hover:bg-[#572987] disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </>
       )}
     </div>

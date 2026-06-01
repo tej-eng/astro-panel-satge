@@ -7,10 +7,10 @@ import {
   Search,
   MessageCircle,
   Clock3,
-  Coins,
-  IndianRupee,
-  Phone,
   CalendarDays,
+  Star,
+  Eye,
+  FileText,
 } from "lucide-react";
 import SessionMessagesModal from "./sessionmodal";
 
@@ -24,20 +24,14 @@ const GET_ASTROLOGER_CHAT_HISTORY = gql`
 
       data {
         sessionId
-        roomId
         userName
-        userMobile
-        userCountryCode
-        startedAt
-        endedAt
-        createdAt
+        birthPlace
+        rating
+        reviewComment
         status
-        durationSec
         durationMinutes
-        ratePerMin
         coinsEarned
-        commission
-        lastMessage
+        createdAt
       }
     }
   }
@@ -73,12 +67,10 @@ export default function AstrologerChatHistory() {
     return chatHistory.data.filter((item) => {
       const searchValue = search.toLowerCase();
 
-      const matchesSearch =
-        item?.userName?.toLowerCase().includes(searchValue) ||
-        item?.sessionId?.toLowerCase().includes(searchValue) ||
-        item?.roomId?.toLowerCase().includes(searchValue) ||
-        item?.userMobile?.includes(searchValue) ||
-        item?.lastMessage?.toLowerCase().includes(searchValue);
+   const matchesSearch =
+  item?.userName?.toLowerCase().includes(searchValue) ||
+  item?.sessionId?.toLowerCase().includes(searchValue) ||
+  item?.birthPlace?.toLowerCase().includes(searchValue);
 
       const matchesStatus =
         statusFilter === "ALL" || item?.status === statusFilter;
@@ -90,6 +82,20 @@ export default function AstrologerChatHistory() {
   if (error) {
     return <div className="p-6 text-red-500">Error loading chat history</div>;
   }
+
+  const renderStars = (rating = 0) => {
+  return Array.from({ length: 5 }, (_, index) => (
+    <Star
+      key={index}
+      size={16}
+      className={
+        index < rating
+          ? "fill-yellow-400 text-yellow-400"
+          : "fill-gray-200 text-gray-200"
+      }
+    />
+  ));
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -182,188 +188,169 @@ export default function AstrologerChatHistory() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1400px]">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  User
-                </th>
+     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+  {loading ? (
+    <div className="col-span-full text-center py-10">
+      Loading chat history...
+    </div>
+  ) : filteredChats.length > 0 ? (
+    filteredChats.map((chat) => (
+      <div
+        key={chat.sessionId}
+        className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
+      >
+        <div className="p-5">
+          {/* TOP */}
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Session
-                </th>
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <p className="text-sm">
+                <span className="font-bold text-purple-700">
+                  Order ID :
+                </span>{" "}
+                <span className="text-gray-600">
+                  {chat.sessionId.slice(0, 12)}
+                </span>
+              </p>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Status
-                </th>
+              <p className="mt-1">
+                <span className="font-bold text-purple-700">
+                  Name :
+                </span>{" "}
+                <span className="text-gray-700">
+                  {chat.userName}
+                </span>
+              </p>
+            </div>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Duration
-                </th>
+            <Eye
+              size={18}
+              className="text-gray-400"
+            />
+          </div>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Rate/Min
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Coins
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Commission
-                </th>
-
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Action
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-10 text-gray-500">
-                    Loading chat history...
-                  </td>
-                </tr>
-              ) : filteredChats.length > 0 ? (
-                filteredChats.map((chat) => (
-                  <tr
-                    key={chat.sessionId}
-                    className="border-t hover:bg-gray-50 transition"
-                  >
-                    {/* USER */}
-                    <td className="p-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">
-                          {chat.userName}
-                        </h3>
-
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                          <Phone className="w-3 h-3" />
-
-                          <span>
-                            {chat.userCountryCode} {chat.userMobile}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* SESSION */}
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-700">
-                          {chat.sessionId}
-                        </p>
-
-                        <p className="text-xs text-gray-500">{chat.roomId}</p>
-                      </div>
-                    </td>
-
-                    {/* STATUS */}
-                    <td className="p-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          chat.status === "COMPLETED"
-                            ? "bg-green-100 text-green-700"
-                            : chat.status === "ONGOING"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {chat.status}
-                      </span>
-                    </td>
-
-                    {/* DURATION */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 text-gray-700">
-                        <Clock3 className="w-4 h-4" />
-
-                        <span>{chat.durationMinutes} min</span>
-                      </div>
-                    </td>
-
-                    {/* RATE */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 font-medium text-gray-800">
-                        <IndianRupee className="w-4 h-4" />
-
-                        {chat.ratePerMin}
-                      </div>
-                    </td>
-
-                    {/* COINS */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 text-yellow-600 font-semibold">
-                        <Coins className="w-4 h-4" />
-
-                        {chat.coinsEarned}
-                      </div>
-                    </td>
-
-                    {/* COMMISSION */}
-                    <td className="p-4 font-semibold text-red-500">
-                      ₹{chat.commission}
-                    </td>
-
-                    <td className="p-4 font-semibold text-red-500">
-                      <button
-                        onClick={() => {
-                          setSelectedSession(chat.sessionId);
-
-                          setOpenModal(true);
-                        }}
-                      >
-                        View Chat
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={10} className="text-center py-10 text-gray-500">
-                    No chat history found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <SessionMessagesModal
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-          sessionId={selectedSession}
-        />
-
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between p-4 border-t bg-gray-50">
-          <p className="text-sm text-gray-500">
-            Page {chatHistory?.currentPage || 1} of{" "}
-            {chatHistory?.totalPages || 1}
+          <p className="text-sm mb-1">
+            <span className="font-bold text-purple-700">
+              Date :
+            </span>{" "}
+            {new Date(chat.createdAt).toLocaleString()}
           </p>
 
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
+          <p className="text-sm mb-1">
+            <span className="font-bold text-purple-700">
+              Birth Place :
+            </span>{" "}
+            {chat.birthPlace || "-"}
+          </p>
+
+          <p className="text-sm mb-1">
+            <span className="font-bold text-purple-700">
+              Earning :
+            </span>{" "}
+            ₹ {chat.coinsEarned}
+          </p>
+
+          <p className="text-sm mb-1">
+            <span className="font-bold text-purple-700">
+              Duration :
+            </span>{" "}
+            {chat.durationMinutes} min
+          </p>
+
+          <div className="flex justify-between items-center mt-3">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-purple-700">
+                Rating:
+              </span>
+
+              {renderStars(chat.rating)}
+            </div>
+
+            <span
+              className={`font-semibold ${
+                chat.status === "COMPLETED"
+                  ? "text-green-500"
+                  : "text-orange-500"
+              }`}
             >
-              Previous
+              {chat.status}
+            </span>
+          </div>
+
+          {/* REVIEW */}
+
+          <div className="mt-5 bg-purple-50 border border-purple-100 rounded-xl p-4 min-h-[90px]">
+            <p className="font-bold text-purple-700 mb-2">
+              Review :
+            </p>
+
+            <p className="text-sm text-gray-600">
+              {chat.reviewComment ||
+                "No review available."}
+            </p>
+          </div>
+
+          {/* BUTTONS */}
+
+          <div className="grid grid-cols-2 gap-3 mt-5">
+            <button
+              onClick={() => {
+                setSelectedSession(chat.sessionId);
+                setOpenModal(true);
+              }}
+              className="border border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
+            >
+              <Eye size={16} />
+              View Chat
             </button>
 
             <button
-              disabled={page === chatHistory?.totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-4 py-2 border rounded-xl disabled:opacity-50 hover:bg-gray-100"
+              className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700"
             >
-              Next
+              <FileText size={16} />
+              Open Kundli
             </button>
           </div>
         </div>
       </div>
+    ))
+  ) : (
+    <div className="col-span-full text-center py-10 text-gray-500">
+      No chat history found
+    </div>
+  )}
+</div>
+
+<SessionMessagesModal
+  open={openModal}
+  onClose={() => setOpenModal(false)}
+  sessionId={selectedSession}
+/>
+
+<div className="flex items-center justify-between mt-8">
+  <p className="text-sm text-gray-500">
+    Page {chatHistory?.currentPage || 1} of{" "}
+    {chatHistory?.totalPages || 1}
+  </p>
+
+  <div className="flex gap-2">
+    <button
+      disabled={page === 1}
+      onClick={() => setPage((prev) => prev - 1)}
+      className="px-4 py-2 border rounded-xl disabled:opacity-50"
+    >
+      Previous
+    </button>
+
+    <button
+      disabled={page === chatHistory?.totalPages}
+      onClick={() => setPage((prev) => prev + 1)}
+      className="px-4 py-2 border rounded-xl disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+</div>
     </div>
   );
 }
