@@ -10,8 +10,7 @@ export default function ProfilUI() {
 
   const profileData = data?.profileData || {};
   const imageUrl = `https://webdemonew.dhwaniastro.co.in/${profileData?.image_path}${profileData?.image}`;
-  return (
-   
+  return (   
       
       <div className={`${styles["profile-page"]} flex`}>
         <div className={`${styles["pr-top"]} flex`}>
