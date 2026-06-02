@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import {
   Search,
   MessageCircle,
@@ -11,8 +11,11 @@ import {
   Star,
   Eye,
   FileText,
+  Activity,
 } from "lucide-react";
 import SessionMessagesModal from "./sessionmodal";
+import { GET_REMEDIES, SEND_REMEDY } from "@/app/utils/panelQueries";
+import { toast } from "react-toastify";
 
 const GET_ASTROLOGER_CHAT_HISTORY = gql`
   query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
@@ -41,8 +44,18 @@ export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [openModal, setOpenModal] = useState(false);
-
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [remedyText, setRemedyText] = useState("");
+
+  const [selectedRemedy, setSelectedRemedy] = useState(null);
+
+  const { data: remediesData, loading: remediesLoading } =
+    useQuery(GET_REMEDIES);
+
+  const [sendRemedyMutation] = useMutation(SEND_REMEDY);
 
   const [page, setPage] = useState(1);
 
@@ -67,10 +80,10 @@ export default function AstrologerChatHistory() {
     return chatHistory.data.filter((item) => {
       const searchValue = search.toLowerCase();
 
-   const matchesSearch =
-  item?.userName?.toLowerCase().includes(searchValue) ||
-  item?.sessionId?.toLowerCase().includes(searchValue) ||
-  item?.birthPlace?.toLowerCase().includes(searchValue);
+      const matchesSearch =
+        item?.userName?.toLowerCase().includes(searchValue) ||
+        item?.sessionId?.toLowerCase().includes(searchValue) ||
+        item?.birthPlace?.toLowerCase().includes(searchValue);
 
       const matchesStatus =
         statusFilter === "ALL" || item?.status === statusFilter;
@@ -82,20 +95,60 @@ export default function AstrologerChatHistory() {
   if (error) {
     return <div className="p-6 text-red-500">Error loading chat history</div>;
   }
+const handleSubmitRemedy = async () => {
+  const finalRemedy =
+    remedyText?.trim() ||
+    selectedRemedy?.description;
+
+  if (!finalRemedy) {
+    toast.error(
+      "Please enter or select a remedy"
+    );
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const { data } = await sendRemedyMutation({
+      variables: {
+        sessionId: selectedOrderId,
+        remedyText: finalRemedy,
+      },
+    });
+
+    if (data?.sendRemedy?.success) {
+      toast.success(
+        data.sendRemedy.message
+      );
+
+      setShowModal(false);
+      setRemedyText("");
+      setSelectedRemedy(null);
+    }
+  } catch (error) {
+    toast.error(
+      error?.message ||
+        "Something went wrong"
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const renderStars = (rating = 0) => {
-  return Array.from({ length: 5 }, (_, index) => (
-    <Star
-      key={index}
-      size={16}
-      className={
-        index < rating
-          ? "fill-yellow-400 text-yellow-400"
-          : "fill-gray-200 text-gray-200"
-      }
-    />
-  ));
-};
+    return Array.from({ length: 5 }, (_, index) => (
+      <Star
+        key={index}
+        size={16}
+        className={
+          index < rating
+            ? "fill-yellow-400 text-yellow-400"
+            : "fill-gray-200 text-gray-200"
+        }
+      />
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -188,169 +241,243 @@ export default function AstrologerChatHistory() {
       </div>
 
       {/* TABLE */}
-     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-  {loading ? (
-    <div className="col-span-full text-center py-10">
-      Loading chat history...
-    </div>
-  ) : filteredChats.length > 0 ? (
-    filteredChats.map((chat) => (
-      <div
-        key={chat.sessionId}
-        className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
-      >
-        <div className="p-5">
-          {/* TOP */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full text-center py-10">
+            Loading chat history...
+          </div>
+        ) : filteredChats.length > 0 ? (
+          filteredChats.map((chat) => (
+            <div
+              key={chat.sessionId}
+              className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
+            >
+              <div className="p-5">
+                {/* TOP */}
 
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <p className="text-sm">
-                <span className="font-bold text-purple-700">
-                  Order ID :
-                </span>{" "}
-                <span className="text-gray-600">
-                  {chat.sessionId.slice(0, 12)}
-                </span>
-              </p>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm">
+                      <span className="font-bold text-purple-700">
+                        Order ID :
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {chat.sessionId.slice(0, 12)}
+                      </span>
+                    </p>
 
-              <p className="mt-1">
-                <span className="font-bold text-purple-700">
-                  Name :
-                </span>{" "}
-                <span className="text-gray-700">
-                  {chat.userName}
-                </span>
-              </p>
+                    <p className="mt-1">
+                      <span className="font-bold text-purple-700">Name :</span>{" "}
+                      <span className="text-gray-700">{chat.userName}</span>
+                    </p>
+                  </div>
+
+                  <Eye size={18} className="text-gray-400" />
+                </div>
+
+                <p className="text-sm mb-1">
+                  <span className="font-bold text-purple-700">Date :</span>{" "}
+                  {new Date(chat.createdAt).toLocaleString()}
+                </p>
+
+                <p className="text-sm mb-1">
+                  <span className="font-bold text-purple-700">
+                    Birth Place :
+                  </span>{" "}
+                  {chat.birthPlace || "-"}
+                </p>
+
+                <p className="text-sm mb-1">
+                  <span className="font-bold text-purple-700">Earning :</span> ₹{" "}
+                  {chat.coinsEarned}
+                </p>
+
+                <p className="text-sm mb-1">
+                  <span className="font-bold text-purple-700">Duration :</span>{" "}
+                  {chat.durationMinutes} min
+                </p>
+
+                <div className="flex justify-between items-center mt-3">
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-purple-700">Rating:</span>
+
+                    {renderStars(chat.rating)}
+                  </div>
+
+                  <span
+                    className={`font-semibold ${
+                      chat.status === "COMPLETED"
+                        ? "text-green-500"
+                        : "text-orange-500"
+                    }`}
+                  >
+                    {chat.status}
+                  </span>
+                </div>
+
+                {/* REVIEW */}
+
+                <div className="mt-5 bg-purple-50 border border-purple-100 rounded-xl p-4 min-h-[90px]">
+                  <p className="font-bold text-purple-700 mb-2">Review :</p>
+
+                  <p className="text-sm text-gray-600">
+                    {chat.reviewComment || "No review available."}
+                  </p>
+                </div>
+
+                {/* BUTTONS */}
+
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  {chat.status === "COMPLETED" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setSelectedOrderId(chat.sessionId);
+                          setShowModal(true);
+                        }}
+                        className=" flex items-center justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700 rounded-md hover:bg-purple-50 transition 
+                               "
+                      >
+                        <Activity className="w-4 h-4" />
+                        Suggest Remedy
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSession(chat.sessionId);
+                          setOpenModal(true);
+                        }}
+                        className="border border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
+                      >
+                        <Eye size={16} />
+                        View Chat
+                      </button>
+                    </>
+                  )}
+
+                  <button className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700">
+                    <FileText size={16} />
+                    Open Kundli
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10 text-gray-500">
+            No chat history found
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-[#0000009a] bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="text-[1rem] justify-self-center font-semibold mb-4">
+              Suggest Remedy for Order ID:
+              {selectedOrderId}
             </div>
 
-            <Eye
-              size={18}
-              className="text-gray-400"
-            />
-          </div>
+            <div className="mb-4">
+              <h4 className="font-medium mb-2">Select Existing Remedy</h4>
 
-          <p className="text-sm mb-1">
-            <span className="font-bold text-purple-700">
-              Date :
-            </span>{" "}
-            {new Date(chat.createdAt).toLocaleString()}
-          </p>
+              {remediesLoading ? (
+                <p>Loading remedies...</p>
+              ) : (
+                <div className="max-h-[200px] overflow-y-auto border rounded">
+                  {remediesData?.getRemedies?.data
+                    ?.filter((item) => item.isActive)
+                    ?.map((remedy) => (
+                      <div
+                        key={remedy.id}
+                        onClick={() => {
+                          setSelectedRemedy(remedy);
+                          setRemedyText(remedy.description);
+                        }}
+                        className={`p-3 border-b cursor-pointer hover:bg-gray-100 ${
+                          selectedRemedy?.id === remedy.id
+                            ? "bg-indigo-100"
+                            : ""
+                        }`}
+                      >
+                        <div className="font-medium">{remedy.title}</div>
 
-          <p className="text-sm mb-1">
-            <span className="font-bold text-purple-700">
-              Birth Place :
-            </span>{" "}
-            {chat.birthPlace || "-"}
-          </p>
-
-          <p className="text-sm mb-1">
-            <span className="font-bold text-purple-700">
-              Earning :
-            </span>{" "}
-            ₹ {chat.coinsEarned}
-          </p>
-
-          <p className="text-sm mb-1">
-            <span className="font-bold text-purple-700">
-              Duration :
-            </span>{" "}
-            {chat.durationMinutes} min
-          </p>
-
-          <div className="flex justify-between items-center mt-3">
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-purple-700">
-                Rating:
-              </span>
-
-              {renderStars(chat.rating)}
+                        <div className="text-sm text-gray-600">
+                          {remedy.description}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
 
-            <span
-              className={`font-semibold ${
-                chat.status === "COMPLETED"
-                  ? "text-green-500"
-                  : "text-orange-500"
-              }`}
-            >
-              {chat.status}
-            </span>
-          </div>
+            <div className="mb-4">
+              <label className="font-medium block mb-2">
+                Or Write New Remedy
+              </label>
 
-          {/* REVIEW */}
+              <textarea
+                disabled={submitting}
+                className="w-full border p-2 rounded"
+                rows={4}
+                placeholder="Enter remedy..."
+                value={remedyText}
+                onChange={(e) => setRemedyText(e.target.value)}
+              />
+            </div>
 
-          <div className="mt-5 bg-purple-50 border border-purple-100 rounded-xl p-4 min-h-[90px]">
-            <p className="font-bold text-purple-700 mb-2">
-              Review :
-            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setRemedyText("");
+                  setSelectedRemedy(null);
+                }}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
 
-            <p className="text-sm text-gray-600">
-              {chat.reviewComment ||
-                "No review available."}
-            </p>
-          </div>
-
-          {/* BUTTONS */}
-
-          <div className="grid grid-cols-2 gap-3 mt-5">
-            <button
-              onClick={() => {
-                setSelectedSession(chat.sessionId);
-                setOpenModal(true);
-              }}
-              className="border border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
-            >
-              <Eye size={16} />
-              View Chat
-            </button>
-
-            <button
-              className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700"
-            >
-              <FileText size={16} />
-              Open Kundli
-            </button>
+              <button
+                onClick={handleSubmitRemedy}
+                disabled={submitting}
+                className="bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                {submitting ? "Submitting..." : "Send Remedy"}
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      <SessionMessagesModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        sessionId={selectedSession}
+      />
+
+      <div className="flex items-center justify-between mt-8">
+        <p className="text-sm text-gray-500">
+          Page {chatHistory?.currentPage || 1} of {chatHistory?.totalPages || 1}
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((prev) => prev - 1)}
+            className="px-4 py-2 border rounded-xl disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <button
+            disabled={page === chatHistory?.totalPages}
+            onClick={() => setPage((prev) => prev + 1)}
+            className="px-4 py-2 border rounded-xl disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
-    ))
-  ) : (
-    <div className="col-span-full text-center py-10 text-gray-500">
-      No chat history found
-    </div>
-  )}
-</div>
-
-<SessionMessagesModal
-  open={openModal}
-  onClose={() => setOpenModal(false)}
-  sessionId={selectedSession}
-/>
-
-<div className="flex items-center justify-between mt-8">
-  <p className="text-sm text-gray-500">
-    Page {chatHistory?.currentPage || 1} of{" "}
-    {chatHistory?.totalPages || 1}
-  </p>
-
-  <div className="flex gap-2">
-    <button
-      disabled={page === 1}
-      onClick={() => setPage((prev) => prev - 1)}
-      className="px-4 py-2 border rounded-xl disabled:opacity-50"
-    >
-      Previous
-    </button>
-
-    <button
-      disabled={page === chatHistory?.totalPages}
-      onClick={() => setPage((prev) => prev + 1)}
-      className="px-4 py-2 border rounded-xl disabled:opacity-50"
-    >
-      Next
-    </button>
-  </div>
-</div>
     </div>
   );
 }

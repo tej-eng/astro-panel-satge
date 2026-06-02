@@ -320,7 +320,7 @@ const ChatHistoryCard = () => {
                     }}
                     className=" flex items-center justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700 rounded-md hover:bg-purple-50 transition 
                    "
-                  >
+                   >
                     <Activity className="w-4 h-4" />
                     Suggest Remedy
                   </button>

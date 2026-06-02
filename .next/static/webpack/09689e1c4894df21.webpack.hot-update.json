@@ -1,0 +1,1 @@
+{"c":["app/layout","app/dashboard/[...slug]/page","webpack"],"r":[],"m":["(app-pages-browser)/./node_modules/dayjs/dayjs.min.js","(app-pages-browser)/./node_modules/dayjs/plugin/timezone.js","(app-pages-browser)/./node_modules/dayjs/plugin/utc.js","(app-pages-browser)/./src/app/UI/features/Remedies/remdies.module.css"]}
