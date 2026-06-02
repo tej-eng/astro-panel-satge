@@ -16,6 +16,7 @@ import {
 import SessionMessagesModal from "./sessionmodal";
 import { GET_REMEDIES, SEND_REMEDY } from "@/app/utils/panelQueries";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const GET_ASTROLOGER_CHAT_HISTORY = gql`
   query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
@@ -60,6 +61,11 @@ export default function AstrologerChatHistory() {
   const [page, setPage] = useState(1);
 
   const limit = 10;
+  const router = useRouter();
+
+    const getKundli = (orderId) => {
+    router.push(`/dashboard/chathistory/kundli/${orderId}`);
+  };
 
   // APOLLO QUERY
   const { data, loading, error } = useQuery(GET_ASTROLOGER_CHAT_HISTORY, {
@@ -354,7 +360,8 @@ const handleSubmitRemedy = async () => {
                     </>
                   )}
 
-                  <button className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700">
+                  <button  onClick={() => getKundli(chat.sessionId)}
+                   className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700">
                     <FileText size={16} />
                     Open Kundli
                   </button>
