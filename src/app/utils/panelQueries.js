@@ -10,6 +10,7 @@ export const GET_OFFERS = gql`
         offerName
         price
         description
+        selected
         isActive
         createdAt
         updatedAt

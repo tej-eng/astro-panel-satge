@@ -1006,9 +1006,6 @@
   .gap-\[1rem\] {
     gap: 1rem;
   }
-  .gap-\[3rem\] {
-    gap: 3rem;
-  }
   .gap-\[10px\] {
     gap: 10px;
   }
@@ -1117,9 +1114,6 @@
   }
   .overflow-x-auto {
     overflow-x: auto;
-  }
-  .overflow-x-hidden {
-    overflow-x: hidden;
   }
   .overflow-y-auto {
     overflow-y: auto;
@@ -2950,11 +2944,6 @@
   .md\:justify-end {
     @media (width >= 48rem) {
       justify-content: flex-end;
-    }
-  }
-  .md\:justify-start {
-    @media (width >= 48rem) {
-      justify-content: flex-start;
     }
   }
   .md\:gap-2 {

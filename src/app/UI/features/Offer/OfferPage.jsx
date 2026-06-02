@@ -6,64 +6,72 @@ import { toast } from "react-toastify";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_OFFERS, UPDATE_OFFER_STATUS } from "@/app/utils/panelQueries";
 
-
-
 const Offers = () => {
   const { data, loading, refetch } = useQuery(GET_OFFERS, {
     fetchPolicy: "network-only",
   });
 
-  const [updateOfferStatus] = useMutation(
-    UPDATE_OFFER_STATUS
-  );
+  const [updateOfferStatus] = useMutation(UPDATE_OFFER_STATUS);
 
-  const offers =
-    data?.getOffers?.data || [];
+  const offers = data?.getOffers?.data || [];
 
-  const handleToggle = async (
-    offerId,
-    currentStatus
-  ) => {
+  const handleToggle = async (offerId, currentStatus) => {
     try {
-      const { data } =
-        await updateOfferStatus({
+      // OFF kar raha hai
+      if (currentStatus) {
+        const { data } = await updateOfferStatus({
           variables: {
             offerId,
-            isActive: !currentStatus,
+            selected: false,
+             isActive: false,
           },
         });
 
+        toast.success(
+          data?.updateOfferStatus?.message || "Offer deactivated successfully",
+        );
+
+        refetch();
+        return;
+      }
+
+      // ON karne ki koshish kar raha hai
+      const activeOffer = offers.find(
+        (offer) => offer.selected && offer.id !== offerId,
+      );
+
+      if (activeOffer) {
+        toast.warning("Please deactivate the currently active offer first.");
+        return;
+      }
+
+      const { data } = await updateOfferStatus({
+        variables: {
+          offerId,
+          selected: true,
+          isActive: true,
+        },
+      });
+
       toast.success(
-        data?.updateOfferStatus?.message ||
-          "Offer updated successfully"
+        data?.updateOfferStatus?.message || "Offer activated successfully",
       );
 
       refetch();
     } catch (error) {
-      toast.error(
-        error?.message ||
-          "Failed to update offer"
-      );
+      toast.error(error?.message || "Failed to update offer");
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-10">
-        Loading offers...
-      </div>
-    );
+    return <div className="flex justify-center py-10">Loading offers...</div>;
   }
 
   return (
     <div
       className={`${styles["card-panel-permi"]} flex items-center justify-center flex-col gap-4`}
     >
-      <h2
-        className={`${styles["wallet-head"]} text-center py-5`}
-      >
-        Offers
-      </h2>
+      <h2 className={`${styles["wallet-head"]} text-center py-5`}>Offers</h2>
 
       <div className="w-full">
         <hr />
@@ -71,9 +79,7 @@ const Offers = () => {
         <div
           className={`${styles["tab-content"]} ${styles["b-feed-user"]} pt-3`}
         >
-          <div
-            className={`${styles["tab-pane"]} fade show active`}
-          >
+          <div className={`${styles["tab-pane"]} fade show active`}>
             <div
               className={`${styles["astro-main-ser"]} flex flex-wrap gap-5 justify-center md:justify-between`}
             >
@@ -126,12 +132,9 @@ const Offers = () => {
 
                       <div className="form-check form-switch ml-3">
                         <AntSwitch
-                          checked={offer.isActive}
+                          checked={offer.selected}
                           onChange={() =>
-                            handleToggle(
-                              offer.id,
-                              offer.isActive
-                            )
+                            handleToggle(offer.id, offer.selected)
                           }
                         />
                       </div>
@@ -141,9 +144,7 @@ const Offers = () => {
               ))}
 
               {offers.length === 0 && (
-                <div className="text-center py-10">
-                  No offers found.
-                </div>
+                <div className="text-center py-10">No offers found.</div>
               )}
             </div>
           </div>
