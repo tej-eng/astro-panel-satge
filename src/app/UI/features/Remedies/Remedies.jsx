@@ -1,101 +1,203 @@
-"use client"
-import { useGetRemedyApiQuery } from '@/app/redux/slice/remedySlice';
-import styles from '@/app/UI/features/Remedies/remdies.module.css'
-import React, { useState} from 'react';
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import BasicPagination from "../../PaginationUI/Pagination";
-import useFilteredSearch from "@/hooks/useFilteredSearch";
+"use client";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { useState } from "react";
+import { GET_SESSION_REMEDIES } from "@/app/utils/panelQueries";
+import { useQuery } from "@apollo/client/react";
 
-const Remedy = () => {
-   const [page, setPage] = useState(1);
-  const { data, error, isLoading , isFetching } = useGetRemedyApiQuery({ page });
+const Remedies = () => {
+  const [page, setPage] = useState(1);
 
-  const massege = data?.message || [];
-  const filteredData = useFilteredSearch(massege, [
-    "updated_at",
-    "type",
-    "order_id",
-  ]);
-  
-  const sortedData = filteredData?.slice().sort((a, b) => {
-    return new Date(b.updated_at) - new Date(a.updated_at);
+  const [filters, setFilters] = useState({
+    sessionId: "",
+    startDate: "",
+    endDate: "",
   });
-  
-  
- 
-  
- 
-  const pagination = data?.pagination || {};
-  if (isLoading) return <p>Loading Remedy...</p>;
-  if (error) return <p>Error fetching Remedy data.</p>;
-  if (!data) return <p>API Response is undefined</p>;
-  if (!sortedData || sortedData.length === 0) return <p>No Remedy Data Found</p>;
-// if (!filteredData) return <p>No Remedy Data Found</p>;
 
+  const { data, loading, refetch } = useQuery(
+    GET_SESSION_REMEDIES,
+    {
+      variables: {
+        filter: {
+          page,
+          limit: 10,
+          ...(filters.sessionId && {
+            sessionId: filters.sessionId,
+          }),
+          ...(filters.startDate && {
+            startDate: new Date(
+              filters.startDate
+            ).toISOString(),
+          }),
+          ...(filters.endDate && {
+            endDate: new Date(
+              filters.endDate
+            ).toISOString(),
+          }),
+        },
+      },
+      fetchPolicy: "network-only",
+    }
+  );
+
+  const remedies =
+    data?.getSessionRemedies?.data || [];
+
+  const totalPages =
+    data?.getSessionRemedies?.totalPages || 1;
+
+  const handleSearch = () => {
+    setPage(1);
+    refetch();
+  };
 
   return (
-    <div className={`${styles["calling-his"]} flex items-center flex-col gap-4 `}>
-      <h2 className={`${styles["wallet-head"]} text-center`}>Suggested Remedies</h2>
-
-      <div className={`${styles["store-his-box"]} flex gap-[3rem] justify-center md:justify-start flex-wrap py-5`}>
-        {sortedData?.map((remedy, index) => (
-                        
-          <div key={index} className={`${styles["card-rem"]} flex flex-col`}>
-            <div className={`${styles["call-top"]} flex items-start justify-between`}>
-              <div className={`${styles["cal-od-rem"]} flex items-start justify-between flex-col`}>
-                <span className={`${styles["store-top"]} flex items-center`}>
-                  <span className={`${styles["odr-sp"]} flex`}>Order ID:</span>
-                  <span className={styles["id-nm"]}>{remedy.order_id}</span>
-                </span>
-               
-              </div>
-            </div>
-            <hr style={{ margin: ".1rem" }} />
-
-            <div className={`${styles["call-card-det"]} flex items-start justify-between flex-col`}>
-              <div className={`${styles["cal-od-id"]} flex items-center justify-between`}>
-                <span className={styles["odr-sp"]}>Type:</span>
-                <span className={styles["id-nm"]}>{remedy.type}</span>
-              </div>
-              <div className={`${styles["cal-od-id"]} flex items-center justify-between`}>
-
-                <span className={styles["odr-sp"]}>{dayjs.utc(remedy.updated_at).tz("Asia/Kolkata").format("DD-MM-YYYY hh:mm A")}
-                </span>
-           
-              </div>
-              {/* <hr style={{ margin: ".1rem" }} /> */}
-              <div className={`${styles["card-rev"]} flex flex-col`}>
-                <span className={styles["rev-span"]}>
-                  <b>Description:</b>
-                </span>
-                <p className={`overflow-x-hidden  ${styles["rev-astro"]} ${styles["card-rev"]} mb-0`}>
-                {remedy.message}
-                </p>
-              </div>
-            </div>
-       
-          </div>
-        ))}
+    <div className="w-full p-5">
+      {/* Header */}
+      <div className="flex justify-center mb-6">
+        <h2 className="bg-purple-900 text-yellow-400 px-6 py-2 rounded-lg font-semibold">
+          Suggested Remedies
+        </h2>
       </div>
-      <BasicPagination
-        currentPage={pagination?.current_page || 1}
-        totalPages={pagination?.last_page || 1}
-        onPageChange={(newPage) => setPage(newPage)}
-        siblingCount={1}
-  boundaryCount={1}
-  showInfo={true}
-  isLoading={isFetching}
-      />
-      {isFetching && (
-        <div className="mt-2 text-sm text-gray-500">Loading Page...</div>
+
+      {/* Search Filters */}
+      <div className="bg-white rounded-lg shadow p-4 mb-8">
+        <div className="grid md:grid-cols-4 gap-4">
+          <input
+            type="text"
+            placeholder="Search Session ID"
+            value={filters.sessionId}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                sessionId: e.target.value,
+              }))
+            }
+            className="border p-2 rounded"
+          />
+
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                startDate: e.target.value,
+              }))
+            }
+            className="border p-2 rounded"
+          />
+
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                endDate: e.target.value,
+              }))
+            }
+            className="border p-2 rounded"
+          />
+
+          <button
+            onClick={handleSearch}
+            className="bg-indigo-600 text-white rounded px-4"
+          >
+            Search
+          </button>
+        </div>
+      </div>
+
+      {/* Loading */}
+      {loading ? (
+        <div className="text-center py-10">
+          Loading...
+        </div>
+      ) : (
+        <>
+          {/* Cards */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {remedies.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-lg shadow-md border p-4 min-h-[170px]"
+              >
+                <div className="text-sm text-gray-600">
+                  Order ID:
+                  <span className="ml-2 font-medium">
+                    {item.sessionId}
+                  </span>
+                </div>
+
+                <hr className="my-2" />
+
+                <div className="text-sm">
+                  <span className="font-semibold">
+                    Type:
+                  </span>{" "}
+                  {item.sessionType}
+                </div>
+
+                <div className="text-xs text-purple-600 mt-1">
+                  {new Date(
+                    item.createdAt
+                  ).toLocaleString()}
+                </div>
+
+                <div className="mt-3">
+                  <h4 className="font-semibold">
+                    Description:
+                  </h4>
+
+                  <p className="text-sm mt-1">
+                    {item.remedyText}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {remedies.length === 0 && (
+            <div className="text-center py-10">
+              No remedies found
+            </div>
+          )}
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-10">
+            <div className="bg-white shadow rounded-xl px-6 py-4 flex items-center gap-4">
+              <button
+                disabled={page === 1}
+                onClick={() =>
+                  setPage((prev) =>
+                    Math.max(prev - 1, 1)
+                  )
+                }
+                className="disabled:opacity-50"
+              >
+                ◀
+              </button>
+
+              <span>
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                disabled={page >= totalPages}
+                onClick={() =>
+                  setPage((prev) => prev + 1)
+                }
+                className="disabled:opacity-50"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 };
 
-export default Remedy;
+export default Remedies;
