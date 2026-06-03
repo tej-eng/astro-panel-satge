@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGetKundaliQuery } from "@/app/redux/slice/kundaliSlice";
 import FreeReportSection from "./FreeReport";
 import BasicDetails from "./BasicDetails";
 import Kundli from "./KundliTab";
 import Charts from "./Charts";
+import { GET_KUNDALI } from "@/app/utils/panelQueries";
+import { useQuery } from "@apollo/client/react";
+
+
 
 function PlanetsDetails({ planetsData }) {
   return (
@@ -48,17 +51,40 @@ function PlanetsDetails({ planetsData }) {
 }
 
 export default function KundaliPage({ orderId }) {
-  const { data, error, isLoading } = useGetKundaliQuery(orderId);
+  const { data, error, loading } = useQuery(GET_KUNDALI, {
+    variables: { requestSessionId: orderId }
+  });
   const [activeTab, setActiveTab] = useState("basic");
 
-  if (isLoading) return <div className="p-6">Loading…</div>;
-  if (error) return <div className="p-6 text-red-500">Error loading Kundali data.</div>;
+if (loading)
+  return <div className="p-6">Loading…</div>;
+  if (error) return <div className="p-6 text-red-500">Error loading Kundali dataaaaaaaaaaaaaaaa.</div>;
 
-  const {
-    request_session_id,
-    user_name = "",
-    data: kundaliData = {}
-  } = data || {};
+ const kundaliResponse =
+  data?.getKundali;
+
+const {
+  requestSessionId,
+  userName = "",
+  data: rawData,
+} = kundaliResponse || {};
+
+let kundaliData = {};
+
+console.log("GRAPHQL RESPONSE", data);
+console.log("RAW DATA", rawData);
+console.log("PARSED DATA", kundaliData);
+
+try {
+  kundaliData = rawData
+    ? JSON.parse(rawData)
+    : {};
+} catch (error) {
+  console.error(
+    "Kundali JSON parse error",
+    error
+  );
+}
 
   const {
     user_data = {},
@@ -83,7 +109,7 @@ export default function KundaliPage({ orderId }) {
         <BasicDetails
           birthData={{ ...BirthData, ...user_data }}
           avakhada={Avakhada}
-          user_name={user_name}
+          user_name={userName}
           postData={postData}
           signs={PlanetsData}
         />
@@ -124,8 +150,9 @@ export default function KundaliPage({ orderId }) {
     <div className="w-full mx-auto space-y-8">
       <header>
         <h2 className="wallet-head mx-auto text-center">Kundali Page</h2>
-        <p className="text-bold text-gray-900">Order ID: {request_session_id}</p>
-      </header>
+<p className="text-bold text-gray-900">
+  Order ID: {requestSessionId}
+</p>      </header>
 
       <div className="bg-[#2f1254] px-4 py-3 font-semibold rounded-lg">
         <ul className="grid md:grid-cols-5 grid-cols-3 justify-between gap-5">
