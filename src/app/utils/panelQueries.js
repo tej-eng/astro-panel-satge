@@ -84,3 +84,20 @@ export const GET_SESSION_REMEDIES = gql`
     }
   }
 `;
+
+export const GET_KUNDALI = gql`
+  query GetKundali(
+    $requestSessionId: String!
+  ) {
+    getKundali(
+      requestSessionId: $requestSessionId
+    ) {
+      status
+      userId
+      requestType
+      requestSessionId
+      userName
+      data
+    }
+  }
+`;

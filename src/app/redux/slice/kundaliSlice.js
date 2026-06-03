@@ -21,13 +21,13 @@ const baseQueryWithAuth = fetchBaseQuery({
     },
 });
 export const kundaliApi = createApi({
-  reducerPath: "kundaliApi",
-  baseQuery: baseQueryWithAuth,
-  endpoints: (builder) => ({
-    getKundali: builder.query({
-      query: (request_session_id) => `get-kundali?request_session_id=${request_session_id}`,
+    reducerPath: "kundaliApi",
+    baseQuery: baseQueryWithAuth,
+    endpoints: (builder) => ({
+        getKundali: builder.query({
+            query: (request_session_id) => `get-kundali?request_session_id=${request_session_id}`,
+        }),
     }),
-  }),
 });
 
 export const { useGetKundaliQuery } = kundaliApi;
