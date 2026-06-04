@@ -28,6 +28,7 @@ const GET_ASTROLOGER_CHAT_HISTORY = gql`
 
       data {
         sessionId
+        roomId
         userName
         birthPlace
         rating
@@ -63,8 +64,9 @@ export default function AstrologerChatHistory() {
   const limit = 10;
   const router = useRouter();
 
-    const getKundli = (orderId) => {
-    router.push(`/dashboard/chathistory/kundli/${orderId}`);
+    const getKundli = (roomId) => {
+      console.log("roomId in getKundli functionxxxxxxxxxxxxxxxxxxxxxx", roomId);
+    router.push(`/dashboard/chathistory/kundli/${roomId}`);
   };
 
   // APOLLO QUERY
@@ -268,7 +270,7 @@ const handleSubmitRemedy = async () => {
                         Order ID :
                       </span>{" "}
                       <span className="text-gray-600">
-                        {chat.sessionId.slice(0, 12)}
+                        {chat.sessionId}
                       </span>
                     </p>
 
@@ -360,7 +362,8 @@ const handleSubmitRemedy = async () => {
                     </>
                   )}
 
-                  <button  onClick={() => getKundli(chat.sessionId)}
+                  <button  onClick={() => getKundli(chat.roomId)}
+                  
                    className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700">
                     <FileText size={16} />
                     Open Kundli
