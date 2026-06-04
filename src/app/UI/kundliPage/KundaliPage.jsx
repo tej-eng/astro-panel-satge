@@ -83,7 +83,7 @@ export default function KundaliPage({ roomId }) {
   if (error)
     return (
       <div className="p-6 text-red-500">
-        Error loading Kundali dataaaaaaaaaaaaaaaa.
+        Error loading Kundali xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
       </div>
     );
 
