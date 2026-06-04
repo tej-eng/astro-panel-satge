@@ -90,8 +90,8 @@ export default function DashboardSection() {
   ComponentToRender = <CallNotes orderId={orderId} />;
 }
 else if (path.length === 3 && (path[0] === "callhistory" || path[0] === "chathistory") && path[1] === "kundli") {
-  const orderId = path[2];
-  ComponentToRender = <KundaliPage orderId={orderId} />;
+  const roomId = path[2];
+  ComponentToRender = <KundaliPage roomId={roomId} />;
 }
 else if (
   path.length === 4 &&
