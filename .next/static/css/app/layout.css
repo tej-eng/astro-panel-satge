@@ -1003,9 +1003,6 @@
   .gap-12 {
     gap: calc(var(--spacing) * 12);
   }
-  .gap-\[1rem\] {
-    gap: 1rem;
-  }
   .gap-\[10px\] {
     gap: 10px;
   }
@@ -2668,11 +2665,6 @@
       margin-bottom: calc(var(--spacing) * 4);
     }
   }
-  .sm\:grid {
-    @media (width >= 40rem) {
-      display: grid;
-    }
-  }
   .sm\:w-\[14rem\] {
     @media (width >= 40rem) {
       width: 14rem;
@@ -3190,11 +3182,6 @@
   .lg\:pt-\[4\.8rem\] {
     @media (width >= 64rem) {
       padding-top: 4.8rem;
-    }
-  }
-  .xl\:grid {
-    @media (width >= 80rem) {
-      display: grid;
     }
   }
   .xl\:grid-cols-3 {

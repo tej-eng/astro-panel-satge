@@ -101,3 +101,99 @@ export const GET_KUNDALI = gql`
     }
   }
 `;
+
+export const GET_ASTROLOGER_FOLLOWERS = gql`
+  query GetAstrologerFollowers(
+    $astrologerId: String!
+    $page: Int!
+    $limit: Int!
+  ) {
+    getAstrologerFollowers(
+      astrologerId: $astrologerId
+      page: $page
+      limit: $limit
+    ) {
+      followers {
+        id
+        userId
+        astrologerId
+        createdAt
+        
+        user {
+          id
+          name
+          mobile
+          
+          countryCode
+        }
+      }
+      total
+      page
+      limit
+      totalPages
+    }
+  }
+`;
+
+export const GET_ASTROLOGER_CALL_HISTORY = gql`
+  query GetAstrologerCallHistory(
+    $page: Int!
+    $limit: Int!
+    $status: SessionStatus
+  ) {
+    getAstrologerCallHistory(
+      filter: {
+        page: $page
+        limit: $limit
+        status: $status
+      }
+    ) {
+      success
+      totalCount
+      currentPage
+      totalPages
+
+      data {
+        sessionId
+        roomId
+        userName
+        userMobile
+        userCountryCode
+        startedAt
+        endedAt
+        createdAt
+        status
+        durationSec
+        durationMinutes
+        ratePerMin
+        coinsEarned
+        commission
+        lastMessage
+      }
+    }
+  }
+`;
+
+export const GET_ASTROLOGER_CHAT_HISTORY = gql`
+  query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
+    getAstrologerChatHistory(filter: { page: $page, limit: $limit }) {
+      success
+      totalCount
+      currentPage
+      totalPages
+
+      data {
+        sessionId
+        roomId
+        userName
+        birthPlace
+        rating
+        reviewComment
+        status
+        durationMinutes
+        coinsEarned
+        createdAt
+      }
+    }
+  }
+`;
