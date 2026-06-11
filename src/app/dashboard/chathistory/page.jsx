@@ -14,33 +14,11 @@ import {
   Activity,
 } from "lucide-react";
 import SessionMessagesModal from "./sessionmodal";
-import { GET_REMEDIES, SEND_REMEDY } from "@/app/utils/panelQueries";
+import { GET_ASTROLOGER_CHAT_HISTORY, GET_REMEDIES, SEND_REMEDY } from "@/app/utils/panelQueries";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
-const GET_ASTROLOGER_CHAT_HISTORY = gql`
-  query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
-    getAstrologerChatHistory(filter: { page: $page, limit: $limit }) {
-      success
-      totalCount
-      currentPage
-      totalPages
 
-      data {
-        sessionId
-        roomId
-        userName
-        birthPlace
-        rating
-        reviewComment
-        status
-        durationMinutes
-        coinsEarned
-        createdAt
-      }
-    }
-  }
-`;
 
 export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
