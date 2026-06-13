@@ -1,5 +1,5 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/upcomingFeatures/page": "app/dashboard/upcomingFeatures/page.js",
-  "/dashboard/callhistory/page": "app/dashboard/callhistory/page.js"
+  "/not-found": "app/not-found.js",
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }
