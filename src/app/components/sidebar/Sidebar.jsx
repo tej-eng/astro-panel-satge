@@ -48,6 +48,7 @@ const menuItems = [
   { href: "/dashboard/wallet", label: "Wallet", icon: <FaWallet /> },
   { href: "/dashboard/offer", label: "Offers", icon: <IoIosGift /> },
   { href: "/dashboard/remedy", label: "Remedies", icon: <GiRemedy /> },
+  { href: "/dashboard/services", label: "Services", icon: <FaMoneyCheck /> },
   // { href: "/dashboard/waitlist", label: "Wait List", icon: <MdHourglassTop /> },
   {
     href: "/dashboard/myreview",
