@@ -1,9 +1,39 @@
 "use client";
 
-import { GetAstrologerNotices } from "@/app/utils/panelQueries";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@apollo/client/react";
 
-export default function NoticeBoardPage() {
+import { GetAstrologerNotices } from "@/app/utils/panelQueries";
+import { useGetdosAndDontApiQuery } from "@/app/redux/slice/doesDont";
+
+const HomeMainCards = () => {
+  const router = useRouter();
+
+  const astroUser =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("astro_user") || "null")
+      : null;
+
+  const astrologerId = astroUser?.id;
+
+  const {
+    data: noticeData,
+    loading: isNoticeLoading,
+    error: noticeError,
+  } = useQuery(GetAstrologerNotices, {
+    variables: {
+      astrologerId,
+    },
+    skip: !astrologerId,
+    fetchPolicy: "network-only",
+  });
+
+  const {
+    data: dosDontData,
+    isLoading: isDosDontLoading,
+    error: dosDontError,
+  } = useGetdosAndDontApiQuery();
+
   const isToday = (dateString) => {
     const today = new Date();
     const date = new Date(dateString);
@@ -16,8 +46,6 @@ export default function NoticeBoardPage() {
   };
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return "-";
-
     const date = new Date(dateString);
 
     return date.toLocaleString("en-IN", {
@@ -26,170 +54,144 @@ export default function NoticeBoardPage() {
     });
   };
 
-  const { data, loading, error } = useQuery(
-    GetAstrologerNotices,
+  const notices = noticeData?.getAstrologerNotices || [];
+
+  const todayNotices = notices.filter((notice) => isToday(notice.createdAt));
+
+  const latestNotices = [...notices]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 3);
+
+  const cards = [
     {
-      fetchPolicy: "network-only",
-    }
-  );
+      title: "Notice Board",
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        Loading notices...
-      </div>
-    );
-  }
+      content: (
+        <>
+          {isNoticeLoading ? (
+            <p>Loading...</p>
+          ) : noticeError ? (
+            <p className="text-red-500">Failed to load notices.</p>
+          ) : notices.length === 0 ? (
+            <p className="text-gray-500">No notices available.</p>
+          ) : (
+            <div className="space-y-3">
+              {todayNotices.length > 0
+                ? todayNotices.slice(0, 1).map((notice) => (
+                    <div key={notice.id}>
+                      <div className="flex items-center gap-2">
+                        {notice.isPinned && (
+                          <span className="text-red-500">📌</span>
+                        )}
 
-  if (error) {
-    return (
-      <div className="p-6 text-center text-red-500">
-        Failed to load notices.
-      </div>
-    );
-  }
+                        <h4 className="font-semibold text-sm">
+                          {notice.title}
+                        </h4>
+                      </div>
 
-  const allNotices =
-    data?.getAstrologerNotices || [];
+                      <p className="text-sm text-gray-700 mt-1">
+                        {notice.description.length > 120
+                          ? `${notice.description.slice(0, 120)}...`
+                          : notice.description}
+                      </p>
 
-  const todayNotices = allNotices.filter(
-    (notice) => isToday(notice.createdAt)
-  );
+                      <small className="text-gray-500">
+                        {/* {formatDateTime(notice.createdAt)} */}
+                      </small>
+                    </div>
+                  ))
+                : latestNotices.map((notice) => (
+                    <div
+                      key={notice.id}
+                      className="border-b pb-2 last:border-b-0"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex items-center gap-2">
+                          {notice.isPinned && (
+                            <span className="text-red-500">📌</span>
+                          )}
 
-  const olderNotices = allNotices.filter(
-    (notice) => !isToday(notice.createdAt)
-  );
+                          <h4 className="font-semibold text-sm">
+                            {notice.title}
+                          </h4>
+                        </div>
+
+                        <small className="text-gray-500 whitespace-nowrap">
+                          {/* {new Date(notice.createdAt).toLocaleDateString()} */}
+                        </small>
+                      </div>
+
+                      <p className="text-sm text-gray-700 mt-1">
+                        {notice.description.length > 80
+                          ? `${notice.description.slice(0, 80)}...`
+                          : notice.description}
+                      </p>
+                    </div>
+                  ))}
+            </div>
+          )}
+        </>
+      ),
+
+      button: {
+        label: "View All",
+        onClick: () => router.push("/dashboard/noticeBoard"),
+      },
+    },
+
+    {
+      title: "Do's and Don't",
+
+      content: (
+        <>
+          {isDosDontLoading ? (
+            <p>Loading...</p>
+          ) : dosDontError ? (
+            <p className="text-red-500">Failed to load content.</p>
+          ) : (
+            <div className="text-sm">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: `${dosDontData?.dos?.slice(0, 200)}...`,
+                }}
+              />
+            </div>
+          )}
+        </>
+      ),
+
+      button: {
+        label: "View All",
+        onClick: () => router.push("/dashboard/dosDonts"),
+      },
+    },
+  ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">
-        📢 Notice Board
-      </h1>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {cards.map((card, index) => (
+        <div
+          key={index}
+          className="bg-gradient-to-br from-purple-300 to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
+        >
+          <span className="text-xl font-bold text-purple-950 mb-3 block">
+            {card.title}
+          </span>
 
-      {/* Today's Notices */}
-
-      {todayNotices.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-green-600">
-            Today's Noticessssssssssssss
-          </h2>
-
-          {todayNotices.map((notice) => (
-            <div
-              key={notice.id}
-              className={`mb-4 p-5 rounded-xl shadow border ${
-                notice.isPinned
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-green-200 bg-green-50"
-              }`}
-            >
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    {notice.isPinned && (
-                      <span>📌</span>
-                    )}
-                    {notice.title}
-                  </h3>
-                </div>
-
-                <p className="text-sm text-gray-500 whitespace-nowrap">
-                  {formatDateTime(
-                    notice.createdAt
-                  )}
-                </p>
-              </div>
-
-              <p className="mt-3 text-gray-700 whitespace-pre-wrap">
-                {notice.description}
-              </p>
-
-              {notice.startDate && (
-                <div className="mt-3 text-xs text-gray-500">
-                  Active From:{" "}
-                  {formatDateTime(
-                    notice.startDate
-                  )}
-                </div>
-              )}
-
-              {notice.endDate && (
-                <div className="text-xs text-gray-500">
-                  Active Until:{" "}
-                  {formatDateTime(
-                    notice.endDate
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Previous Notices */}
-
-      {olderNotices.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">
-            Previous Notices
-          </h2>
-
-          {olderNotices.map((notice) => (
-            <div
-              key={notice.id}
-              className={`mb-4 p-5 rounded-xl shadow-sm ${
-                notice.isPinned
-                  ? "bg-yellow-50 border border-yellow-300"
-                  : "bg-white border"
-              }`}
-            >
-              <div className="flex justify-between items-start gap-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  {notice.isPinned && (
-                    <span>📌</span>
-                  )}
-                  {notice.title}
-                </h3>
-
-                <p className="text-sm text-gray-500 whitespace-nowrap">
-                  {formatDateTime(
-                    notice.createdAt
-                  )}
-                </p>
-              </div>
-
-              <p className="mt-3 text-gray-700 whitespace-pre-wrap">
-                {notice.description}
-              </p>
-
-              {notice.startDate && (
-                <div className="mt-3 text-xs text-gray-500">
-                  Active From:{" "}
-                  {formatDateTime(
-                    notice.startDate
-                  )}
-                </div>
-              )}
-
-              {notice.endDate && (
-                <div className="text-xs text-gray-500">
-                  Active Until:{" "}
-                  {formatDateTime(
-                    notice.endDate
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {todayNotices.length === 0 &&
-        olderNotices.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No notices available.
+          <div className="text-base text-gray-800 leading-relaxed mb-4 min-h-[140px]">
+            {card.content}
           </div>
-        )}
+
+          <button
+            onClick={card.button.onClick}
+            className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-5 py-2 rounded-lg shadow-md transition duration-200 flex place-self-center"
+          >
+            {card.button.label}
+          </button>
+        </div>
+      ))}
     </div>
   );
-}
+};
+
+export default HomeMainCards;

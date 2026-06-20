@@ -49,6 +49,7 @@ export default function NoticeBoardPage() {
     );
   }
 
+
   const allNotices =
     data?.getAstrologerNotices || [];
 
@@ -152,9 +153,9 @@ export default function NoticeBoardPage() {
                 </h3>
 
                 <p className="text-sm text-gray-500 whitespace-nowrap">
-                  {formatDateTime(
+                  {/* {formatDateTime(
                     notice.createdAt
-                  )}
+                  )} */}
                 </p>
               </div>
 
@@ -174,9 +175,9 @@ export default function NoticeBoardPage() {
               {notice.endDate && (
                 <div className="text-xs text-gray-500">
                   Active Until:{" "}
-                  {formatDateTime(
+                  {/* {formatDateTime(
                     notice.endDate
-                  )}
+                  )} */}
                 </div>
               )}
             </div>
