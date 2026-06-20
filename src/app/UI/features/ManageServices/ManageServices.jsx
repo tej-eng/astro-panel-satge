@@ -11,14 +11,14 @@ const ManageServices = () => {
   {
     type: "Chat",
     key: "chat",
-    price: "₹ 20",
+    // price: "₹ 20",
     status: "Online",
     id: "flexSwitchCheckDefault1",
   },
   {
     type: "Call",
     key: "call",
-    price: "₹ 30",
+    // price: "₹ 30",
     status: "Offline",
     id: "flexSwitchCheckDefault2",
   },
@@ -29,7 +29,7 @@ const ManageServices = () => {
       </>
     ),
     key: "live",
-    price: "₹ 50 / ₹ 100",
+    // price: "₹ 50 / ₹ 100",
     status: "Offline",
     id: "flexSwitchCheckDefault3",
   },
@@ -40,8 +40,8 @@ const ManageServices = () => {
       </>
     ),
     key: "promo",
-    price: "₹ 10",
-    promo: "2 / 10",
+    // price: "₹ 10",
+    // promo: "2 / 10",
     status: "Online",
     id: "flexSwitchCheckDefault4",
   },
@@ -106,7 +106,7 @@ const handleToggle = (index) => {
               <span
                 className={`${styles.innerbutton} flex flex-col w-1/3 space-y-1`}
               >
-                <span className={styles.pAType}>Price</span>
+                {/* <span className={styles.pAType}>Price</span> */}
                 {panel.id !== "flexSwitchCheckDefault3" && (
                   <h3 className={styles.topGreet}>{panel.price}</h3>
                 )}
