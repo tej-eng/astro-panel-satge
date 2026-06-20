@@ -197,3 +197,73 @@ export const GET_ASTROLOGER_CHAT_HISTORY = gql`
     }
   }
 `;
+
+
+
+export const TOGGLE_ASTROLOGER_SERVICE = gql`
+  mutation ToggleAstrologerService(
+    $astrologerId: String!
+    $serviceType: AstrologerServiceType!
+    $status: Boolean!
+  ) {
+    toggleAstrologerService(
+      astrologerId: $astrologerId
+      serviceType: $serviceType
+      status: $status
+    ) {
+      success
+      message
+    }
+  }
+`;
+
+export const GET_ASTROLOGER_SERVICES = gql`
+  query GetAstrologerServices($astrologerId: String!) {
+    getAstrologerById(astrologerId: $astrologerId) {
+      isChatActive
+      isCallActive
+      isLiveActive
+      isPromotional
+    }
+  }
+`;
+
+export const GetAstrologerAnalytics = gql`
+  query GetAstrologerAnalytics($astrologerId: String!) {
+  getAstrologerAnalytics(astrologerId: $astrologerId) {
+    totalEarnings
+    totalFollowers
+    totalChats
+    totalCalls
+    averageRating
+
+    monthlyData {
+      month
+      earnings
+      chats
+      calls
+    }
+  }
+}
+`;
+
+export const GetAstrologerNotices = gql`
+ query GetAstrologerNotices {
+  getAstrologerNotices {
+    id
+    title
+    description
+    targetType
+    isPinned
+    isActive
+    startDate
+    endDate
+    createdAt
+  }
+}
+`;
+
+
+
+
+

@@ -1,169 +1,195 @@
 "use client";
-import { useRouter } from "next/navigation"; 
-import styles from "@/app/UI/features/HomeCard/homemaincard.module.css";
-import {
-  useGetdosAndDontApiQuery,
-  useGetNoticeBoardQuery,
-} from "@/app/redux/slice/doesDont";
 
-const HomeMainCards = () => {
-  const router = useRouter();
+import { GetAstrologerNotices } from "@/app/utils/panelQueries";
+import { useQuery } from "@apollo/client/react";
+
+export default function NoticeBoardPage() {
   const isToday = (dateString) => {
     const today = new Date();
     const date = new Date(dateString);
+
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     );
   };
-  
+
   const formatDateTime = (dateString) => {
+    if (!dateString) return "-";
+
     const date = new Date(dateString);
+
     return date.toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
     });
   };
-  
-  
-  
 
-  const {
-    data: noticeData,
-    isLoading: isNoticeLoading,
-    error: noticeError,
-  } = useGetNoticeBoardQuery();
-  const {
-    data: dosDontData,
-    isLoading: isDosDontLoading,
-    error: dosDontError,
-  } = useGetdosAndDontApiQuery();
-
-  const cards = [
+  const { data, loading, error } = useQuery(
+    GetAstrologerNotices,
     {
-      title: "Notice Board",
-      content: (
-        <>
-          {isNoticeLoading ? (
-            <p>Loading...</p>
-          ) : noticeError ? (
-            <p className="text-red-500">Failed to load notice board data.</p>
-          ) : (
-            <div className="space-y-2">
-            
-              {noticeData?.data?.data?.filter((notice) => isToday(notice.created_at)).length > 0 ? (
-                noticeData?.data?.data
-                  ?.filter((notice) => isToday(notice.created_at))
-                  ?.slice(0, 1)
-                  ?.map((notice) => (
-                    <div key={notice.id} className="">
-                      <h4 className="font-semibold">{notice.heading}</h4>
-                      <p className="text-[1rem]">{notice.text}</p>
-                      <small className="text-gray-500 text-[1rem]">
-                        {formatDateTime(notice.created_at)}
-                      </small>
-                    </div>
-                  ))
-              ) : (
-             
-                [...noticeData?.data?.data]
-                ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) 
-                  ?.slice(0, 3)
-                  ?.map((notice) => (
-                    <div key={notice.id} className="">
-                      <div className="flex justify-between">
-                      <h4 className="font-semibold text-sm">{notice.heading}</h4>
-                      <small className="text-[1rem]">
-                        {formatDateTime(notice.created_at)}
-                      </small>
-                      </div>
-                      <p className="text-[1rem]">{notice.text}</p>
-                      
-                    </div>
-                  ))
-              )}
-              {/* <b className="block pt-2 text-center text-gray-700">Dhwani Astro</b> */}
-            </div>
-          )}
-        </>
-      ),
-      button: {
-        label: "View All",
-        onClick: () => router.push("dashboard/noticeBoard"),
-        buttonClass: " bg-opacity-50",
-      },
-      cardClass: " bg-opacity-25",
+      fetchPolicy: "network-only",
     }
-    ,
-    
-    {
-      title: `Do's and Don't`,
-      content: (
-        <>
-          {isDosDontLoading ? (
-            <p>Loading...</p>
-          ) : dosDontError ? (
-            <p className="text-red-500">Failed to load content.</p>
-          ) : (
-            <div className="text-[1rem]">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: `${dosDontData?.dos?.slice(0, 200)}...`,
-                }}
-              />
-            {/* <b className="block pt-1 text-center text-gray-700">Dhwani Astro</b> */}
-            </div>
-          )}
-        </>
-      ),
-      button: {
-        label: "View All",
-        onClick: () => router.push("dashboard/dosDonts"),
- 
-        buttonClass: " bg-opacity-50",
-      },
-      cardClass: "bg-blue-500 bg-opacity-25",
-    },
-   
+  );
 
-  ];
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        Loading notices...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Failed to load notices.
+      </div>
+    );
+  }
+
+  const allNotices =
+    data?.getAstrologerNotices || [];
+
+  const todayNotices = allNotices.filter(
+    (notice) => isToday(notice.createdAt)
+  );
+
+  const olderNotices = allNotices.filter(
+    (notice) => !isToday(notice.createdAt)
+  );
 
   return (
-  
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 ">
-  {cards.map((card, index) => (
-    <div
-      key={index}
-      className="bg-gradient-to-br from-purple-300 to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
-    >
-      <span className="text-xl font-bold text-purple-950 mb-3 block">
-        {card.title}
-      </span>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">
+        📢 Notice Board
+      </h1>
 
-      {card.content && (
-        <>
-          <div className="text-base text-gray-800 leading-relaxed mb-4">
-            {card.content}
-          </div>
+      {/* Today's Notices */}
 
-          {card.button && (
-            <button
-              onClick={card.button.onClick}
-              className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-5 py-2 rounded-lg shadow-md transition duration-200 flex place-self-center"
+      {todayNotices.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-green-600">
+            Today's Noticessssssssssssss
+          </h2>
+
+          {todayNotices.map((notice) => (
+            <div
+              key={notice.id}
+              className={`mb-4 p-5 rounded-xl shadow border ${
+                notice.isPinned
+                  ? "border-yellow-400 bg-yellow-50"
+                  : "border-green-200 bg-green-50"
+              }`}
             >
-              <div className="flex items-center justify-center space-x-2 ">
-                {card.button.label}
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    {notice.isPinned && (
+                      <span>📌</span>
+                    )}
+                    {notice.title}
+                  </h3>
+                </div>
+
+                <p className="text-sm text-gray-500 whitespace-nowrap">
+                  {formatDateTime(
+                    notice.createdAt
+                  )}
+                </p>
               </div>
-            </button>
-          )}
-        </>
+
+              <p className="mt-3 text-gray-700 whitespace-pre-wrap">
+                {notice.description}
+              </p>
+
+              {notice.startDate && (
+                <div className="mt-3 text-xs text-gray-500">
+                  Active From:{" "}
+                  {formatDateTime(
+                    notice.startDate
+                  )}
+                </div>
+              )}
+
+              {notice.endDate && (
+                <div className="text-xs text-gray-500">
+                  Active Until:{" "}
+                  {formatDateTime(
+                    notice.endDate
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Previous Notices */}
+
+      {olderNotices.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">
+            Previous Notices
+          </h2>
+
+          {olderNotices.map((notice) => (
+            <div
+              key={notice.id}
+              className={`mb-4 p-5 rounded-xl shadow-sm ${
+                notice.isPinned
+                  ? "bg-yellow-50 border border-yellow-300"
+                  : "bg-white border"
+              }`}
+            >
+              <div className="flex justify-between items-start gap-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  {notice.isPinned && (
+                    <span>📌</span>
+                  )}
+                  {notice.title}
+                </h3>
+
+                <p className="text-sm text-gray-500 whitespace-nowrap">
+                  {formatDateTime(
+                    notice.createdAt
+                  )}
+                </p>
+              </div>
+
+              <p className="mt-3 text-gray-700 whitespace-pre-wrap">
+                {notice.description}
+              </p>
+
+              {notice.startDate && (
+                <div className="mt-3 text-xs text-gray-500">
+                  Active From:{" "}
+                  {formatDateTime(
+                    notice.startDate
+                  )}
+                </div>
+              )}
+
+              {notice.endDate && (
+                <div className="text-xs text-gray-500">
+                  Active Until:{" "}
+                  {formatDateTime(
+                    notice.endDate
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {todayNotices.length === 0 &&
+        olderNotices.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            No notices available.
+          </div>
+        )}
     </div>
-  ))}
-</div>
-
   );
-};
-
-export default HomeMainCards;
+}

@@ -17,7 +17,7 @@ export default function Firstpage() {
       <div className="">
      
         <HomeMainCards/>
-        <CardBox />
+        {/* <CardBox /> */}
         <ManageServices />
         <hr className="my-2" />
         <ButtonTileList />
