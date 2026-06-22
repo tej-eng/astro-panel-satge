@@ -275,12 +275,10 @@ export default function WalletTransactions() {
                   Type
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Amount
-                </th>
+              
 
                 <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Coins
+                  Amount
                 </th>
 
                 <th className="p-4 text-left text-sm font-semibold text-gray-700">
@@ -342,12 +340,10 @@ export default function WalletTransactions() {
                         </span>
                       </td>
 
-                      {/* AMOUNT */}
-                      <td className="p-4 font-semibold text-gray-800">
-                        ₹{item.amount}
-                      </td>
+                     
+                      
 
-                      {/* COINS */}
+                      {/* AMOUNT */}
                       <td className="p-4">
                         <div className="flex items-center gap-1 text-yellow-600 font-semibold">
                           <Coins className="w-4 h-4" />
