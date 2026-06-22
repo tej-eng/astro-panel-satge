@@ -238,12 +238,10 @@ export default function AstrologerEarnings() {
                   Type
                 </th>
 
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
-                  Amount
-                </th>
+               
 
                 <th className="text-left p-4 text-sm font-semibold text-gray-700">
-                  Coins
+                  Amount
                 </th>
 
                 <th className="text-left p-4 text-sm font-semibold text-gray-700">
@@ -294,9 +292,7 @@ export default function AstrologerEarnings() {
                       </td>
 
                       {/* AMOUNT */}
-                      <td className="p-4 font-semibold text-gray-800">
-                        ₹{item.amount}
-                      </td>
+                     
 
                       {/* COINS */}
                       <td className="p-4 text-gray-700">
