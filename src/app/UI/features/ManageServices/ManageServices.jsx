@@ -11,15 +11,22 @@ import {
   GET_ASTROLOGER_SERVICES,
   GetAstrologerAnalytics,
 } from "@/app/utils/panelQueries";
-
 const SERVICE_MAP = {
   chat: "CHAT",
   call: "CALL",
   live: "LIVE",
+  promo: "PROMOTIONAL",
 };
 
 const ManageServices = () => {
   const [astrologerId, setAstrologerId] = useState("");
+  useEffect(() => {
+    const astroData = JSON.parse(localStorage.getItem("astro_user") || "{}");
+
+    if (astroData?.id) {
+      setAstrologerId(astroData.id);
+    }
+  }, []);
 
   const [panels, setPanels] = useState([
     {
@@ -57,8 +64,6 @@ const ManageServices = () => {
       id: "flexSwitchCheckDefault4",
     },
   ]);
-
- 
 
   // Services Query
   const {
@@ -132,66 +137,76 @@ const ManageServices = () => {
   }, [serviceData]);
 
   const handleToggle = async (index) => {
-    const currentPanel = panels[index];
+  const currentPanel = panels[index];
 
-    if (currentPanel.key === "promo") return;
+  const isTurningOn = currentPanel.status === "Offline";
 
-    const isTurningOn = currentPanel.status === "Offline";
+  let updatedPanels = [...panels];
 
-    let updatedPanels = [...panels];
+  // Live ON => Chat & Call OFF
+  if (currentPanel.key === "live" && isTurningOn) {
+    updatedPanels = updatedPanels.map((panel) =>
+      panel.key === "chat" || panel.key === "call"
+        ? {
+            ...panel,
+            status: "Offline",
+          }
+        : panel
+    );
+  }
 
-    if (currentPanel.key === "live" && isTurningOn) {
-      updatedPanels = updatedPanels.map((panel) =>
-        panel.key === "chat" || panel.key === "call"
-          ? {
-              ...panel,
-              status: "Offline",
-            }
-          : panel,
-      );
-    } else if (
-      (currentPanel.key === "chat" || currentPanel.key === "call") &&
-      isTurningOn
-    ) {
-      updatedPanels = updatedPanels.map((panel) =>
-        panel.key === "live"
-          ? {
-              ...panel,
-              status: "Offline",
-            }
-          : panel,
-      );
-    }
+  // Chat/Call ON => Live OFF
+  else if (
+    (currentPanel.key === "chat" || currentPanel.key === "call") &&
+    isTurningOn
+  ) {
+    updatedPanels = updatedPanels.map((panel) =>
+      panel.key === "live"
+        ? {
+            ...panel,
+            status: "Offline",
+          }
+        : panel
+    );
+  }
 
-    updatedPanels[index] = {
-      ...updatedPanels[index],
-      status: isTurningOn ? "Online" : "Offline",
-    };
-
-    setPanels(updatedPanels);
-
-    try {
-      const { data } = await toggleService({
-        variables: {
-          astrologerId,
-          serviceType: SERVICE_MAP[currentPanel.key],
-          status: isTurningOn,
-        },
-      });
-
-      toast.success(
-        data?.toggleAstrologerService?.message || "Service Updated",
-      );
-
-      await Promise.all([refetchServices(), refetchAnalytics()]);
-    } catch (error) {
-      console.error(error);
-
-      toast.error(error?.message || "Failed to update service");
-
-      await Promise.all([refetchServices(), refetchAnalytics()]);
-    }
+  updatedPanels[index] = {
+    ...updatedPanels[index],
+    status: isTurningOn ? "Online" : "Offline",
   };
+
+  setPanels(updatedPanels);
+
+  try {
+    const { data } = await toggleService({
+      variables: {
+        astrologerId,
+        serviceType: SERVICE_MAP[currentPanel.key],
+        status: isTurningOn,
+      },
+    });
+
+    toast.success(
+      data?.toggleAstrologerService?.message || "Service Updated"
+    );
+
+    await Promise.all([
+      refetchServices(),
+      refetchAnalytics(),
+    ]);
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error?.message || "Failed to update service"
+    );
+
+    await Promise.all([
+      refetchServices(),
+      refetchAnalytics(),
+    ]);
+  }
+};
 
   if (serviceLoading || analyticsLoading) {
     return <div className="p-6 text-center">Loading... </div>;
@@ -230,12 +245,7 @@ const ManageServices = () => {
                 <AntSwitch
                   checked={panel.status === "Online"}
                   onChange={() => handleToggle(index)}
-                  disabled={panel.key === "promo" || toggleLoading}
-                  title={
-                    panel.key === "promo"
-                      ? "Auto controlled. Resets every 24h."
-                      : ""
-                  }
+                  disabled={toggleLoading}
                 />
               </span>
 
