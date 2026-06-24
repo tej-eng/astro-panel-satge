@@ -56,6 +56,12 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/callhistory/page.js"
     ],
+    "/dashboard/setting/profilesetting/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/setting/profilesetting/page.css",
+      "static/chunks/app/dashboard/setting/profilesetting/page.js"
+    ],
     "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
