@@ -24,6 +24,38 @@
       "static/css/app/dashboard/layout.css",
       "static/chunks/app/dashboard/layout.js"
     ],
+    "/astrologerchat/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/astrologerchat/page.css",
+      "static/chunks/app/astrologerchat/page.js"
+    ],
+    "/dashboard/[...slug]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/[...slug]/page.css",
+      "static/chunks/app/dashboard/[...slug]/page.js"
+    ],
+    "/dashboard/services/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/services/page.js"
+    ],
+    "/dashboard/wallet/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/wallet/page.js"
+    ],
+    "/dashboard/chathistory/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/chathistory/page.js"
+    ],
+    "/dashboard/callhistory/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/callhistory/page.js"
+    ],
     "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
