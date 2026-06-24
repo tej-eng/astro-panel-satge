@@ -262,6 +262,13 @@ export const GetAstrologerNotices = gql`
   }
 }
 `;
+export const REFRESH_TOKEN = gql`
+  mutation {
+    refreshAstrologerToken {
+      accessToken
+    }
+  }
+`;
 
 
 
