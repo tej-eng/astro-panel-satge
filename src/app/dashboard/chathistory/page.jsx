@@ -12,17 +12,21 @@ import {
   Eye,
   FileText,
   Activity,
+  Filter,
 } from "lucide-react";
 import SessionMessagesModal from "./sessionmodal";
-import { GET_ASTROLOGER_CHAT_HISTORY, GET_REMEDIES, SEND_REMEDY } from "@/app/utils/panelQueries";
+import {
+  GET_ASTROLOGER_CHAT_HISTORY,
+  GET_REMEDIES,
+  SEND_REMEDY,
+} from "@/app/utils/panelQueries";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-
-
 
 export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sourceFilter, setSourceFilter] = useState("ALL"); // ✅ Added source filter
   const [openModal, setOpenModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -42,18 +46,18 @@ export default function AstrologerChatHistory() {
   const limit = 10;
   const router = useRouter();
 
-    const getKundli = (roomId) => {
-      console.log("roomId in getKundli functionxxxxxxxxxxxxxxxxxxxxxx", roomId);
+  const getKundli = (roomId) => {
+    console.log("roomId in getKundli functionxxxxxxxxxxxxxxxxxxxxxx", roomId);
     router.push(`/dashboard/chathistory/kundli/${roomId}`);
   };
 
-  // APOLLO QUERY
+  // APOLLO QUERY - Updated with source filter
   const { data, loading, error } = useQuery(GET_ASTROLOGER_CHAT_HISTORY, {
     variables: {
       page,
       limit,
+      source: sourceFilter !== "ALL" ? sourceFilter : undefined, // ✅ Pass source filter
     },
-
     fetchPolicy: "network-only",
   });
 
@@ -74,53 +78,48 @@ export default function AstrologerChatHistory() {
       const matchesStatus =
         statusFilter === "ALL" || item?.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesSource =
+        sourceFilter === "ALL" || item?.source === sourceFilter;
+
+      return matchesSearch && matchesStatus && matchesSource;
     });
-  }, [chatHistory, search, statusFilter]);
+  }, [chatHistory, search, statusFilter, sourceFilter]);
 
   if (error) {
     return <div className="p-6 text-red-500">Error loading chat history</div>;
   }
-const handleSubmitRemedy = async () => {
-  const finalRemedy =
-    remedyText?.trim() ||
-    selectedRemedy?.description;
 
-  if (!finalRemedy) {
-    toast.error(
-      "Please enter or select a remedy"
-    );
-    return;
-  }
+  const handleSubmitRemedy = async () => {
+    const finalRemedy = remedyText?.trim() || selectedRemedy?.description;
 
-  setSubmitting(true);
-
-  try {
-    const { data } = await sendRemedyMutation({
-      variables: {
-        sessionId: selectedOrderId,
-        remedyText: finalRemedy,
-      },
-    });
-
-    if (data?.sendRemedy?.success) {
-      toast.success(
-        data.sendRemedy.message
-      );
-
-      setShowModal(false);
-      setRemedyText("");
-      setSelectedRemedy(null);
+    if (!finalRemedy) {
+      toast.error("Please enter or select a remedy");
+      return;
     }
-  } catch (error) {
-    toast.error(
-      error?.message ||
-        "Something went wrong"
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+
+    setSubmitting(true);
+
+    try {
+      const { data } = await sendRemedyMutation({
+        variables: {
+          sessionId: selectedOrderId,
+          remedyText: finalRemedy,
+        },
+      });
+
+      if (data?.sendRemedy?.success) {
+        toast.success(data.sendRemedy.message);
+
+        setShowModal(false);
+        setRemedyText("");
+        setSelectedRemedy(null);
+      }
+    } catch (error) {
+      toast.error(error?.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const renderStars = (rating = 0) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -211,17 +210,26 @@ const handleSubmitRemedy = async () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
+            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black min-w-[140px]"
           >
             <option value="ALL">All Status</option>
-
             <option value="COMPLETED">COMPLETED</option>
-
             <option value="ONGOING">ONGOING</option>
-
             <option value="MISSED">MISSED</option>
-
             <option value="CANCELLED">CANCELLED</option>
+          </select>
+
+          {/* ✅ SOURCE FILTER */}
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black min-w-[140px]"
+          >
+            <option value="ALL">All Sources</option>
+            <option value="WEB">Web</option>
+            <option value="ANDROID">Android</option>
+            <option value="IOS">iOS</option>
+            {/* Add more source options as needed */}
           </select>
         </div>
       </div>
@@ -240,21 +248,28 @@ const handleSubmitRemedy = async () => {
             >
               <div className="p-5">
                 {/* TOP */}
-
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <p className="text-sm">
                       <span className="font-bold text-purple-700">
                         Order ID :
                       </span>{" "}
-                      <span className="text-gray-600">
-                        {chat.sessionId}
-                      </span>
+                      <span className="text-gray-600">{chat.sessionId}</span>
                     </p>
 
                     <p className="mt-1">
                       <span className="font-bold text-purple-700">Name :</span>{" "}
                       <span className="text-gray-700">{chat.userName}</span>
+                    </p>
+
+                    {/* ✅ Display Source */}
+                    <p className="mt-1 text-sm">
+                      <span className="font-bold text-purple-700">
+                        Source :
+                      </span>{" "}
+                      <span className="text-gray-700">
+                        {chat.source || chat.intakeSource || "N/A"}
+                      </span>
                     </p>
                   </div>
 
@@ -302,7 +317,6 @@ const handleSubmitRemedy = async () => {
                 </div>
 
                 {/* REVIEW */}
-
                 <div className="mt-5 bg-purple-50 border border-purple-100 rounded-xl p-4 min-h-[90px]">
                   <p className="font-bold text-purple-700 mb-2">Review :</p>
 
@@ -312,7 +326,6 @@ const handleSubmitRemedy = async () => {
                 </div>
 
                 {/* BUTTONS */}
-
                 <div className="grid grid-cols-2 gap-3 mt-5">
                   {chat.status === "COMPLETED" && (
                     <>
@@ -321,8 +334,7 @@ const handleSubmitRemedy = async () => {
                           setSelectedOrderId(chat.sessionId);
                           setShowModal(true);
                         }}
-                        className=" flex items-center justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700 rounded-md hover:bg-purple-50 transition 
-                               "
+                        className="flex items-center justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700 rounded-md hover:bg-purple-50 transition"
                       >
                         <Activity className="w-4 h-4" />
                         Suggest Remedy
@@ -340,9 +352,10 @@ const handleSubmitRemedy = async () => {
                     </>
                   )}
 
-                  <button  onClick={() => getKundli(chat.roomId)}
-                  
-                   className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700">
+                  <button
+                    onClick={() => getKundli(chat.roomId)}
+                    className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700"
+                  >
                     <FileText size={16} />
                     Open Kundli
                   </button>

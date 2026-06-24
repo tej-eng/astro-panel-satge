@@ -75,7 +75,6 @@ const GET_ASTROLOGER_PROFILE = gql`
           ifsc
           branchName
           panNumber
-          profileImage
           aadhaarImage
           panImage
           passbookImage

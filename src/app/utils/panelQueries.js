@@ -169,6 +169,7 @@ export const GET_ASTROLOGER_CALL_HISTORY = gql`
         coinsEarned
         commission
         lastMessage
+        source
       }
     }
   }
@@ -192,6 +193,7 @@ export const GET_ASTROLOGER_CHAT_HISTORY = gql`
         status
         durationMinutes
         coinsEarned
+        source
         createdAt
       }
     }
