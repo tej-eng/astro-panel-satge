@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "@apollo/client/react";
+import {
+  useMutation,
+  useQuery,
+  useLazyQuery,
+} from "@apollo/client/react";
 
 import {
   START_LIVE,
@@ -20,17 +24,12 @@ const client = AgoraRTC.createClient({
 
 export default function AgentLiveStreaming() {
   const [title, setTitle] = useState("");
-  const [streamId, setStreamId] =
-    useState(null);
+  const [streamId, setStreamId] = useState(null);
 
-  const [isLive, setIsLive] =
-    useState(false);
+  const [isLive, setIsLive] = useState(false);
 
-  const [micTrack, setMicTrack] =
-    useState(null);
-
-  const [cameraTrack, setCameraTrack] =
-    useState(null);
+  const [micTrack, setMicTrack] = useState(null);
+  const [cameraTrack, setCameraTrack] = useState(null);
 
   const [scheduleTitle, setScheduleTitle] =
     useState("");
@@ -57,11 +56,14 @@ export default function AgentLiveStreaming() {
   const [endLive] =
     useMutation(END_LIVE);
 
+  // FIXED: joinLive is Query, not Mutation
   const [joinLive] =
-    useMutation(JOIN_LIVE);
+    useLazyQuery(JOIN_LIVE);
 
-  const [scheduleLive, { loading: scheduling }] =
-    useMutation(SCHEDULE_LIVE);
+  const [
+    scheduleLive,
+    { loading: scheduling },
+  ] = useMutation(SCHEDULE_LIVE);
 
   const handleStartLive =
     async () => {
@@ -71,31 +73,41 @@ export default function AgentLiveStreaming() {
           return;
         }
 
-        const {
-          data: startData,
-        } = await startLive({
-          variables: {
-            title,
-          },
-        });
+        const { data: startData } =
+          await startLive({
+            variables: {
+              title,
+            },
+          });
 
         const stream =
-          startData.startLive;
+          startData?.startLive;
+
+        if (!stream) {
+          throw new Error(
+            "Unable to start live"
+          );
+        }
 
         setStreamId(stream.id);
 
-        const {
-          data: joinData,
-        } = await joinLive({
-          variables: {
-            channelName:
-              stream.channelName,
-            role: "publisher",
-          },
-        });
+        const { data: joinData } =
+          await joinLive({
+            variables: {
+              channelName:
+                stream.channelName,
+              role: "publisher",
+            },
+          });
 
         const live =
-          joinData.joinLive;
+          joinData?.joinLive;
+
+        if (!live) {
+          throw new Error(
+            "Unable to join live"
+          );
+        }
 
         await client.setClientRole(
           "host"
@@ -135,7 +147,9 @@ export default function AgentLiveStreaming() {
         console.error(error);
 
         alert(
-          error.message ||
+          error?.message ||
+            error?.graphQLErrors?.[0]
+              ?.message ||
             "Failed to start live"
         );
       }
@@ -144,19 +158,28 @@ export default function AgentLiveStreaming() {
   const handleEndLive =
     async () => {
       try {
-        if (cameraTrack)
+        if (cameraTrack) {
+          cameraTrack.stop();
           cameraTrack.close();
+        }
 
-        if (micTrack)
+        if (micTrack) {
+          micTrack.stop();
           micTrack.close();
+        }
 
         await client.leave();
 
-        await endLive({
-          variables: {
-            streamId,
-          },
-        });
+        if (streamId) {
+          await endLive({
+            variables: {
+              streamId,
+            },
+          });
+        }
+
+        setCameraTrack(null);
+        setMicTrack(null);
 
         setIsLive(false);
         setStreamId(null);
@@ -166,6 +189,11 @@ export default function AgentLiveStreaming() {
         );
       } catch (error) {
         console.error(error);
+
+        alert(
+          error?.message ||
+            "Failed to end live"
+        );
       }
     };
 
@@ -206,7 +234,9 @@ export default function AgentLiveStreaming() {
         console.error(error);
 
         alert(
-          error.message ||
+          error?.message ||
+            error?.graphQLErrors?.[0]
+              ?.message ||
             "Failed to schedule live"
         );
       }
@@ -237,9 +267,7 @@ export default function AgentLiveStreaming() {
             placeholder="Enter Live Title"
             value={title}
             onChange={(e) =>
-              setTitle(
-                e.target.value
-              )
+              setTitle(e.target.value)
             }
           />
 
@@ -353,9 +381,7 @@ export default function AgentLiveStreaming() {
                     <p>
                       📅{" "}
                       {new Date(
-                        Number(
-                          live.scheduledAt
-                        )
+                        live.scheduledAt
                       ).toLocaleDateString(
                         "en-IN"
                       )}
@@ -364,9 +390,7 @@ export default function AgentLiveStreaming() {
                     <p>
                       ⏰{" "}
                       {new Date(
-                        Number(
-                          live.scheduledAt
-                        )
+                        live.scheduledAt
                       ).toLocaleTimeString(
                         "en-IN"
                       )}

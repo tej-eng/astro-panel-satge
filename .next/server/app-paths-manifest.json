@@ -3,6 +3,6 @@
   "/page": "app/page.js",
   "/astrologerchat/page": "app/astrologerchat/page.js",
   "/dashboard/[...slug]/page": "app/dashboard/[...slug]/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/callhistory/page": "app/dashboard/callhistory/page.js"
+  "/dashboard/callhistory/page": "app/dashboard/callhistory/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }

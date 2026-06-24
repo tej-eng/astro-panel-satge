@@ -271,9 +271,6 @@ export const REFRESH_TOKEN = gql`
 `;
 
 // ================= LIVE STREAMING =================
-// ================= LIVE STREAM =================
-
-
 export const START_LIVE = gql`
   mutation StartLive($title: String!) {
     startLive(title: $title) {
@@ -282,24 +279,20 @@ export const START_LIVE = gql`
       status
       channelName
       scheduledAt
-      startedAt
       astrologerId
+      createdAt
     }
   }
 `;
 
 export const END_LIVE = gql`
   mutation EndLive($streamId: String!) {
-    endLive(streamId: $streamId) {
-      id
-      status
-      endedAt
-    }
+    endLive(streamId: $streamId)
   }
 `;
 
 export const JOIN_LIVE = gql`
-  mutation JoinLive(
+  query JoinLive(
     $channelName: String!
     $role: String!
   ) {
@@ -329,6 +322,7 @@ export const SCHEDULE_LIVE = gql`
       status
       channelName
       scheduledAt
+      createdAt
     }
   }
 `;
@@ -341,9 +335,8 @@ export const GET_MY_SCHEDULED_LIVES = gql`
       status
       channelName
       scheduledAt
-      startedAt
       endedAt
+      createdAt
     }
   }
 `;
-
