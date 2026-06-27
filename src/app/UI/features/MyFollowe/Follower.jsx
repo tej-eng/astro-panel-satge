@@ -93,8 +93,8 @@ Object.keys(localStorage).forEach(key => {
                 <small
                   className={`${styles["top-fll"]} text-black`}
                 >
-                  {follower.user?.countryCode}
-                  {follower.user?.mobile}
+                  {/* {follower.user?.countryCode}
+                  {follower.user?.mobile} */}
                 </small>
 
                 <small

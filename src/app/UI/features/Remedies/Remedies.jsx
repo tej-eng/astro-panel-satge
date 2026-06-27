@@ -13,37 +13,28 @@ const Remedies = () => {
     endDate: "",
   });
 
-  const { data, loading, refetch } = useQuery(
-    GET_SESSION_REMEDIES,
-    {
-      variables: {
-        filter: {
-          page,
-          limit: 10,
-          ...(filters.sessionId && {
-            sessionId: filters.sessionId,
-          }),
-          ...(filters.startDate && {
-            startDate: new Date(
-              filters.startDate
-            ).toISOString(),
-          }),
-          ...(filters.endDate && {
-            endDate: new Date(
-              filters.endDate
-            ).toISOString(),
-          }),
-        },
+  const { data, loading, refetch } = useQuery(GET_SESSION_REMEDIES, {
+    variables: {
+      filter: {
+        page,
+        limit: 10,
+        ...(filters.sessionId && {
+          sessionId: filters.sessionId,
+        }),
+        ...(filters.startDate && {
+          startDate: new Date(filters.startDate).toISOString(),
+        }),
+        ...(filters.endDate && {
+          endDate: new Date(filters.endDate).toISOString(),
+        }),
       },
-      fetchPolicy: "network-only",
-    }
-  );
+    },
+    fetchPolicy: "network-only",
+  });
 
-  const remedies =
-    data?.getSessionRemedies?.data || [];
+  const remedies = data?.getSessionRemedies?.data || [];
 
-  const totalPages =
-    data?.getSessionRemedies?.totalPages || 1;
+  const totalPages = data?.getSessionRemedies?.totalPages || 1;
 
   const handleSearch = () => {
     setPage(1);
@@ -110,9 +101,7 @@ const Remedies = () => {
 
       {/* Loading */}
       {loading ? (
-        <div className="text-center py-10">
-          Loading...
-        </div>
+        <div className="text-center py-10">Loading...</div>
       ) : (
         <>
           {/* Cards */}
@@ -124,32 +113,27 @@ const Remedies = () => {
               >
                 <div className="text-sm text-gray-600">
                   Order ID:
-                  <span className="ml-2 font-medium">
-                    {item.sessionId}
-                  </span>
+                  <span className="ml-2 font-medium">{item.sessionId}</span>
                 </div>
 
                 <hr className="my-2" />
 
                 <div className="text-sm">
-                  <span className="font-semibold">
-                    Type:
-                  </span>{" "}
+                  <span className="font-semibold">Type:</span>{" "}
                   {item.sessionType}
                 </div>
 
                 <div className="text-xs text-purple-600 mt-1">
-                  {new Date(
-                    item.createdAt
-                  ).toLocaleString()}
+                  {new Date(item.createdAt).toLocaleString()}
                 </div>
 
                 <div className="mt-3">
-                  <h4 className="font-semibold">
-                    Description:
-                  </h4>
+                  <h4 className="font-semibold">Description:</h4>
 
-                  <p className="text-sm mt-1">
+                  <p
+                    className="text-sm mt-1 break-words whitespace-pre-wrap overflow-hidden line-clamp-4"
+                    title={item.remedyText}
+                  >
                     {item.remedyText}
                   </p>
                 </div>
@@ -159,9 +143,7 @@ const Remedies = () => {
 
           {/* Empty State */}
           {remedies.length === 0 && (
-            <div className="text-center py-10">
-              No remedies found
-            </div>
+            <div className="text-center py-10">No remedies found</div>
           )}
 
           {/* Pagination */}
@@ -169,11 +151,7 @@ const Remedies = () => {
             <div className="bg-white shadow rounded-xl px-6 py-4 flex items-center gap-4">
               <button
                 disabled={page === 1}
-                onClick={() =>
-                  setPage((prev) =>
-                    Math.max(prev - 1, 1)
-                  )
-                }
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 className="disabled:opacity-50"
               >
                 ◀
@@ -185,9 +163,7 @@ const Remedies = () => {
 
               <button
                 disabled={page >= totalPages}
-                onClick={() =>
-                  setPage((prev) => prev + 1)
-                }
+                onClick={() => setPage((prev) => prev + 1)}
                 className="disabled:opacity-50"
               >
                 ▶

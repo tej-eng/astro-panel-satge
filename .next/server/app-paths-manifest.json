@@ -1,7 +1,8 @@
 {
-  "/page": "app/page.js",
   "/astrologerchat/page": "app/astrologerchat/page.js",
-  "/dashboard/setting/profilesetting/page": "app/dashboard/setting/profilesetting/page.js",
+  "/page": "app/page.js",
+  "/dashboard/[...slug]/page": "app/dashboard/[...slug]/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/chathistory/page": "app/dashboard/chathistory/page.js",
-  "/dashboard/callhistory/page": "app/dashboard/callhistory/page.js"
+  "/dashboard/services/page": "app/dashboard/services/page.js"
 }

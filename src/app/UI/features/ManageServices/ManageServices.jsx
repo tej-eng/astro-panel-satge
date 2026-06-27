@@ -144,31 +144,31 @@ const ManageServices = () => {
   let updatedPanels = [...panels];
 
   // Live ON => Chat & Call OFF
-  if (currentPanel.key === "live" && isTurningOn) {
-    updatedPanels = updatedPanels.map((panel) =>
-      panel.key === "chat" || panel.key === "call"
-        ? {
-            ...panel,
-            status: "Offline",
-          }
-        : panel
-    );
-  }
+  // if (currentPanel.key === "live" && isTurningOn) {
+  //   updatedPanels = updatedPanels.map((panel) =>
+  //     panel.key === "chat" || panel.key === "call"
+  //       ? {
+  //           ...panel,
+  //           status: "Offline",
+  //         }
+  //       : panel
+  //   );
+  // }
 
   // Chat/Call ON => Live OFF
-  else if (
-    (currentPanel.key === "chat" || currentPanel.key === "call") &&
-    isTurningOn
-  ) {
-    updatedPanels = updatedPanels.map((panel) =>
-      panel.key === "live"
-        ? {
-            ...panel,
-            status: "Offline",
-          }
-        : panel
-    );
-  }
+  // else if (
+  //   (currentPanel.key === "chat" || currentPanel.key === "call") &&
+  //   isTurningOn
+  // ) {
+  //   updatedPanels = updatedPanels.map((panel) =>
+  //     panel.key === "live"
+  //       ? {
+  //           ...panel,
+  //           status: "Offline",
+  //         }
+  //       : panel
+  //   );
+  // }
 
   updatedPanels[index] = {
     ...updatedPanels[index],
