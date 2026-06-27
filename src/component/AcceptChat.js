@@ -8,34 +8,6 @@ const AcceptChat = ({accept}) => {
 
   const socket = useContext(SocketContext);
 
- 
- 
-
-
-
- 
-// useEffect(() => {
-//   if (!socket) {
-//     console.log('⛔ Socket not connected');
-//     return;
-//   }
-// return () => {
-    
-//     };
-//   }, [socket]);
-
-
-//   const handleAccept = () => {
-//     alert('✅ Chat Accepted');
-//     setIsModalOpen(false);
-//   };
-
-//   const handleReject = () => {
-//     alert('❌ Chat Rejected');
-//     setIsModalOpen(false);
-//   };
-
-
   return (
     <AnimatePresence>
       {accept && (

@@ -14,7 +14,46 @@ import { GiAstrolabe } from 'react-icons/gi';
 import { IoIosAttach } from 'react-icons/io';
 import { useGetChatBySessionIdQuery } from '@/app/redux/slice/chatHistoryApi';
 import TimerController from '@/component/chat/TimerController';
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import { SENDER_IMG_URL, RECEIVER_IMG_URL } from '@/app/redux/apiConfig';
+const GET_SESSION_MESSAGES = gql`
+ query getCurrentChatMessages($roomId: String!) {
+  getCurrentChatMessages(roomId: $roomId) {
+    success
+    totalCount
+    data {
+      id
+      msgId
+      roomId
+      senderId
+      receiverId
+      message
+      image
+      sender
+      replyTo
+      createdAt
+    }
+  }
+}
+`;
+
+export const GET_REMEDY_FOR_CHAT = gql`
+  query GetRemediesForChat {
+    getRemediesForChat {
+      success
+      message
+      data {
+        id
+        title
+        description
+        isActive
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
 
 const AstrologerChat = () => {
   const router = useRouter();
@@ -39,7 +78,9 @@ const AstrologerChat = () => {
   const [chatend, setChatEnd] = useState(false);
   // New state for canned messages
   const [cannedMessages, setCannedMessages] = useState([]);
+  const [remedy, setRemedy] = useState([]);
   const [showCannedDropdown, setShowCannedDropdown] = useState(false);
+  const [showRemedyDropdown, setShowRemedyDropdown] = useState(false); // New state for remedy dropdown
 
   // Decrypt chat params
   const encryptedData = searchParams.get('data');
@@ -58,71 +99,73 @@ const AstrologerChat = () => {
   const occupation_user = chatParams.occupationuser;
   const userimage = chatParams.userimage;
 
-  const { data } = useGetChatBySessionIdQuery(roomId, {
-    skip: !roomId,
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, loading, error } =
+    useQuery(GET_SESSION_MESSAGES, {
+      variables: {
+        roomId,
+      },
+      skip: !roomId || !open,
+      fetchPolicy: "network-only",
+    });
+  console.log("----------------------------", data);
+  const FetchChat_message =
+    data?.getSessionMessages?.data || [];
+  console.log(FetchChat_message);
 
- 
+  // GraphQL query for remedies
+  const { data: remedyData, loading: remedyLoading, error: remedyError } = 
+    useQuery(GET_REMEDY_FOR_CHAT, {
+      fetchPolicy: "network-only",
+    });
+
   useEffect(() => {
-    
+    if (remedyData?.getRemediesForChat?.data) {
+      setRemedy(remedyData.getRemediesForChat.data);
+    }
+  }, [remedyData]);
+
+  useEffect(() => {
     const fetchCannedMessages = async () => {
       try {
-      
         const data = [
- 
-  { id: 1, title: "introduction", description: "Hello! I am Astrologer, How can I assist you with your astrological needs?" },  
-
-  // --- Astrology Greetings ---
-  { id: 4, title: "greeting", description: "Namaste! Thank you for reaching out. How may I assist you with your astrological queries today?" },
-  { id: 5, title: "welcome message", description: "Welcome to my astrology consultation. Please share your date of birth, birthtime, and place of birth for accurate predictions." },
-
-  // --- Horoscope-related ---
-  { id: 6, title: "daily horoscope", description: "Based on your zodiac sign, today brings opportunities for growth. Stay focused and positive." },
-  { id: 7, title: "weekly horoscope", description: "This week may bring challenges in your career but new opportunities in relationships. Trust the process." },
-
-  // --- Love & Relationship ---
-  { id: 8, title: "love consultation", description: "Love and relationships are guided by Venus. Please provide partner details for compatibility analysis." },
-  { id: 9, title: "marriage prediction", description: "Marriage prospects look promising in the upcoming year. Would you like a detailed kundli match analysis?" },
-
-  // --- Career & Finance ---
-  { id: 10, title: "career guidance", description: "Your horoscope indicates strong potential in business ventures. Be cautious with investments this month." },
-  { id: 11, title: "financial forecast", description: "Financial stability will improve in the coming months. Plan your savings wisely." },
-
-  // --- Closing messages ---
-  { id: 12, title: "thank you", description: "Thank you for consulting with me. May the stars always guide you towards happiness and success." },
-  { id: 13, title: "follow up", description: "I will share a detailed report shortly. Please stay connected for further guidance." },
-
-  
-  // General Astrology
-  { id: 14, title: "zodiac traits", description: "Each zodiac sign has unique strengths and weaknesses. Please share your sign for a detailed personality reading." },
-  { id: 15, title: "planetary effects", description: "Planetary movements like Mercury retrograde may influence your current situation. Would you like me to explain how?" },
-  { id: 16, title: "remedies suggestion", description: "Astrological remedies like mantras, gemstones, or rituals can help balance planetary effects. Do you want tailored suggestions?" },
-
-  // Health & Wellness
-  { id: 17, title: "health forecast", description: "Your horoscope indicates the need for focus on health. Regular exercise and meditation are highly recommended this period." },
-  { id: 18, title: "mental wellbeing", description: "The moon's position suggests emotional sensitivity. Practicing mindfulness will help you stay calm." },
-
-  // Spiritual Guidance
-  { id: 19, title: "karma insight", description: "Astrology also highlights your karmic path. Would you like to know more about your past life influences?" },
-  { id: 20, title: "meditation guidance", description: "Meditation aligned with your moon sign can bring peace and clarity. Shall I suggest a practice?" },
-  { id: 21, title: "lucky numbers", description: "Your lucky numbers today are 3, 7, and 21. Keep them in mind for important decisions." },
-
-  // Vastu / Home-related
-  { id: 22, title: "vastu tips", description: "Vastu principles suggest aligning your home/office with cosmic energy for prosperity. Would you like some tips?" },
-  { id: 23, title: "property decision", description: "Planetary alignments indicate this may be a good period to consider property investments." },
-
-  // Travel & Relocation
-  { id: 24, title: "travel forecast", description: "The stars indicate favorable conditions for short travels in the coming days." },
-  { id: 25, title: "foreign settlement", description: "Your chart shows strong chances of foreign settlement in the next few years." },
-
-  // Astro Remedies & Rituals
-  { id: 26, title: "gemstone recommendation", description: "Wearing a gemstone aligned with your ruling planet can strengthen positive energies. Would you like a recommendation?" },
-  { id: 27, title: "puja suggestion", description: "Performing a Navagraha puja can help reduce negative planetary effects." }
-];
-
-
-        setCannedMessages(data); 
+          { id: 1, title: "introduction", description: "Hello! I am Astrologer, How can I assist you with your astrological needs?" },
+          // --- Astrology Greetings ---
+          { id: 4, title: "greeting", description: "Namaste! Thank you for reaching out. How may I assist you with your astrological queries today?" },
+          { id: 5, title: "welcome message", description: "Welcome to my astrology consultation. Please share your date of birth, birthtime, and place of birth for accurate predictions." },
+          // --- Horoscope-related ---
+          { id: 6, title: "daily horoscope", description: "Based on your zodiac sign, today brings opportunities for growth. Stay focused and positive." },
+          { id: 7, title: "weekly horoscope", description: "This week may bring challenges in your career but new opportunities in relationships. Trust the process." },
+          // --- Love & Relationship ---
+          { id: 8, title: "love consultation", description: "Love and relationships are guided by Venus. Please provide partner details for compatibility analysis." },
+          { id: 9, title: "marriage prediction", description: "Marriage prospects look promising in the upcoming year. Would you like a detailed kundli match analysis?" },
+          // --- Career & Finance ---
+          { id: 10, title: "career guidance", description: "Your horoscope indicates strong potential in business ventures. Be cautious with investments this month." },
+          { id: 11, title: "financial forecast", description: "Financial stability will improve in the coming months. Plan your savings wisely." },
+          // --- Closing messages ---
+          { id: 12, title: "thank you", description: "Thank you for consulting with me. May the stars always guide you towards happiness and success." },
+          { id: 13, title: "follow up", description: "I will share a detailed report shortly. Please stay connected for further guidance." },
+          // General Astrology
+          { id: 14, title: "zodiac traits", description: "Each zodiac sign has unique strengths and weaknesses. Please share your sign for a detailed personality reading." },
+          { id: 15, title: "planetary effects", description: "Planetary movements like Mercury retrograde may influence your current situation. Would you like me to explain how?" },
+          { id: 16, title: "remedies suggestion", description: "Astrological remedies like mantras, gemstones, or rituals can help balance planetary effects. Do you want tailored suggestions?" },
+          // Health & Wellness
+          { id: 17, title: "health forecast", description: "Your horoscope indicates the need for focus on health. Regular exercise and meditation are highly recommended this period." },
+          { id: 18, title: "mental wellbeing", description: "The moon's position suggests emotional sensitivity. Practicing mindfulness will help you stay calm." },
+          // Spiritual Guidance
+          { id: 19, title: "karma insight", description: "Astrology also highlights your karmic path. Would you like to know more about your past life influences?" },
+          { id: 20, title: "meditation guidance", description: "Meditation aligned with your moon sign can bring peace and clarity. Shall I suggest a practice?" },
+          { id: 21, title: "lucky numbers", description: "Your lucky numbers today are 3, 7, and 21. Keep them in mind for important decisions." },
+          // Vastu / Home-related
+          { id: 22, title: "vastu tips", description: "Vastu principles suggest aligning your home/office with cosmic energy for prosperity. Would you like some tips?" },
+          { id: 23, title: "property decision", description: "Planetary alignments indicate this may be a good period to consider property investments." },
+          // Travel & Relocation
+          { id: 24, title: "travel forecast", description: "The stars indicate favorable conditions for short travels in the coming days." },
+          { id: 25, title: "foreign settlement", description: "Your chart shows strong chances of foreign settlement in the next few years." },
+          // Astro Remedies & Rituals
+          { id: 26, title: "gemstone recommendation", description: "Wearing a gemstone aligned with your ruling planet can strengthen positive energies. Would you like a recommendation?" },
+          { id: 27, title: "puja suggestion", description: "Performing a Navagraha puja can help reduce negative planetary effects." }
+        ];
+        setCannedMessages(data);
       } catch (error) {
         console.error('Error fetching canned messages:', error);
       }
@@ -148,9 +191,7 @@ const AstrologerChat = () => {
       { room_id: roomId, astroId: token, userId: userId },
       (response) => {
         if (response.success) {
-          console.log('Chat ended successfully on the server.');
         } else {
-          console.error('Failed to end the chat on the server.');
         }
       }
     );
@@ -215,7 +256,6 @@ const AstrologerChat = () => {
 
   useEffect(() => {
     if (!socket) {
-      console.log('Socket not initialized');
       return;
     }
     if (socket.connected) {
@@ -418,7 +458,8 @@ const AstrologerChat = () => {
         setImageFile(null);
         setImagePreview(null);
         setReplyTo(null);
-        setShowCannedDropdown(false); // Close dropdown after sending
+        setShowCannedDropdown(false);
+        setShowRemedyDropdown(false); // Close remedy dropdown after sending
       };
 
       if (imageFile) {
@@ -508,10 +549,19 @@ const AstrologerChat = () => {
     window.open(url, '_blank');
   };
 
-   // Handle canned message selection
+  // Handle canned message selection
   const handleCannedMessageSelect = (description) => {
     setMessage(description);
     setShowCannedDropdown(false);
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  };
+
+  // Handle remedy selection
+  const handleRemedySelect = (description) => {
+    setMessage(description);
+    setShowRemedyDropdown(false);
     if (messageInputRef.current) {
       messageInputRef.current.focus();
     }
@@ -521,24 +571,19 @@ const AstrologerChat = () => {
   const getProfileImgUrl = (img) => (img ? `/Dhwani-logo.jpg` : '/Dhwani-logo.jpg');
 
   useEffect(() => {
-  if (data && Array.isArray(data.messages)) {
-    setMessages((prev) => {
-      const existingIds = new Set(prev.map(m => m.msg_id));
-      const newMessages = data.messages
-        .filter(m => !existingIds.has(m.msg_id))
-        .map(msg => ({
-          msg_id: msg.msg_id,
-          sender: msg.user?.user_type === 'astrologer' ? 'Astrologer' : 'Customer',
-          message: msg.message,
-          time: msg.created_time,
-          image: msg.image ? `${SENDER_IMG_URL}/${msg.image}` : null,
-          replyTo: msg.replyTo || null,
-        }));
-      return [...prev, ...newMessages];
-    });
-  }
-}, [data]);
-
+    const chatMessages = data?.getCurrentChatMessages?.data;
+    if (!Array.isArray(chatMessages)) return;
+    setMessages(
+      chatMessages.map((msg) => ({
+        msg_id: msg.msgId,
+        sender: msg.sender,
+        message: msg.message,
+        time: msg.createdAt,
+        image: msg.image,
+        replyTo: msg.replyTo,
+      }))
+    );
+  }, [data]);
 
   return (
     <>
@@ -804,7 +849,10 @@ const AstrologerChat = () => {
                 <button
                   type="button"
                   className="px-3 py-2 text-xs text-white bg-blue-500 rounded-full mr-2"
-                  onClick={() => setShowCannedDropdown(!showCannedDropdown)}
+                  onClick={() => {
+                    setShowCannedDropdown(!showCannedDropdown);
+                    setShowRemedyDropdown(false); // Close remedy dropdown when opening canned
+                  }}
                   title="Select canned message"
                 >
                   Canned Msg
@@ -830,6 +878,56 @@ const AstrologerChat = () => {
                   </div>
                 )}
               </div>
+
+              {/* Remedy Button and Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-xs text-white bg-green-500 rounded-full mr-2 flex items-center gap-1"
+                  onClick={() => {
+                    setShowRemedyDropdown(!showRemedyDropdown);
+                    setShowCannedDropdown(false); // Close canned dropdown when opening remedy
+                  }}
+                  title="Select remedy"
+                >
+                  <GiAstrolabe size={16} />
+                  Remedy
+                </button>
+                {showRemedyDropdown && (
+                  <div className="absolute bottom-10 left-0 w-56 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {remedyLoading ? (
+                      <div className="px-3 py-2 text-xs text-gray-500">
+                        Loading remedies...
+                      </div>
+                    ) : remedyError ? (
+                      <div className="px-3 py-2 text-xs text-red-500">
+                        Failed to load remedies
+                      </div>
+                    ) : remedy.length > 0 ? (
+                      remedy.map((item) => (
+                        <div
+                          key={item.id}
+                          className="px-3 py-2 text-xs text-gray-800 hover:bg-green-100 cursor-pointer border-b border-gray-100 last:border-0"
+                          onClick={() => handleRemedySelect(item.description)}
+                          title={item.title}
+                        >
+                          <div className="font-semibold">{item.title}</div>
+                          <div className="text-[10px] text-gray-500 line-clamp-2">
+                            {item.description.length > 60 
+                              ? item.description.slice(0, 60) + '...' 
+                              : item.description}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs text-gray-500">
+                        No remedies available
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <input
                 type="file"
                 onChange={handleImageChange}
@@ -925,4 +1023,3 @@ const AstrologerChat = () => {
 };
 
 export default AstrologerChat;
-
