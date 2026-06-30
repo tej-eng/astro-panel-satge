@@ -1,22 +1,10 @@
 {
   "pages": {
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/page.css",
-      "static/chunks/app/page.js"
-    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/page.css",
-      "static/chunks/app/dashboard/page.js"
     ],
     "/dashboard/layout": [
       "static/chunks/webpack.js",
@@ -24,11 +12,22 @@
       "static/css/app/dashboard/layout.css",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/astrologerchat/page": [
+    "/dashboard/call-history/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/astrologerchat/page.css",
-      "static/chunks/app/astrologerchat/page.js"
+      "static/chunks/app/dashboard/call-history/page.js"
+    ],
+    "/dashboard/[...slug]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/[...slug]/page.css",
+      "static/chunks/app/dashboard/[...slug]/page.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/page.css",
+      "static/chunks/app/dashboard/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",

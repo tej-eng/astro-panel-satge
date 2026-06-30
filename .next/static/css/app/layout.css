@@ -577,9 +577,6 @@
   .inline-flex {
     display: inline-flex;
   }
-  .table {
-    display: table;
-  }
   .h-0 {
     height: calc(var(--spacing) * 0);
   }
@@ -903,9 +900,6 @@
   }
   .min-w-\[1400px\] {
     min-width: 1400px;
-  }
-  .min-w-\[1500px\] {
-    min-width: 1500px;
   }
   .min-w-full {
     min-width: 100%;

@@ -33,7 +33,7 @@ const menuItems = [
         icon: <IoIosChatbubbles />,
       },
       {
-        href: "/dashboard/callhistory",
+        href: "/dashboard/call-history",
         label: "Call History",
         icon: <IoCall />,
       },
