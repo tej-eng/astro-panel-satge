@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [sourceFilter, setSourceFilter] = useState("ALL"); // ✅ Added source filter
+  const [sourceFilter, setSourceFilter] = useState("ALL"); 
   const [openModal, setOpenModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -51,19 +51,18 @@ export default function AstrologerChatHistory() {
     router.push(`/dashboard/chathistory/kundli/${roomId}`);
   };
 
-  // APOLLO QUERY - Updated with source filter
+  
   const { data, loading, error } = useQuery(GET_ASTROLOGER_CHAT_HISTORY, {
     variables: {
       page,
       limit,
-      source: sourceFilter !== "ALL" ? sourceFilter : undefined, // ✅ Pass source filter
+      source: sourceFilter !== "ALL" ? sourceFilter : undefined, 
     },
     fetchPolicy: "network-only",
   });
 
   const chatHistory = data?.getAstrologerChatHistory;
 
-  // SEARCH + FILTER
   const filteredChats = useMemo(() => {
     if (!chatHistory?.data) return [];
 
@@ -140,7 +139,7 @@ export default function AstrologerChatHistory() {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Astrologer Chat History
+          Astrologer Chat Historyuuuuuuuuuuuuuuu
         </h1>
 
         <p className="text-gray-500 mt-1">
@@ -148,9 +147,9 @@ export default function AstrologerChatHistory() {
         </p>
       </div>
 
-      {/* TOP STATS */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {/* TOTAL CHATS */}
+      
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Chats</p>
@@ -163,7 +162,6 @@ export default function AstrologerChatHistory() {
           </h2>
         </div>
 
-        {/* CURRENT PAGE */}
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Current Page</p>
@@ -176,7 +174,7 @@ export default function AstrologerChatHistory() {
           </h2>
         </div>
 
-        {/* TOTAL PAGES */}
+       
         <div className="bg-white rounded-2xl border shadow-sm p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Pages</p>
@@ -190,7 +188,7 @@ export default function AstrologerChatHistory() {
         </div>
       </div>
 
-      {/* SEARCH + FILTER */}
+   
       <div className="bg-white rounded-2xl border shadow-sm p-4 mb-5">
         <div className="flex flex-col md:flex-row gap-4">
           {/* SEARCH */}
