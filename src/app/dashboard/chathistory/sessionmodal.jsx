@@ -60,7 +60,7 @@ export default function SessionMessagesModal({
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
             <h2 className="text-xl font-bold text-gray-800">
-              Session Chat History
+              Chat History
             </h2>
 
             <p className="text-sm text-gray-500 mt-1">
@@ -98,7 +98,7 @@ export default function SessionMessagesModal({
                   key={msg.id}
                   className={`flex ${
                     msg.sender ===
-                    "ASTROLOGER"
+                    "Astrologer"
                       ? "justify-end"
                       : "justify-start"
                   }`}
@@ -106,7 +106,7 @@ export default function SessionMessagesModal({
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.sender ===
-                      "ASTROLOGER"
+                      "user"
                         ? "bg-black text-white"
                         : "bg-white border"
                     }`}
