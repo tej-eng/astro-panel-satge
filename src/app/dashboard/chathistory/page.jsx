@@ -143,7 +143,7 @@ export default function AstrologerChatHistory() {
         </h1>
 
         <p className="text-gray-500 mt-1">
-          View all customer chat sessions & earnings
+          
         </p>
       </div>
 
