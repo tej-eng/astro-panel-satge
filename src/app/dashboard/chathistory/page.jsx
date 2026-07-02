@@ -139,7 +139,7 @@ export default function AstrologerChatHistory() {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Astrologer Chat Historyuuuuuuuuuuuuuuu
+           Chat History
         </h1>
 
         <p className="text-gray-500 mt-1">

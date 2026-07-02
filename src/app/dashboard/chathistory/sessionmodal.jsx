@@ -3,19 +3,11 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 
-import {
-  X,
-  Image as ImageIcon,
-  Loader2,
-} from "lucide-react";
+import { X, Image as ImageIcon, Loader2 } from "lucide-react";
 
 const GET_SESSION_MESSAGES = gql`
-  query GetSessionMessages(
-    $sessionId: String!
-  ) {
-    getSessionMessages(
-      sessionId: $sessionId
-    ) {
+  query GetSessionMessages($sessionId: String!) {
+    getSessionMessages(sessionId: $sessionId) {
       success
       totalCount
 
@@ -30,25 +22,19 @@ const GET_SESSION_MESSAGES = gql`
   }
 `;
 
-export default function SessionMessagesModal({
-  open,
-  onClose,
-  sessionId,
-}) {
+export default function SessionMessagesModal({ open, onClose, sessionId }) {
   // API CALL
-  const { data, loading, error } =
-    useQuery(GET_SESSION_MESSAGES, {
-      variables: {
-        sessionId,
-      },
+  const { data, loading, error } = useQuery(GET_SESSION_MESSAGES, {
+    variables: {
+      sessionId,
+    },
 
-      skip: !sessionId || !open,
+    skip: !sessionId || !open,
 
-      fetchPolicy: "network-only",
-    });
+    fetchPolicy: "network-only",
+  });
 
-  const messages =
-    data?.getSessionMessages?.data || [];
+  const messages = data?.getSessionMessages?.data || [];
 
   // CLOSE IF NOT OPEN
   if (!open) return null;
@@ -59,9 +45,7 @@ export default function SessionMessagesModal({
         {/* HEADER */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              Chat History
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800">Chat History</h2>
 
             <p className="text-sm text-gray-500 mt-1">
               Session ID: {sessionId}
@@ -82,7 +66,6 @@ export default function SessionMessagesModal({
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <Loader2 className="w-8 h-8 animate-spin mb-3" />
-
               Loading messages...
             </div>
           ) : error ? (
@@ -97,18 +80,16 @@ export default function SessionMessagesModal({
                 <div
                   key={msg.id}
                   className={`flex ${
-                    msg.sender ===
-                    "Astrologer"
+                    msg.sender === "Astrologer"
                       ? "justify-end"
                       : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                      msg.sender ===
-                      "user"
-                        ? "bg-black text-white"
-                        : "bg-white border"
+                      msg.sender === "user"
+                        ? "bg-[#FFF4B8] text-gray-900"
+                        : "bg-[#EED6FF] text-gray-900"
                     }`}
                   >
                     {/* SENDER */}
@@ -118,9 +99,7 @@ export default function SessionMessagesModal({
 
                     {/* MESSAGE */}
                     {msg.message && (
-                      <p className="text-sm break-words">
-                        {msg.message}
-                      </p>
+                      <p className="text-sm break-words">{msg.message}</p>
                     )}
 
                     {/* IMAGE */}
@@ -134,7 +113,6 @@ export default function SessionMessagesModal({
 
                         <div className="flex items-center gap-1 text-xs opacity-70 mt-2">
                           <ImageIcon className="w-3 h-3" />
-
                           Image
                         </div>
                       </div>
@@ -142,9 +120,7 @@ export default function SessionMessagesModal({
 
                     {/* TIME */}
                     <div className="text-[11px] opacity-60 mt-2">
-                      {new Date(
-                        msg.createdAt
-                      ).toLocaleString()}
+                      {new Date(msg.createdAt).toLocaleString()}
                     </div>
                   </div>
                 </div>
