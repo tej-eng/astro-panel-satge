@@ -111,7 +111,7 @@ const handleSubmitRemedy = async () => {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Astrologer Call Historyyyyyyyyyyyyyy
+          Call History
         </h1>
 
         <p className="text-gray-500 mt-1">
