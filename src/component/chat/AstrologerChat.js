@@ -1,41 +1,43 @@
 import { useState, useEffect, useRef, useContext, useCallback } from "react";
-import imageCompression from 'browser-image-compression';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
-import SocketContext from '@/component/SocketClient';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { decryptParams } from '@/app/utils/crypto';
-import '@/component/chat/astro.css';
-import PopUp from '@/app/common/PopUp';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaUpload } from 'react-icons/fa';
-import { BiCheckDouble } from 'react-icons/bi';
-import { GiAstrolabe } from 'react-icons/gi';
-import { IoIosAttach } from 'react-icons/io';
-import { useGetChatBySessionIdQuery } from '@/app/redux/slice/chatHistoryApi';
-import TimerController from '@/component/chat/TimerController';
+import imageCompression from "browser-image-compression";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
+import SocketContext from "@/component/SocketClient";
+import { useRouter, useSearchParams } from "next/navigation";
+import { decryptParams } from "@/app/utils/crypto";
+import "@/component/chat/astro.css";
+import PopUp from "@/app/common/PopUp";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaUpload } from "react-icons/fa";
+import { BiCheckDouble } from "react-icons/bi";
+import { GiAstrolabe } from "react-icons/gi";
+import { IoIosAttach } from "react-icons/io";
+import { useGetChatBySessionIdQuery } from "@/app/redux/slice/chatHistoryApi";
+import TimerController from "@/component/chat/TimerController";
 import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
-import { SENDER_IMG_URL, RECEIVER_IMG_URL } from '@/app/redux/apiConfig';
+import { useQuery, useMutation } from "@apollo/client/react";
+import { SENDER_IMG_URL, RECEIVER_IMG_URL } from "@/app/redux/apiConfig";
+
+
 const GET_SESSION_MESSAGES = gql`
- query getCurrentChatMessages($roomId: String!) {
-  getCurrentChatMessages(roomId: $roomId) {
-    success
-    totalCount
-    data {
-      id
-      msgId
-      roomId
-      senderId
-      receiverId
-      message
-      image
-      sender
-      replyTo
-      createdAt
+  query getCurrentChatMessages($roomId: String!) {
+    getCurrentChatMessages(roomId: $roomId) {
+      success
+      totalCount
+      data {
+        id
+        msgId
+        roomId
+        senderId
+        receiverId
+        message
+        image
+        sender
+        replyTo
+        createdAt
+      }
     }
   }
-}
 `;
 
 export const GET_REMEDY_FOR_CHAT = gql`
@@ -55,20 +57,30 @@ export const GET_REMEDY_FOR_CHAT = gql`
   }
 `;
 
+export const UPLOAD_FILE = gql`
+  mutation UploadFile($file: Upload!) {
+    uploadFile(file: $file) {
+      success
+      url
+      filename
+    }
+  }
+`;
 const AstrologerChat = () => {
   const router = useRouter();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const messageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
-  const [leaveMessage, setLeaveMessage] = useState('');
-  const [typingStatus, setTypingStatus] = useState('');
+  const [leaveMessage, setLeaveMessage] = useState("");
+  const [typingStatus, setTypingStatus] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const typingTimeoutRef = useRef(null);
   const [recharge, setRecharge] = useState(false);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
   const [endAlert, setEndAlert] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -80,10 +92,11 @@ const AstrologerChat = () => {
   const [cannedMessages, setCannedMessages] = useState([]);
   const [remedy, setRemedy] = useState([]);
   const [showCannedDropdown, setShowCannedDropdown] = useState(false);
-  const [showRemedyDropdown, setShowRemedyDropdown] = useState(false); // New state for remedy dropdown
+  const [showRemedyDropdown, setShowRemedyDropdown] = useState(false);
+  const [uploadFile, { loading: uploading }] = useMutation(UPLOAD_FILE);
 
   // Decrypt chat params
-  const encryptedData = searchParams.get('data');
+  const encryptedData = searchParams.get("data");
   let chatParams = {};
   if (encryptedData) {
     chatParams = decryptParams(encryptedData) || {};
@@ -99,24 +112,25 @@ const AstrologerChat = () => {
   const occupation_user = chatParams.occupationuser;
   const userimage = chatParams.userimage;
 
-  const { data, loading, error } =
-    useQuery(GET_SESSION_MESSAGES, {
-      variables: {
-        roomId,
-      },
-      skip: !roomId || !open,
-      fetchPolicy: "network-only",
-    });
+  const { data, loading, error } = useQuery(GET_SESSION_MESSAGES, {
+    variables: {
+      roomId,
+    },
+    skip: !roomId,
+    fetchPolicy: "network-only",
+  });
   console.log("----------------------------", data);
-  const FetchChat_message =
-    data?.getSessionMessages?.data || [];
+  const FetchChat_message = data?.getSessionMessages?.data || [];
   console.log(FetchChat_message);
 
   // GraphQL query for remedies
-  const { data: remedyData, loading: remedyLoading, error: remedyError } = 
-    useQuery(GET_REMEDY_FOR_CHAT, {
-      fetchPolicy: "network-only",
-    });
+  const {
+    data: remedyData,
+    loading: remedyLoading,
+    error: remedyError,
+  } = useQuery(GET_REMEDY_FOR_CHAT, {
+    fetchPolicy: "network-only",
+  });
 
   useEffect(() => {
     if (remedyData?.getRemediesForChat?.data) {
@@ -128,46 +142,171 @@ const AstrologerChat = () => {
     const fetchCannedMessages = async () => {
       try {
         const data = [
-          { id: 1, title: "introduction", description: "Hello! I am Astrologer, How can I assist you with your astrological needs?" },
+          {
+            id: 1,
+            title: "introduction",
+            description:
+              "Hello! I am Astrologer, How can I assist you with your astrological needs?",
+          },
           // --- Astrology Greetings ---
-          { id: 4, title: "greeting", description: "Namaste! Thank you for reaching out. How may I assist you with your astrological queries today?" },
-          { id: 5, title: "welcome message", description: "Welcome to my astrology consultation. Please share your date of birth, birthtime, and place of birth for accurate predictions." },
+          {
+            id: 4,
+            title: "greeting",
+            description:
+              "Namaste! Thank you for reaching out. How may I assist you with your astrological queries today?",
+          },
+          {
+            id: 5,
+            title: "welcome message",
+            description:
+              "Welcome to my astrology consultation. Please share your date of birth, birthtime, and place of birth for accurate predictions.",
+          },
           // --- Horoscope-related ---
-          { id: 6, title: "daily horoscope", description: "Based on your zodiac sign, today brings opportunities for growth. Stay focused and positive." },
-          { id: 7, title: "weekly horoscope", description: "This week may bring challenges in your career but new opportunities in relationships. Trust the process." },
+          {
+            id: 6,
+            title: "daily horoscope",
+            description:
+              "Based on your zodiac sign, today brings opportunities for growth. Stay focused and positive.",
+          },
+          {
+            id: 7,
+            title: "weekly horoscope",
+            description:
+              "This week may bring challenges in your career but new opportunities in relationships. Trust the process.",
+          },
           // --- Love & Relationship ---
-          { id: 8, title: "love consultation", description: "Love and relationships are guided by Venus. Please provide partner details for compatibility analysis." },
-          { id: 9, title: "marriage prediction", description: "Marriage prospects look promising in the upcoming year. Would you like a detailed kundli match analysis?" },
+          {
+            id: 8,
+            title: "love consultation",
+            description:
+              "Love and relationships are guided by Venus. Please provide partner details for compatibility analysis.",
+          },
+          {
+            id: 9,
+            title: "marriage prediction",
+            description:
+              "Marriage prospects look promising in the upcoming year. Would you like a detailed kundli match analysis?",
+          },
           // --- Career & Finance ---
-          { id: 10, title: "career guidance", description: "Your horoscope indicates strong potential in business ventures. Be cautious with investments this month." },
-          { id: 11, title: "financial forecast", description: "Financial stability will improve in the coming months. Plan your savings wisely." },
+          {
+            id: 10,
+            title: "career guidance",
+            description:
+              "Your horoscope indicates strong potential in business ventures. Be cautious with investments this month.",
+          },
+          {
+            id: 11,
+            title: "financial forecast",
+            description:
+              "Financial stability will improve in the coming months. Plan your savings wisely.",
+          },
           // --- Closing messages ---
-          { id: 12, title: "thank you", description: "Thank you for consulting with me. May the stars always guide you towards happiness and success." },
-          { id: 13, title: "follow up", description: "I will share a detailed report shortly. Please stay connected for further guidance." },
+          {
+            id: 12,
+            title: "thank you",
+            description:
+              "Thank you for consulting with me. May the stars always guide you towards happiness and success.",
+          },
+          {
+            id: 13,
+            title: "follow up",
+            description:
+              "I will share a detailed report shortly. Please stay connected for further guidance.",
+          },
           // General Astrology
-          { id: 14, title: "zodiac traits", description: "Each zodiac sign has unique strengths and weaknesses. Please share your sign for a detailed personality reading." },
-          { id: 15, title: "planetary effects", description: "Planetary movements like Mercury retrograde may influence your current situation. Would you like me to explain how?" },
-          { id: 16, title: "remedies suggestion", description: "Astrological remedies like mantras, gemstones, or rituals can help balance planetary effects. Do you want tailored suggestions?" },
+          {
+            id: 14,
+            title: "zodiac traits",
+            description:
+              "Each zodiac sign has unique strengths and weaknesses. Please share your sign for a detailed personality reading.",
+          },
+          {
+            id: 15,
+            title: "planetary effects",
+            description:
+              "Planetary movements like Mercury retrograde may influence your current situation. Would you like me to explain how?",
+          },
+          {
+            id: 16,
+            title: "remedies suggestion",
+            description:
+              "Astrological remedies like mantras, gemstones, or rituals can help balance planetary effects. Do you want tailored suggestions?",
+          },
           // Health & Wellness
-          { id: 17, title: "health forecast", description: "Your horoscope indicates the need for focus on health. Regular exercise and meditation are highly recommended this period." },
-          { id: 18, title: "mental wellbeing", description: "The moon's position suggests emotional sensitivity. Practicing mindfulness will help you stay calm." },
+          {
+            id: 17,
+            title: "health forecast",
+            description:
+              "Your horoscope indicates the need for focus on health. Regular exercise and meditation are highly recommended this period.",
+          },
+          {
+            id: 18,
+            title: "mental wellbeing",
+            description:
+              "The moon's position suggests emotional sensitivity. Practicing mindfulness will help you stay calm.",
+          },
           // Spiritual Guidance
-          { id: 19, title: "karma insight", description: "Astrology also highlights your karmic path. Would you like to know more about your past life influences?" },
-          { id: 20, title: "meditation guidance", description: "Meditation aligned with your moon sign can bring peace and clarity. Shall I suggest a practice?" },
-          { id: 21, title: "lucky numbers", description: "Your lucky numbers today are 3, 7, and 21. Keep them in mind for important decisions." },
+          {
+            id: 19,
+            title: "karma insight",
+            description:
+              "Astrology also highlights your karmic path. Would you like to know more about your past life influences?",
+          },
+          {
+            id: 20,
+            title: "meditation guidance",
+            description:
+              "Meditation aligned with your moon sign can bring peace and clarity. Shall I suggest a practice?",
+          },
+          {
+            id: 21,
+            title: "lucky numbers",
+            description:
+              "Your lucky numbers today are 3, 7, and 21. Keep them in mind for important decisions.",
+          },
           // Vastu / Home-related
-          { id: 22, title: "vastu tips", description: "Vastu principles suggest aligning your home/office with cosmic energy for prosperity. Would you like some tips?" },
-          { id: 23, title: "property decision", description: "Planetary alignments indicate this may be a good period to consider property investments." },
+          {
+            id: 22,
+            title: "vastu tips",
+            description:
+              "Vastu principles suggest aligning your home/office with cosmic energy for prosperity. Would you like some tips?",
+          },
+          {
+            id: 23,
+            title: "property decision",
+            description:
+              "Planetary alignments indicate this may be a good period to consider property investments.",
+          },
           // Travel & Relocation
-          { id: 24, title: "travel forecast", description: "The stars indicate favorable conditions for short travels in the coming days." },
-          { id: 25, title: "foreign settlement", description: "Your chart shows strong chances of foreign settlement in the next few years." },
+          {
+            id: 24,
+            title: "travel forecast",
+            description:
+              "The stars indicate favorable conditions for short travels in the coming days.",
+          },
+          {
+            id: 25,
+            title: "foreign settlement",
+            description:
+              "Your chart shows strong chances of foreign settlement in the next few years.",
+          },
           // Astro Remedies & Rituals
-          { id: 26, title: "gemstone recommendation", description: "Wearing a gemstone aligned with your ruling planet can strengthen positive energies. Would you like a recommendation?" },
-          { id: 27, title: "puja suggestion", description: "Performing a Navagraha puja can help reduce negative planetary effects." }
+          {
+            id: 26,
+            title: "gemstone recommendation",
+            description:
+              "Wearing a gemstone aligned with your ruling planet can strengthen positive energies. Would you like a recommendation?",
+          },
+          {
+            id: 27,
+            title: "puja suggestion",
+            description:
+              "Performing a Navagraha puja can help reduce negative planetary effects.",
+          },
         ];
         setCannedMessages(data);
       } catch (error) {
-        console.error('Error fetching canned messages:', error);
+        console.error("Error fetching canned messages:", error);
       }
     };
 
@@ -178,33 +317,35 @@ const AstrologerChat = () => {
 
   useEffect(() => {
     const astroId = JSON.parse(localStorage.getItem("astro_user"))?.id;
-    setToken(astroId || '');
+    setToken(astroId || "");
   }, []);
 
-  const initialTime = Number.isFinite(parseFloat(chat_time)) ? parseInt(chat_time * 60) : 0;
+  const initialTime = Number.isFinite(parseFloat(chat_time))
+    ? parseInt(chat_time * 60)
+    : 0;
 
   // Define handleTimerEnd before useEffect hooks
   const handleTimerEnd = useCallback(() => {
     setChatEnd(true);
     socket.emit(
-      'complted_chat',
+      "complted_chat",
       { room_id: roomId, astroId: token, userId: userId },
       (response) => {
         if (response.success) {
         } else {
         }
-      }
+      },
     );
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(`endTime_${roomId}`);
     }
-    router.push('/dashboard');
+    router.push("/dashboard");
   }, [roomId, token, userId, socket, router]);
 
   // Always get endTime from localStorage if available, else set new
   const getEndTime = () => {
     if (!roomId) return null;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const stored = localStorage.getItem(`endTime_${roomId}`);
       if (stored) return parseInt(stored);
       if (initialTime > 0) {
@@ -218,7 +359,7 @@ const AstrologerChat = () => {
 
   const [endTime, setEndTime] = useState(getEndTime());
   const [timeLeft, setTimeLeft] = useState(() => {
-    if (typeof window !== 'undefined' && roomId) {
+    if (typeof window !== "undefined" && roomId) {
       const stored = localStorage.getItem(`endTime_${roomId}`);
       if (stored) {
         const now = Date.now();
@@ -238,14 +379,14 @@ const AstrologerChat = () => {
       if (remainingMs <= 0) {
         setTimeLeft(0);
         handleTimerEnd();
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.removeItem(`endTime_${roomId}`);
         }
         clearInterval(intervalId);
         return;
       }
       setTimeLeft(Math.max(Math.floor(remainingMs / 1000), 0));
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         localStorage.setItem(`endTime_${roomId}`, endTime);
       }
     };
@@ -259,107 +400,111 @@ const AstrologerChat = () => {
       return;
     }
     if (socket.connected) {
-      socket.emit('joinChat', {
-        username: 'astrologer',
+      socket.emit("joinChat", {
+        username: "astrologer",
         room_id: roomId,
         joinpersonid: token,
       });
     } else {
-      socket.on('connect', () => {
-        socket.emit('joinChat', {
-          username: 'astrologer',
+      socket.on("connect", () => {
+        socket.emit("joinChat", {
+          username: "astrologer",
           room_id: roomId,
           joinpersonid: token,
         });
       });
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
       });
     }
 
-    socket.on('user_disconnected', () => {
+    socket.on("user_disconnected", () => {
       try {
-        setLeaveMessage('The Chat Session Successfully Completed, Thank You!');
+        setLeaveMessage("The Chat Session Successfully Completed, Thank You!");
         setShowPopup(true);
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.removeItem(`endTime_${roomId}`);
         }
         setTimeout(() => {
           setShowPopup(false);
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 3000);
       } catch (error) {
-        console.error('Error in user_disconnected:', error);
+        console.error("Error in user_disconnected:", error);
       }
     });
 
-    socket.on('open_popup_astrologer', (data) => {
+    socket.on("open_popup_astrologer", (data) => {
       try {
         if (data.roomId === roomId) {
           setRecharge(true);
         }
       } catch (error) {
-        console.error('Error in open_popup_astrologer:', error);
+        console.error("Error in open_popup_astrologer:", error);
       }
     });
 
-    socket.on('customer_recharge_fail', (data) => {
+    socket.on("customer_recharge_fail", (data) => {
       try {
         if (data.roomId === roomId) {
           setRecharge(false);
         }
       } catch (error) {
-        console.error('Error in customer_recharge_fail:', error);
+        console.error("Error in customer_recharge_fail:", error);
       }
     });
 
-    socket.on('recharge_complted', (data) => {
+    socket.on("recharge_complted", (data) => {
       try {
         if (data?.roomId === roomId) {
           setRecharge(false);
-          const newDueSeconds = Number.isFinite(parseFloat(data?.duetime)) ? parseInt(data.duetime) : 0;
+          const newDueSeconds = Number.isFinite(parseFloat(data?.duetime))
+            ? parseInt(data.duetime)
+            : 0;
           if (newDueSeconds > 0) {
             const newEndTime = Date.now() + newDueSeconds * 1000;
             setEndTime(newEndTime);
             setTimeLeft(newDueSeconds);
-            if (typeof window !== 'undefined') {
+            if (typeof window !== "undefined") {
               localStorage.setItem(`endTime_${roomId}`, newEndTime);
             }
           }
         }
       } catch (error) {
-        console.error('Error in recharge_complted:', error);
+        console.error("Error in recharge_complted:", error);
       }
     });
 
-    socket.on('complted_chat', (data) => {
+    socket.on("complted_chat", (data) => {
       if (data.roomId === roomId) {
         try {
-          setLeaveMessage('The Chat Session Successfully Completed, Thank You!');
+          setLeaveMessage(
+            "The Chat Session Successfully Completed, Thank You!",
+          );
           setEndAlert(false);
           setShowPopup(true);
           setRecharge(false);
-          if (typeof window !== 'undefined') {
+          if (typeof window !== "undefined") {
             localStorage.removeItem(`endTime_${roomId}`);
           }
           setTimeout(() => {
             setShowPopup(false);
-            router.push('/dashboard');
+            router.push("/dashboard");
           }, 3000);
         } catch (error) {
-          console.error('Error in complted_chat:', error);
+          console.error("Error in complted_chat:", error);
         }
       }
     });
 
-    socket.on('receive_message', (data) => {
+    socket.on("receive_message", (data) => {
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           msg_id: data?.msg_id,
           sender: data.sender,
           message: data.message,
-          value: 'test',
+          value: "test",
           time: data.time,
           image: data.image,
           replyTo: data.replyTo || null,
@@ -367,29 +512,29 @@ const AstrologerChat = () => {
       ]);
     });
 
-    socket.on('typing', (data) => {
-      if (data.user_name !== 'Astrologer') {
-        setTypingStatus(data.typing ? `${data.user_name} is typing...` : '');
+    socket.on("typing", (data) => {
+      if (data.user_name !== "Astrologer") {
+        setTypingStatus(data.typing ? `${data.user_name} is typing...` : "");
       }
     });
 
     return () => {
-      socket.off('receive_message');
-      socket.off('leave_chat');
-      socket.off('typing');
-      socket.off('user_disconnected');
-      socket.off('open_popup_astrologer');
-      socket.off('recharge_complted');
-      socket.off('connect');
-      socket.off('connect_error');
+      socket.off("receive_message");
+      socket.off("leave_chat");
+      socket.off("typing");
+      socket.off("user_disconnected");
+      socket.off("open_popup_astrologer");
+      socket.off("recharge_complted");
+      socket.off("connect");
+      socket.off("connect_error");
     };
   }, [socket, roomId, router, token, userId]);
 
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
+        behavior: "smooth",
+        block: "end",
       });
     }
   }, [messages]);
@@ -398,116 +543,133 @@ const AstrologerChat = () => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
-    socket.emit('typing', {
+    socket.emit("typing", {
       room_id: roomId,
       typing: e.target.value.length > 0,
-      user_name: 'Astrologer',
+      user_name: "Astrologer",
     });
 
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typing', {
+      socket.emit("typing", {
         room_id: roomId,
         typing: false,
-        user_name: 'Astrologer',
+        user_name: "Astrologer",
       });
     }, 2000);
   };
 
-  const sendMessage = () => {
-    if (message.trim() !== '' || imageFile) {
-      const sender_id = token;
-      const received_id = userId;
-      const room_id = roomId;
-      const messageToSend = message;
-      let imageToSend = null;
-      const msg_id = `${Date.now()}${Math.floor(Math.random() * 100000)}`;
+  const sendMessage = async () => {
+    if (!message.trim() && !imageFile) return;
 
-      const handleSend = (imageBase64 = null) => {
-        const replyData = replyTo
+    const sender_id = token;
+    const received_id = userId;
+    const room_id = roomId;
+    const msg_id = `${Date.now()}${Math.floor(Math.random() * 100000)}`;
+
+    let imageUrl = null;
+
+    try {
+      // Upload image first
+      if (imageFile) {
+        console.log(imageFile);
+        console.log(imageFile instanceof File);
+        console.log(imageFile.constructor.name);
+        const { data } = await uploadFile({
+          variables: {
+            file: imageFile,
+          },
+        });
+
+        if (!data?.uploadFile?.success) {
+          alert("Image upload failed.");
+          return;
+        }
+
+        imageUrl = data.uploadFile.url;
+      }
+
+      socket.emit("send_message", {
+        msg_id,
+        sender_id,
+        room_id,
+        received_id,
+        sender: "Astrologer",
+        message: message.trim(),
+        image: imageUrl,
+        replyTo: replyTo
           ? {
-              sender: replyTo.sender,
+              sender: "Astrologer",
               message: replyTo.message,
               image: replyTo.image || null,
             }
-          : null;
+          : null,
+      });
 
-        socket.emit('send_message', {
-          msg_id,
-          sender_id,
-          room_id,
-          received_id,
-          message: messageToSend,
-          image: imageBase64,
-          sender: 'Astrologer',
-          replyTo: replyTo
-            ? {
-                sender: 'Astrologer',
-                message: replyTo.message,
-                image: replyTo.image || null,
-              }
-            : null,
-        });
+      setMessage("");
+      setImageFile(null);
+      setImagePreview(null);
 
-        setMessage('');
-        setImageFile(null);
-        setImagePreview(null);
-        setReplyTo(null);
-        setShowCannedDropdown(false);
-        setShowRemedyDropdown(false); // Close remedy dropdown after sending
-      };
-
-      if (imageFile) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          imageToSend = reader.result;
-          handleSend(imageToSend);
-        };
-        reader.readAsDataURL(imageFile);
-      } else {
-        handleSend();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
+
+      setReplyTo(null);
+      setShowCannedDropdown(false);
+      setShowRemedyDropdown(false);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Upload failed.");
     }
   };
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (!file || !file.type.startsWith('image/')) {
-      alert('Please select an image only!');
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image.");
       return;
     }
 
-    const maxAllowedSizeMB = 1;
-    const maxAllowedSizeBytes = maxAllowedSizeMB * 1024 * 1024;
-    if (file.size > maxAllowedSizeBytes) {
-      alert(`Image size exceeds ${maxAllowedSizeMB} MB. Please choose a smaller image.`);
+    const maxAllowedSizeMB = 5;
+
+    if (file.size > maxAllowedSizeMB * 1024 * 1024) {
+      alert("Image size should be less than 5 MB.");
       return;
     }
-
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1080,
-      useWebWorker: true,
-    };
 
     try {
-      const resizedImageBlob = await imageCompression(file, options);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        if (messageInputRef.current) {
-          messageInputRef.current.focus();
-        }
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1080,
+        useWebWorker: true,
       };
-      reader.readAsDataURL(resizedImageBlob);
-      setImageFile(resizedImageBlob);
-    } catch (error) {
-      console.error('Error resizing image:', error);
+
+      const compressedImage = await imageCompression(file, options);
+
+      const compressedFile = new File([compressedImage], file.name, {
+        type: compressedImage.type,
+        lastModified: Date.now(),
+      });
+
+      setImageFile(compressedFile);
+
+      setImagePreview(URL.createObjectURL(compressedImage));
+
+      console.log(compressedFile instanceof File);
+
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -526,18 +688,18 @@ const AstrologerChat = () => {
     if (confirm) {
       setEndAlert(true);
       socket.emit(
-        'complted_chat',
+        "complted_chat",
         { room_id: roomId, astroId: token, userId },
         (response) => {
           if (response.success) {
-            alert('Chat ended successfully.');
-            if (typeof window !== 'undefined') {
+            alert("Chat ended successfully.");
+            if (typeof window !== "undefined") {
               localStorage.removeItem(`endTime_${roomId}`);
             }
           } else {
-            alert('Failed to end the chat. Please try again.');
+            alert("Failed to end the chat. Please try again.");
           }
-        }
+        },
       );
     }
     setShowConfirmModal(false);
@@ -546,7 +708,7 @@ const AstrologerChat = () => {
   const handleOpenKundali = () => {
     const chatId = roomId;
     const url = `https://webdemonew.dhwaniastro.co.in/chat-room/generate-kundalinew/${chatId}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   // Handle canned message selection
@@ -567,8 +729,10 @@ const AstrologerChat = () => {
     }
   };
 
-  const PROFILE_IMG_BASE = 'https://webdemonew.dhwaniastro.co.in/public/cms-images/user-images/';
-  const getProfileImgUrl = (img) => (img ? `/Dhwani-logo.jpg` : '/Dhwani-logo.jpg');
+  const PROFILE_IMG_BASE =
+    "https://webdemonew.dhwaniastro.co.in/public/cms-images/user-images/";
+  const getProfileImgUrl = (img) =>
+    img ? `/Dhwani-logo.jpg` : "/Dhwani-logo.jpg";
 
   useEffect(() => {
     const chatMessages = data?.getCurrentChatMessages?.data;
@@ -581,7 +745,7 @@ const AstrologerChat = () => {
         time: msg.createdAt,
         image: msg.image,
         replyTo: msg.replyTo,
-      }))
+      })),
     );
   }, [data]);
 
@@ -601,7 +765,7 @@ const AstrologerChat = () => {
                   {userName}
                 </span>
                 <span className="text-yellow-400 text-[10px]">
-                  {typingStatus || 'Online'}
+                  {typingStatus || "Online"}
                 </span>
               </div>
             </div>
@@ -665,9 +829,10 @@ const AstrologerChat = () => {
                 {messages.map((msg, index) => (
                   <div
                     key={index}
-                    className={`relative w-[60%] max-w-fit flex flex-col ${msg.sender === 'Astrologer'
-                      ? 'self-end bg-purple-200 me-7'
-                      : 'self-start bg-yellow-100 ms-7'
+                    className={`relative w-[60%] max-w-fit flex flex-col ${
+                      msg.sender === "Astrologer"
+                        ? "self-end bg-purple-200 me-7"
+                        : "self-start bg-yellow-100 ms-7"
                     } rounded-lg px-3 py-2 text-[#000] md:text-xs text-[10px] gap-0.5`}
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(null)}
@@ -676,9 +841,10 @@ const AstrologerChat = () => {
                       {msg.replyTo && (
                         <div className="flex items-center gap-2 text-xs text-gray-500 reply-context">
                           <span>
-                            Reply to {msg.replyTo.sender || 'User'}:{' '}
-                            {msg.replyTo.message && msg.replyTo.message.length > 30
-                              ? msg.replyTo.message.slice(0, 30) + '...'
+                            Reply to {msg.replyTo.sender || "User"}:{" "}
+                            {msg.replyTo.message &&
+                            msg.replyTo.message.length > 30
+                              ? msg.replyTo.message.slice(0, 30) + "..."
                               : msg.replyTo.message}
                           </span>
                           {msg.replyTo.image && (
@@ -764,9 +930,11 @@ const AstrologerChat = () => {
                       )}
                     </div>
                     <div className="flex items-center self-end gap-1 time-check">
-                      <span className="text-gray-500 text-[10px]">{msg.time}</span>
                       <span className="text-gray-500 text-[10px]">
-                        <BiCheckDouble size={10} style={{ color: '#32CD32' }} />
+                        {msg.time}
+                      </span>
+                      <span className="text-gray-500 text-[10px]">
+                        <BiCheckDouble size={10} style={{ color: "#32CD32" }} />
                       </span>
                     </div>
                   </div>
@@ -787,6 +955,10 @@ const AstrologerChat = () => {
                 onClick={() => {
                   setImagePreview(null);
                   setImageFile(null);
+
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
                 }}
                 className="remove-image-preview"
               >
@@ -802,9 +974,9 @@ const AstrologerChat = () => {
                   <div className="flex items-center justify-between w-fit">
                     <span className="text-gray-800 text-[11px] flex items-center">
                       <strong>
-                        Reply to {replyTo.sender || 'User'}:&nbsp;&nbsp;
+                        Reply to {replyTo.sender || "User"}:&nbsp;&nbsp;
                         {replyTo.message && replyTo.message.length > 30
-                          ? replyTo.message.slice(0, 30) + '...'
+                          ? replyTo.message.slice(0, 30) + "..."
                           : replyTo.message}
                       </strong>
                       {replyTo.image && (
@@ -834,7 +1006,7 @@ const AstrologerChat = () => {
                 value={message}
                 onChange={handleMessageChange}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
                   }
@@ -864,7 +1036,9 @@ const AstrologerChat = () => {
                         <div
                           key={msg.id}
                           className="px-3 py-2 text-xs text-gray-800 hover:bg-blue-100 cursor-pointer"
-                          onClick={() => handleCannedMessageSelect(msg.description)}
+                          onClick={() =>
+                            handleCannedMessageSelect(msg.description)
+                          }
                           title={msg.title}
                         >
                           {msg.title}
@@ -913,8 +1087,8 @@ const AstrologerChat = () => {
                         >
                           <div className="font-semibold">{item.title}</div>
                           <div className="text-[10px] text-gray-500 line-clamp-2">
-                            {item.description.length > 60 
-                              ? item.description.slice(0, 60) + '...' 
+                            {item.description.length > 60
+                              ? item.description.slice(0, 60) + "..."
                               : item.description}
                           </div>
                         </div>
@@ -929,14 +1103,9 @@ const AstrologerChat = () => {
               </div>
 
               <input
+                ref={fileInputRef}
                 type="file"
                 onChange={handleImageChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
                 accept="image/*"
                 className="hidden"
                 id="image-upload"
@@ -950,7 +1119,7 @@ const AstrologerChat = () => {
                 />
               </label>
               <label htmlFor="image-upload" className="cursor-pointer">
-                <IoIosAttach size={23} style={{ color: '#2f1254' }} />
+                <IoIosAttach size={23} style={{ color: "#2f1254" }} />
               </label>
             </div>
             <button
@@ -1007,7 +1176,11 @@ const AstrologerChat = () => {
             />
           )}
           {endAlert && (
-            <PopUp title="Chat Completed!" subtitle="Please Wait.." buttontype={0} />
+            <PopUp
+              title="Chat Completed!"
+              subtitle="Please Wait.."
+              buttontype={0}
+            />
           )}
           {recharge && (
             <PopUp

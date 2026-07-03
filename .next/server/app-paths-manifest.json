@@ -1,6 +1,6 @@
 {
   "/not-found": "app/not-found.js",
-  "/dashboard/[...slug]/page": "app/dashboard/[...slug]/page.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/call-history/page": "app/dashboard/call-history/page.js"
+  "/dashboard/chathistory/page": "app/dashboard/chathistory/page.js"
 }

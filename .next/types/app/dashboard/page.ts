@@ -1,4 +1,4 @@
-// File: X:\AstroPanel\astro-panel-satge\src\app\dashboard\page.jsx
+// File: /home/tej/Desktop/tej/astro_panel_stage/src/app/dashboard/page.jsx
 import * as entry from '../../../../src/app/dashboard/page.js'
 import type { ResolvingMetadata } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

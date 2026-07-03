@@ -1,12 +1,12 @@
 "use client";
-
 import {
   ApolloClient,
   InMemoryCache,
-  createHttpLink,
   makeVar,
   from,
 } from "@apollo/client";
+
+import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
 
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
@@ -17,9 +17,12 @@ export const authTokenVar = makeVar(
     : null
 );
 
-const httpLink = createHttpLink({
+const uploadLink = new UploadHttpLink({
   uri: "https://dhwaniastro.com/astroAuth/graphql",
   credentials: "include",
+  headers: {
+    "Apollo-Require-Preflight": "true",
+  },
 });
 
 // ---------------- REFRESH TOKEN ----------------
@@ -152,7 +155,7 @@ const client = new ApolloClient({
   link: from([
     errorLink,
     authLink,
-    httpLink,
+    uploadLink,
   ]),
   cache: new InMemoryCache(),
 });

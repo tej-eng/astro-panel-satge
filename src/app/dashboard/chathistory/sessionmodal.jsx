@@ -16,6 +16,7 @@ const GET_SESSION_MESSAGES = gql`
         sender
         message
         image
+        time
         createdAt
       }
     }
@@ -120,7 +121,7 @@ export default function SessionMessagesModal({ open, onClose, sessionId }) {
 
                     {/* TIME */}
                     <div className="text-[11px] opacity-60 mt-2">
-                      {new Date(msg.createdAt).toLocaleString()}
+                      {msg.time}
                     </div>
                   </div>
                 </div>
