@@ -18,7 +18,6 @@ import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { SENDER_IMG_URL, RECEIVER_IMG_URL } from "@/app/redux/apiConfig";
 
-
 const GET_SESSION_MESSAGES = gql`
   query getCurrentChatMessages($roomId: String!) {
     getCurrentChatMessages(roomId: $roomId) {
@@ -111,6 +110,8 @@ const AstrologerChat = () => {
   const btime = chatParams.time;
   const occupation_user = chatParams.occupationuser;
   const userimage = chatParams.userimage;
+  const latitude = chatParams.lat;
+const longitude = chatParams.lon;
 
   const { data, loading, error } = useQuery(GET_SESSION_MESSAGES, {
     variables: {
@@ -119,7 +120,7 @@ const AstrologerChat = () => {
     skip: !roomId,
     fetchPolicy: "network-only",
   });
-  console.log("----------------------------", data);
+  // console.log("----------------------------", data);
   const FetchChat_message = data?.getSessionMessages?.data || [];
   console.log(FetchChat_message);
 
@@ -705,11 +706,23 @@ const AstrologerChat = () => {
     setShowConfirmModal(false);
   };
 
-  const handleOpenKundali = () => {
-    const chatId = roomId;
-    const url = `https://webdemonew.dhwaniastro.co.in/chat-room/generate-kundalinew/${chatId}`;
-    window.open(url, "_blank");
-  };
+const handleOpenKundali = () => {
+  const params = new URLSearchParams({
+    source: "dashboard",
+    name: userName || "",
+    dob: bdate || "",
+    time: btime || "",
+    place: locationplace || "",
+    lat: latitude?.toString() || "",
+    lon: longitude?.toString() || "",
+    tzone: "5.5",
+  });
+
+  window.open(
+    `https://dhwani-astro-v2.vercel.app/freeservices/kundali/getKundaliPage?${params.toString()}`,
+    "_blank"
+  );
+};
 
   // Handle canned message selection
   const handleCannedMessageSelect = (description) => {
@@ -751,14 +764,16 @@ const AstrologerChat = () => {
 
   return (
     <>
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="md:w-3/5 overflow-hidden w-full bg-white shadow-lg rounded-lg md:p-4 flex flex-col md:h-[95vh] h-[100vh]">
-          <div className="flex justify-between items-center p-2 md:px-4 px-2 bg-[#2f1254] rounded-lg">
+      <div className="flex items-center justify-center h-screen justify-center items-center bg-[#120a18e7] relative overflow-hidden">
+        <div className="absolute w-[400px] h-[400px] bg-purple-600 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
+        <div className="absolute w-[500px] h-[500px] bg-violet-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
+        <div className="md:w-3/5 overflow-hidden w-full bg-white shadow-lg rounded-2xl md:p-4 flex flex-col md:h-[95vh] h-[100vh]">
+          <div className="flex justify-between items-center p-2 md:px-4 px-2 bg-[#2f1254] rounded-full">
             <div className="flex items-center gap-2 md:gap-4">
               <img
                 src={getProfileImgUrl(userimage)}
                 alt="Logo"
-                className="h-auto md:w-10 w-7"
+                className="h-auto rounded-full md:w-10 w-7"
               />
               <div className="flex flex-col text-sm text-white">
                 <span className="md:text-[14px] text-[12px] font-semibold">
@@ -774,12 +789,12 @@ const AstrologerChat = () => {
                 <span className="text-yellow-400 font-semibold text-[10px]">
                   Time :
                 </span>
-                <span className="border border-yellow-400 text-yellow-400 rounded-md px-2 py-1 text-[10px]">
+                <span className="border border-yellow-400 text-yellow-400 shadow-2xl overflow-hidden rounded-full px-2 py-1 text-[10px]">
                   {formatTime(timeLeft)} Min
                 </span>
               </div>
               <button
-                className="px-3 py-1 text-xs font-semibold text-black bg-yellow-400 border border-red-500 rounded-lg"
+                className="px-3 py-1 text-xs font-semibold  bg-red-600 border border-gray-400 shadow-2xl text-white overflow-hidden cursor-pointer rounded-full"
                 onClick={endChat}
               >
                 End
@@ -968,7 +983,7 @@ const AstrologerChat = () => {
           )}
 
           <div className="flex items-center gap-2 relative">
-            <div className="flex flex-col items-start w-full border border-gray-300 rounded-full shadow inp-attach ps-2 pe-3">
+            <div className="flex  items-center w-full border border-gray-300 overflow-hidden rounded-full h-13 shadow inp-attach ps-2 pe-3">
               {replyTo && (
                 <div className="flex flex-col p-1 mt-1 text-sm bg-blue-100 border-l-4 border-blue-500 rounded w-fit">
                   <div className="flex items-center justify-between w-fit">
@@ -1014,119 +1029,137 @@ const AstrologerChat = () => {
                 placeholder="Type your message..."
                 className="flex-grow w-full px-2 py-1 text-xs bg-white border-0 rounded-lg outline-none resize-none placeholder:text-xs md:py-2 focus:outline-none"
               />
-            </div>
-            <div className="flex items-center gap-2 rounded-full ps-2 pe-3 relative">
-              {/* Canned Messages Button and Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-xs text-white bg-blue-500 rounded-full mr-2"
-                  onClick={() => {
-                    setShowCannedDropdown(!showCannedDropdown);
-                    setShowRemedyDropdown(false); // Close remedy dropdown when opening canned
-                  }}
-                  title="Select canned message"
-                >
-                  Canned Msg
-                </button>
-                {showCannedDropdown && (
-                  <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
-                    {cannedMessages.length > 0 ? (
-                      cannedMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className="px-3 py-2 text-xs text-gray-800 hover:bg-blue-100 cursor-pointer"
-                          onClick={() =>
-                            handleCannedMessageSelect(msg.description)
-                          }
-                          title={msg.title}
-                        >
-                          {msg.title}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs text-gray-500">
-                        No canned messages available
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Remedy Button and Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-xs text-white bg-green-500 rounded-full mr-2 flex items-center gap-1"
-                  onClick={() => {
-                    setShowRemedyDropdown(!showRemedyDropdown);
-                    setShowCannedDropdown(false); // Close canned dropdown when opening remedy
-                  }}
-                  title="Select remedy"
-                >
-                  <GiAstrolabe size={16} />
-                  Remedy
-                </button>
-                {showRemedyDropdown && (
-                  <div className="absolute bottom-10 left-0 w-56 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                    {remedyLoading ? (
-                      <div className="px-3 py-2 text-xs text-gray-500">
-                        Loading remedies...
-                      </div>
-                    ) : remedyError ? (
-                      <div className="px-3 py-2 text-xs text-red-500">
-                        Failed to load remedies
-                      </div>
-                    ) : remedy.length > 0 ? (
-                      remedy.map((item) => (
-                        <div
-                          key={item.id}
-                          className="px-3 py-2 text-xs text-gray-800 hover:bg-green-100 cursor-pointer border-b border-gray-100 last:border-0"
-                          onClick={() => handleRemedySelect(item.description)}
-                          title={item.title}
-                        >
-                          <div className="font-semibold">{item.title}</div>
-                          <div className="text-[10px] text-gray-500 line-clamp-2">
-                            {item.description.length > 60
-                              ? item.description.slice(0, 60) + "..."
-                              : item.description}
+              <div className="flex items-center gap-2 rounded-full bg-purple-200 shadow-2xl px-3 py-1  relative">
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="p-1 text-xs text-white bg-violet-300 cursor-pointer rounded-full "
+                    onClick={() => {
+                      setShowCannedDropdown(!showCannedDropdown);
+                      setShowRemedyDropdown(false);
+                    }}
+                    title="Select canned message"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height={18}
+                      width={18}
+                      viewBox="0 0 640 640"
+                    >
+                      <path d="M64 304C64 358.4 83.3 408.6 115.9 448.9L67.1 538.3C65.1 542 64 546.2 64 550.5C64 564.6 75.4 576 89.5 576C93.5 576 97.3 575.4 101 573.9L217.4 524C248.8 536.9 283.5 544 320 544C461.4 544 576 436.5 576 304C576 171.5 461.4 64 320 64C178.6 64 64 171.5 64 304zM158 471.9C167.3 454.8 165.4 433.8 153.2 418.7C127.1 386.4 112 346.8 112 304C112 200.8 202.2 112 320 112C437.8 112 528 200.8 528 304C528 407.2 437.8 496 320 496C289.8 496 261.3 490.1 235.7 479.6C223.8 474.7 210.4 474.8 198.6 479.9L140 504.9L158 471.9zM208 336C225.7 336 240 321.7 240 304C240 286.3 225.7 272 208 272C190.3 272 176 286.3 176 304C176 321.7 190.3 336 208 336zM352 304C352 286.3 337.7 272 320 272C302.3 272 288 286.3 288 304C288 321.7 302.3 336 320 336C337.7 336 352 321.7 352 304zM432 336C449.7 336 464 321.7 464 304C464 286.3 449.7 272 432 272C414.3 272 400 286.3 400 304C400 321.7 414.3 336 432 336z" />
+                    </svg>
+                  </button>
+                  {showCannedDropdown && (
+                    <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                      {cannedMessages.length > 0 ? (
+                        cannedMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className="px-3 py-2 text-xs text-gray-800 hover:bg-blue-100 cursor-pointer"
+                            onClick={() =>
+                              handleCannedMessageSelect(msg.description)
+                            }
+                            title={msg.title}
+                          >
+                            {msg.title}
                           </div>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-gray-500">
+                          No canned messages available
                         </div>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs text-gray-500">
-                        No remedies available
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleImageChange}
-                accept="image/*"
-                className="hidden"
-                id="image-upload"
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <img
-                  src="/kundli.png"
-                  alt="kundali"
-                  className="object-cover h-auto rounded-lg w-13"
-                  onClick={handleOpenKundali}
-                />
-              </label>
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <IoIosAttach size={23} style={{ color: "#2f1254" }} />
-              </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="p-1 text-xs text-white bg-purple-300 rounded-full cursor-pointer flex items-center gap-1"
+                    onClick={() => {
+                      setShowRemedyDropdown(!showRemedyDropdown);
+                      setShowCannedDropdown(false);
+                    }}
+                    title="Select remedy"
+                  >
+                    <svg height={18} width={18} viewBox="0 0 640 640">
+                      <path d="M311.6 95C297.5 75.5 274.9 64 250.9 64C209.5 64 176 97.5 176 138.9L176 141.3C176 205.7 258 274.7 298.2 304.6C311.2 314.3 328.7 314.3 341.7 304.6C381.9 274.6 463.9 205.7 463.9 141.3L463.9 138.9C463.9 97.5 430.4 64 389 64C365 64 342.4 75.5 328.3 95L320 106.7L311.6 95zM141.3 405.5L98.7 448L64 448C46.3 448 32 462.3 32 480L32 544C32 561.7 46.3 576 64 576L384.5 576C413.5 576 441.8 566.7 465.2 549.5L591.8 456.2C609.6 443.1 613.4 418.1 600.3 400.3C587.2 382.5 562.2 378.7 544.4 391.8L424.6 480L312 480C298.7 480 288 469.3 288 456C288 442.7 298.7 432 312 432L384 432C401.7 432 416 417.7 416 400C416 382.3 401.7 368 384 368L231.8 368C197.9 368 165.3 381.5 141.3 405.5z" />
+                    </svg>
+                  </button>
+                  {showRemedyDropdown && (
+                    <div className="absolute bottom-10 left-0 w-56 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                      {remedyLoading ? (
+                        <div className="px-3 py-2 text-xs text-gray-500">
+                          Loading remedies...
+                        </div>
+                      ) : remedyError ? (
+                        <div className="px-3 py-2 text-xs text-red-500">
+                          Failed to load remedies
+                        </div>
+                      ) : remedy.length > 0 ? (
+                        remedy.map((item) => (
+                          <div
+                            key={item.id}
+                            className="px-3 py-2 text-xs text-gray-800 hover:bg-green-100 cursor-pointer border-b border-gray-100 last:border-0"
+                            onClick={() => handleRemedySelect(item.description)}
+                            title={item.title}
+                          >
+                            <div className="font-semibold">{item.title}</div>
+                            <div className="text-[10px] text-gray-500 line-clamp-2">
+                              {item.description.length > 60
+                                ? item.description.slice(0, 60) + "..."
+                                : item.description}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-gray-500">
+                          No remedies available
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                         <button
+                  type="button"
+                  className="p-1 text-xs text-white bg-purple-400 rounded-full flex items-center gap-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Add File"
+                >
+                  <svg
+                    height={18}
+                    width={18}
+                    className="cursor-pointer"
+                    viewBox="0 0 640 640"
+                  >
+                    <path d="M288.6 76.8C344.8 20.6 436 20.6 492.2 76.8C548.4 133 548.4 224.2 492.2 280.4L328.2 444.4C293.8 478.8 238.1 478.8 203.7 444.4C169.3 410 169.3 354.3 203.7 319.9L356.5 167.3C369 154.8 389.3 154.8 401.8 167.3C414.3 179.8 414.3 200.1 401.8 212.6L249 365.3C239.6 374.7 239.6 389.9 249 399.2C258.4 408.5 273.6 408.6 282.9 399.2L446.9 235.2C478.1 204 478.1 153.3 446.9 122.1C415.7 90.9 365 90.9 333.8 122.1L169.8 286.1C116.7 339.2 116.7 425.3 169.8 478.4C222.9 531.5 309 531.5 362.1 478.4L492.3 348.3C504.8 335.8 525.1 335.8 537.6 348.3C550.1 360.8 550.1 381.1 537.6 393.6L407.4 523.6C329.3 601.7 202.7 601.7 124.6 523.6C46.5 445.5 46.5 318.9 124.6 240.8L288.6 76.8z" />
+                  </svg>
+                </button>
+
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <img
+                    src="/kundli.png"
+                    alt="kundali"
+                    className="object-cover h-auto rounded-lg w-15"
+                    onClick={handleOpenKundali}
+                    title="Open Kundali"
+                  />
+                </label>
+       
+              </div>
             </div>
+
             <button
               onClick={sendMessage}
-              className="px-6 py-2 text-xs text-white bg-pink-500 rounded-full bold-full"
+              className="px-4 py-4 text-xs text-white bg-green-600 rounded-full bold-full"
             >
-              Send
+              <svg height={22} width={22} viewBox="0 0 640 640">
+                <path
+                  fill="rgb(255, 255, 255)"
+                  d="M568.4 37.7C578.2 34.2 589 36.7 596.4 44C603.8 51.3 606.2 62.2 602.7 72L424.7 568.9C419.7 582.8 406.6 592 391.9 592C377.7 592 364.9 583.4 359.6 570.3L295.4 412.3C290.9 401.3 292.9 388.7 300.6 379.7L395.1 267.3C400.2 261.2 399.8 252.3 394.2 246.7C388.6 241.1 379.6 240.7 373.6 245.8L261.2 340.1C252.1 347.7 239.6 349.7 228.6 345.3L70.1 280.8C57 275.5 48.4 262.7 48.4 248.5C48.4 233.8 57.6 220.7 71.5 215.7L568.4 37.7z"
+                />
+              </svg>
             </button>
           </div>
 

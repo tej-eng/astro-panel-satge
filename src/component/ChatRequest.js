@@ -6,6 +6,7 @@ import SocketContext from "./SocketClient";
 import { useRouter } from "next/navigation";
 import PopUp from "@/app/common/PopUp";
 import { encryptParams } from "@/app/utils/crypto";
+import { getCoordinates } from "../../utils/getCordinates";
 
 const ChatRequest = () => {
   const router = useRouter();
@@ -66,34 +67,34 @@ const ChatRequest = () => {
         }, 10);
       }
     });
+   socket.on("chat_started_astrologer", async (data) => {
+  if (data.roomid !== currentRequest?.room_id) return;
 
-   socket.on("chat_started_astrologer", (data) => {
-      if (data.roomid === currentRequest.room_id) {
-        const chatParams = {
-          userName: currentRequest.userName,
-          roomId: currentRequest.room_id,
-          chattime: currentRequest.maximum_time?.toString(),
-          userId: currentRequest.user_id,
-          place: currentRequest.location,
-          time: currentRequest.timeOfBirth?.toString(),
-          bod: currentRequest.dateOfBirth,
-          gender: currentRequest.gender,
-          occupationuser: currentRequest.occupation,
-          userimage: currentRequest.user_image || ''
-        };
-        const encrypted = encryptParams(chatParams);
-        const ischatTransfer = localStorage.getItem("ischatTransfer");
-        if(ischatTransfer == "true"){
-           if (transfer_from ==astroId) {
-            localStorage.setItem("ischatTransfer", false);
-            localStorage.setItem("transfer_from", "");
-           }
-        }
-        else{
-         router.push(`/astrologerchat?data=${encrypted}`);
-        }
-      }
-    });
+  const coords = await getCoordinates(currentRequest.location);
+
+  const chatParams = {
+    userName: currentRequest.userName,
+    roomId: currentRequest.room_id,
+    chattime: currentRequest.maximum_time?.toString(),
+    userId: currentRequest.user_id,
+    place: currentRequest.location,
+    time: currentRequest.timeOfBirth?.toString(),
+    bod: currentRequest.dateOfBirth,
+
+    lat: coords?.lat,
+    lon: coords?.lon,
+
+    gender: currentRequest.gender,
+    occupationuser: currentRequest.occupation,
+    userimage: currentRequest.user_image || "",
+  };
+
+  const encrypted = encryptParams(chatParams);
+  console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", chatParams);
+  
+
+  router.push(`/astrologerchat?data=${encrypted}`);
+});
 
     socket.on("chat_rejected_astrologer", async (data) => {
       if (data.roomid === currentRequest.room_id) {
@@ -108,9 +109,8 @@ const ChatRequest = () => {
 
     socket.on("chat_cancel_by_user", async (data) => {
       // if (data.roomid === currentRequest.room_id) {
-          setIsModalOpen(false);
-          setAcceptChat(false);
-
+      setIsModalOpen(false);
+      setAcceptChat(false);
 
       // }
     });
@@ -127,12 +127,12 @@ const ChatRequest = () => {
       }
     });
 
-     socket.on("chat_transfer", async (data) => {
-       if (data.transfer_from ==astroId) {
+    socket.on("chat_transfer", async (data) => {
+      if (data.transfer_from == astroId) {
         localStorage.setItem("transfer_from", astroId);
         localStorage.setItem("ischatTransfer", true);
         setIsModalOpen(false);
-       }
+      }
     });
     return () => {
       socket.off("new_chat_request");
@@ -140,22 +140,16 @@ const ChatRequest = () => {
       socket.off("chat_reject_auto");
       socket.off("chat_rejected_astrologer");
       socket.off("chat_transfer");
-
     };
   }, [socket, currentRequest]);
-
-
 
   const handleAccept = () => {
     const { room_id } = currentRequest;
 
-
     socket.emit("chat_accepted_astrologer", { room_id }, (response) => {});
 
-
-
-    setIsModalOpen(false);  
-    setAcceptChat(true);    
+    setIsModalOpen(false);
+    setAcceptChat(true);
   };
 
   const handleReject = async () => {
@@ -164,7 +158,7 @@ const ChatRequest = () => {
     socket.emit(
       "chat_rejected_astrologer",
       { room_id, astro_id },
-      (response) => {}
+      (response) => {},
     );
     setIsModalOpen(false);
     setAcceptChat(false);
@@ -265,10 +259,7 @@ const ChatRequest = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
-              <h2 className="mb-3 text-xl font-bold">
-                Chat : Please Wait ... 
-              </h2>
-
+              <h2 className="mb-3 text-xl font-bold">Chat : Please Wait ...</h2>
             </motion.div>
           </>
         )}

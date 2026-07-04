@@ -23,6 +23,7 @@
     "axios": "^1.5.1",
     "browser-image-compression": "^2.0.2",
     "bufferutil": "^4.0.9",
+    "country-state-city": "^3.2.1",
     "crypto-js": "^4.2.0",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",

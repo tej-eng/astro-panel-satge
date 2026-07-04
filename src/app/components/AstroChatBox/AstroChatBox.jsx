@@ -115,7 +115,7 @@ export default function AstroChatBox() {
         <div className="inp-attach border rounded-full gap-2 items-center flex px-5 w-full">
           <input
             type="text"
-            placeholder="Type your message..."
+            placeholder="Type your messageee..."
             className="flex-grow px-2 md:py-2 py-1 focus:outline-none rounded-full"
             value={message}
             onChange={e => setMessage(e.target.value)}
