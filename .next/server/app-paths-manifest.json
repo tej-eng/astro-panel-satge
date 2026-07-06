@@ -1,6 +1,6 @@
 {
   "/not-found": "app/not-found.js",
-  "/page": "app/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/chathistory/page": "app/dashboard/chathistory/page.js"
+  "/api/cities/route": "app/api/cities/route.js",
+  "/astrologerchat/page": "app/astrologerchat/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }
