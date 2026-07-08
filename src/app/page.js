@@ -84,10 +84,10 @@ export default function LoginForm() {
 
   // ================= VERIFY OTP =================
 
-  const handleVerifyOTP = async () => {
-    const enteredOtp = otp.join("");
+const handleVerifyOTP = async () => {
+  const enteredOtp = otp.join("");
 
-    try {
+  try {
     const res = await verifyOtp({
       variables: {
         contactNo: phoneData.raw,
@@ -95,27 +95,34 @@ export default function LoginForm() {
       },
       context: {
         fetchOptions: {
-          credentials: "include", // ✅ MUST
+          credentials: "include",
         },
       },
     });
-      const { accessToken, astrologer } = res.data.verifyAstrologerOtp;
 
-      authTokenVar(accessToken);
+    const { astrologer } = res.data.verifyAstrologerOtp;
 
-      localStorage.setItem("astro_token", accessToken);
-      localStorage.setItem("astro_user", JSON.stringify(astrologer));
-      dispatch(
-        setCredentials({ astro_user: astrologer, astro_token: accessToken }),
-      );
+    // Store only user information if needed
+    localStorage.setItem("astro_user", JSON.stringify(astrologer));
 
-      toast.success("Welcome");
+    dispatch(
+      setCredentials({
+        astro_user: astrologer,
+        astro_token: null, // or simply omit this field if your slice allows it
+      })
+    );
 
-      window.location.href = "/dashboard";
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
+    toast.success("Welcome");
+    
+    console.log("Redirecting...");
+    router.replace("/dashboard");
+  } catch (err) {
+    toast.error(err.message);
+  }
+};
+
+
+  
 
   // ================= OTP INPUT =================
 

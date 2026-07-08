@@ -111,7 +111,7 @@ const AstrologerChat = () => {
   const occupation_user = chatParams.occupationuser;
   const userimage = chatParams.userimage;
   const latitude = chatParams.lat;
-const longitude = chatParams.lon;
+  const longitude = chatParams.lon;
 
   const { data, loading, error } = useQuery(GET_SESSION_MESSAGES, {
     variables: {
@@ -706,23 +706,23 @@ const longitude = chatParams.lon;
     setShowConfirmModal(false);
   };
 
-const handleOpenKundali = () => {
-  const params = new URLSearchParams({
-    source: "dashboard",
-    name: userName || "",
-    dob: bdate || "",
-    time: btime || "",
-    place: locationplace || "",
-    lat: latitude?.toString() || "",
-    lon: longitude?.toString() || "",
-    tzone: "5.5",
-  });
+  const handleOpenKundali = () => {
+    const params = new URLSearchParams({
+      source: "dashboard",
+      name: userName || "",
+      dob: bdate || "",
+      time: btime || "",
+      place: locationplace || "",
+      lat: latitude?.toString() || "",
+      lon: longitude?.toString() || "",
+      tzone: "5.5",
+    });
 
-  window.open(
-    `https://dhwani-astro-v2.vercel.app/freeservices/kundali/getKundaliPage?${params.toString()}`,
-    "_blank"
-  );
-};
+    window.open(
+      `https://dhwani-astro-v2.vercel.app/freeservices/kundali/getKundaliPage?${params.toString()}`,
+      "_blank",
+    );
+  };
 
   // Handle canned message selection
   const handleCannedMessageSelect = (description) => {
@@ -848,13 +848,13 @@ const handleOpenKundali = () => {
                       msg.sender === "Astrologer"
                         ? "self-end bg-purple-200 me-7"
                         : "self-start bg-yellow-100 ms-7"
-                    } rounded-lg px-3 py-2 text-[#000] md:text-xs text-[10px] gap-0.5`}
+                    } rounded-lg px-3 py-2 text-gray-600 md:text-xs tracking-wide text-[10px] gap-0.5`}
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(null)}
                   >
                     <div className="flex flex-col gap-0 msgs-det">
                       {msg.replyTo && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500 reply-context">
+                        <div className="bg-gray-100 rounded-lg border-l-4 border-purple-500 p-2 mb-1 text-xs">
                           <span>
                             Reply to {msg.replyTo.sender || "User"}:{" "}
                             {msg.replyTo.message &&
@@ -981,41 +981,41 @@ const handleOpenKundali = () => {
               </button>
             </div>
           )}
+          {replyTo && (
+            <div className="flex flex-col p-1 mt-1 text-sm bg-blue-100 border-l-4 border-purple-500 rounded-lg max-w-fit flex gap-5">
+              <div className="flex items-center justify-between max-w-fit flex gap-5">
+                <span className="text-gray-800 text-[11px] flex items-center">
+                  <strong>Reply to {replyTo.sender}</strong>
 
+                  <div className="mt-1">
+                    {replyTo.message && replyTo.message.length > 30
+                      ? replyTo.message.slice(0, 30) + "..."
+                      : replyTo.message}
+                  </div>
+                  {replyTo.image && (
+                    <span className="ml-2">
+                      <Zoom>
+                        <img
+                          src={replyTo.image}
+                          alt="reply-img"
+                          className="inline-block object-cover w-8 h-8 align-middle border border-gray-300 rounded-md"
+                        />
+                      </Zoom>
+                    </span>
+                  )}
+                </span>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="ml-2 text-xs text-red-500 hover:text-red-700"
+                  title="Cancel reply"
+                >
+                  &#10005;
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 relative">
             <div className="flex  items-center w-full border border-gray-300 overflow-hidden rounded-full h-13 shadow inp-attach ps-2 pe-3">
-              {replyTo && (
-                <div className="flex flex-col p-1 mt-1 text-sm bg-blue-100 border-l-4 border-blue-500 rounded w-fit">
-                  <div className="flex items-center justify-between w-fit">
-                    <span className="text-gray-800 text-[11px] flex items-center">
-                      <strong>
-                        Reply to {replyTo.sender || "User"}:&nbsp;&nbsp;
-                        {replyTo.message && replyTo.message.length > 30
-                          ? replyTo.message.slice(0, 30) + "..."
-                          : replyTo.message}
-                      </strong>
-                      {replyTo.image && (
-                        <span className="ml-2">
-                          <Zoom>
-                            <img
-                              src={replyTo.image}
-                              alt="reply-img"
-                              className="inline-block object-cover w-8 h-8 align-middle border border-gray-300 rounded-md"
-                            />
-                          </Zoom>
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      onClick={() => setReplyTo(null)}
-                      className="ml-2 text-xs text-red-500 hover:text-red-700"
-                      title="Cancel reply"
-                    >
-                      &#10005;
-                    </button>
-                  </div>
-                </div>
-              )}
               <textarea
                 ref={messageInputRef}
                 value={message}
@@ -1121,7 +1121,7 @@ const handleOpenKundali = () => {
                     </div>
                   )}
                 </div>
-                         <button
+                <button
                   type="button"
                   className="p-1 text-xs text-white bg-purple-400 rounded-full flex items-center gap-1"
                   onClick={() => fileInputRef.current?.click()}
@@ -1146,7 +1146,6 @@ const handleOpenKundali = () => {
                     title="Open Kundali"
                   />
                 </label>
-       
               </div>
             </div>
 

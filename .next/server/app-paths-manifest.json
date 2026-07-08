@@ -1,6 +1,0 @@
-{
-  "/not-found": "app/not-found.js",
-  "/api/cities/route": "app/api/cities/route.js",
-  "/astrologerchat/page": "app/astrologerchat/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
-}

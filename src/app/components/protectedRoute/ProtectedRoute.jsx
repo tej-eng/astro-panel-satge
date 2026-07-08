@@ -1,22 +1,49 @@
 "use client";
-import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+
+const GET_CURRENT_ASTROLOGER = gql`
+  query GetCurrentAstrologer {
+    getCurrentAstrologer {
+      name
+      contactNo
+    }
+  }
+`;
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  const { loading, data, error } = useQuery(
+  GET_CURRENT_ASTROLOGER,
+  {
+    fetchPolicy: "network-only",
+    errorPolicy: "all",   // <-- add this
+    context: {
+      fetchOptions: {
+        credentials: "include",
+      },
+    },
+  }
+);
 
   useEffect(() => {
-    const token = localStorage.getItem("astro_token");
-    if (!token) {
-      router.push("/");
-    } else {
-      setIsAuthorized(true);
+    if (!loading) {
+      if (error || !data?.getCurrentAstrologer) {
+        router.replace("/");
+      }
     }
-  }, []);
+  }, [loading, error, data, router]);
 
-  if (!isAuthorized) {
-    return <div className="text-center mt-10">Loading...</div>;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error || !data?.getCurrentAstrologer) {
+    return null;
   }
 
   return children;
