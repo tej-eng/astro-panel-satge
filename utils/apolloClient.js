@@ -1,163 +1,151 @@
 "use client";
+
 import {
   ApolloClient,
   InMemoryCache,
-  makeVar,
   from,
+  makeVar,
 } from "@apollo/client";
 
-import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
-
-import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
+import { Observable } from "@apollo/client/utilities";
+import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
+import { CombinedGraphQLErrors } from "@apollo/client/errors";
 
-export const authTokenVar = makeVar(
-  typeof window !== "undefined"
-    ? localStorage.getItem("astro_token")
-    : null
-);
+
+
+const GRAPHQL_URL = "https://dhwaniastro.com/astroAuth/graphql";
+
+// ------------------------------------------------
+// Upload Link
+// ------------------------------------------------
 
 const uploadLink = new UploadHttpLink({
-  uri: "https://dhwaniastro.com/astroAuth/graphql",
+  uri: GRAPHQL_URL,
   credentials: "include",
   headers: {
     "Apollo-Require-Preflight": "true",
   },
 });
 
-// ---------------- REFRESH TOKEN ----------------
+// ------------------------------------------------
+// Authorization Header
+// ------------------------------------------------
+
+
+
+// ------------------------------------------------
+// Refresh Mutation
+// ------------------------------------------------
 
 const refreshAccessToken = async () => {
-  try {
-    const response = await fetch(
-      "https://dhwaniastro.com/astroAuth/graphql",
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `
-            mutation {
-              refreshAstrologerToken {
-                accessToken
-              }
-            }
-          `,
-        }),
-      }
-    );
+  console.log("Refreshing access token...");
 
-    const result = await response.json();
+  const response = await fetch(GRAPHQL_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: `
+        mutation {
+          refreshAstrologerToken {
+            accessToken
+          }
+        }
+      `,
+    }),
+  });
 
-    return result?.data?.refreshAstrologerToken?.accessToken;
-  } catch (error) {
-    console.error("Refresh token failed", error);
-    return null;
+  const result = await response.json();
+
+  if (result.errors) {
+    return false;
   }
+
+  return true;
 };
 
-// ---------------- AUTH HEADER ----------------
-
-const authLink = setContext((_, { headers }) => {
-  const token = authTokenVar();
-
-  return {
-    headers: {
-      ...headers,
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-});
-
-// ---------------- AUTO REFRESH ----------------
+// ------------------------------------------------
+// Refresh Queue
+// ------------------------------------------------
 
 let isRefreshing = false;
 let pendingRequests = [];
 
-const errorLink = onError(
-  ({ graphQLErrors, networkError, operation, forward }) => {
-    const isUnauthenticated =
-      graphQLErrors?.some(
-        (err) =>
-          err.extensions?.code === "UNAUTHENTICATED" ||
-          err.message?.includes("jwt") ||
-          err.message?.includes("Unauthorized")
-      ) ||
-      networkError?.statusCode === 401;
+// ------------------------------------------------
+// Error Link
+// ------------------------------------------------
 
-    if (!isUnauthenticated) {
-      return;
-    }
+const errorLink = onError(({ error, operation, forward }) => {
+  if (!(error instanceof CombinedGraphQLErrors)) {
+    return;
+  }
+
+  const unauthenticated = error.errors.some(
+    (e) => e.extensions?.code === "UNAUTHENTICATED"
+  );
+
+  if (!unauthenticated) {
+    return;
+  }
+
+  console.log("Need Refresh");
+
+  return new Observable((observer) => {
+   const retry = () => {
+  forward(operation).subscribe({
+    next: (value) => observer.next(value),
+    error: (err) => observer.error(err),
+    complete: () => observer.complete(),
+  });
+};
 
     if (!isRefreshing) {
       isRefreshing = true;
 
-      return new Promise((resolve) => {
-        refreshAccessToken()
-          .then((newToken) => {
-            isRefreshing = false;
+      refreshAccessToken()
+        .then((newToken) => {
+          isRefreshing = false;
 
-            if (!newToken) {
-              localStorage.removeItem("astro_token");
-              localStorage.removeItem("astro_user");
+          console.log("Refresh Result:", newToken);
 
-              window.location.href = "/";
-              return;
-            }
-
-            localStorage.setItem("astro_token", newToken);
-
-            authTokenVar(newToken);
-
-            pendingRequests.forEach((cb) => cb(newToken));
-            pendingRequests = [];
-
-            operation.setContext(({ headers = {} }) => ({
-              headers: {
-                ...headers,
-                Authorization: `Bearer ${newToken}`,
-              },
-            }));
-
-            resolve(forward(operation));
-          })
-          .catch(() => {
-            isRefreshing = false;
-
-            localStorage.removeItem("astro_token");
+          if (!newToken) {
             localStorage.removeItem("astro_user");
-
             window.location.href = "/";
-          });
-      });
+            return;
+          }
+
+          pendingRequests.forEach((cb) => cb(newToken));
+          pendingRequests = [];
+
+          retry();
+        })
+        .catch((err) => {
+          console.log(err);
+
+          isRefreshing = false;
+
+          localStorage.removeItem("astro_user");
+
+          window.location.href = "/";
+        });
+    } else {
+      pendingRequests.push((token) => retry());
     }
-
-    return new Promise((resolve) => {
-      pendingRequests.push((token) => {
-        operation.setContext(({ headers = {} }) => ({
-          headers: {
-            ...headers,
-            Authorization: `Bearer ${token}`,
-          },
-        }));
-
-        resolve(forward(operation));
-      });
-    });
-  }
-);
-
-// ---------------- CLIENT ----------------
+  });
+});
+// ------------------------------------------------
+// Apollo Client
+// ------------------------------------------------
 
 const client = new ApolloClient({
+  cache: new InMemoryCache(),
   link: from([
     errorLink,
-    authLink,
     uploadLink,
   ]),
-  cache: new InMemoryCache(),
 });
 
 export default client;
