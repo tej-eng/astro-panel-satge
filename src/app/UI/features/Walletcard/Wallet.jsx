@@ -271,9 +271,7 @@ const TransactionTable = ({ user_id }) => {
                         <th className="py-3 px-6 text-left font-semibold">
                           Category
                         </th>
-                        <th className="py-3 px-6 text-left font-semibold">
-                          Amount
-                        </th>
+                       
                         <th className="py-3 px-6 text-left font-semibold">
                           Date
                         </th>
