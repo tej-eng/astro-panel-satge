@@ -71,7 +71,7 @@ export default function Navbar() {
     localStorage.removeItem("astro_user");
     await client.clearStore();
 
-    router.replace("/");a
+    router.replace("/");
   }
 };
 
