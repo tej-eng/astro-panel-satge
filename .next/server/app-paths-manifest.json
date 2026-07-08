@@ -2,6 +2,5 @@
   "/not-found": "app/not-found.js",
   "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/earnings/page": "app/dashboard/earnings/page.js",
   "/dashboard/wallet/page": "app/dashboard/wallet/page.js"
 }

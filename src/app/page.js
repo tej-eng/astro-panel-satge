@@ -27,9 +27,10 @@ const REQUEST_OTP = gql`
 `;
 
 const VERIFY_OTP = gql`
-  mutation ($contactNo: String!, $otp: String!) {
+  mutation VerifyOtp($contactNo: String!, $otp: String!) {
     verifyAstrologerOtp(contactNo: $contactNo, otp: $otp) {
       accessToken
+      refreshToken
       astrologer {
         id
         name
