@@ -19,8 +19,12 @@
     "@shadcn/ui": "^0.0.4",
     "@tailwindcss/postcss": "^4.1.11",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     "agora-rtc-sdk-ng": "^4.24.5",
     "apollo-upload-client": "^19.0.0",
+=======
+    "agora-rtc-sdk-ng": "^4.24.4",
+>>>>>>> Stashed changes
 =======
     "agora-rtc-sdk-ng": "^4.24.4",
 >>>>>>> Stashed changes

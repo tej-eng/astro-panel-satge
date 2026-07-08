@@ -1,7 +1,11 @@
 "use client";
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { useState } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> Stashed changes
 =======
 import { useState, useEffect } from "react";
 >>>>>>> Stashed changes
@@ -29,6 +33,7 @@ const client = AgoraRTC.createClient({
 export default function AgentLiveStreaming() {
   const [title, setTitle] = useState("");
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   const [streamId, setStreamId] = useState(null);
 
   const [isLive, setIsLive] = useState(false);
@@ -36,12 +41,17 @@ export default function AgentLiveStreaming() {
   const [micTrack, setMicTrack] = useState(null);
   const [cameraTrack, setCameraTrack] = useState(null);
 =======
+=======
+>>>>>>> Stashed changes
 
   const [streamId, setStreamId] =
     useState(null);
 
   const [isLive, setIsLive] =
     useState(false);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   const [scheduleTitle, setScheduleTitle] =
@@ -54,8 +64,11 @@ export default function AgentLiveStreaming() {
     useState("");
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   const { data, refetch } = useQuery(
 =======
+=======
+>>>>>>> Stashed changes
   const [micTrack, setMicTrack] =
     useState(null);
 
@@ -71,6 +84,9 @@ export default function AgentLiveStreaming() {
     loading: scheduledLoading,
     refetch: refetchScheduledLives,
   } = useQuery(
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     GET_MY_SCHEDULED_LIVES,
     {
@@ -79,15 +95,21 @@ export default function AgentLiveStreaming() {
   );
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   const scheduledLives =
     data?.getMyScheduledLives || [];
 =======
+=======
+>>>>>>> Stashed changes
   const [joinLive] =
     useLazyQuery(JOIN_LIVE);
 
   /* ==========================
       MUTATIONS
   ========================== */
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   const [startLive] =
@@ -96,6 +118,7 @@ export default function AgentLiveStreaming() {
   const [endLive] =
     useMutation(END_LIVE);
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
   // FIXED: joinLive is Query, not Mutation
   const [joinLive] =
@@ -106,6 +129,8 @@ export default function AgentLiveStreaming() {
     { loading: scheduling },
   ] = useMutation(SCHEDULE_LIVE);
 =======
+=======
+>>>>>>> Stashed changes
   const [scheduleLiveMutation] =
     useMutation(SCHEDULE_LIVE);
 
@@ -120,12 +145,16 @@ export default function AgentLiveStreaming() {
   /* ==========================
       START LIVE
   ========================== */
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   const handleStartLive =
     async () => {
       try {
         if (!title.trim()) {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
           alert("Enter stream title");
           return;
@@ -138,6 +167,8 @@ export default function AgentLiveStreaming() {
             },
           });
 =======
+=======
+>>>>>>> Stashed changes
           alert(
             "Please enter live title"
           );
@@ -151,6 +182,9 @@ export default function AgentLiveStreaming() {
             title,
           },
         });
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
         const stream =
@@ -159,7 +193,11 @@ export default function AgentLiveStreaming() {
         if (!stream) {
           throw new Error(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             "Unable to start live"
+=======
+            "Unable to create stream"
+>>>>>>> Stashed changes
 =======
             "Unable to create stream"
 >>>>>>> Stashed changes
@@ -168,6 +206,7 @@ export default function AgentLiveStreaming() {
 
         setStreamId(stream.id);
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         const { data: joinData } =
           await joinLive({
@@ -181,6 +220,8 @@ export default function AgentLiveStreaming() {
         const live =
           joinData?.joinLive;
 =======
+=======
+>>>>>>> Stashed changes
         const {
           data: tokenData,
         } = await joinLive({
@@ -193,6 +234,9 @@ export default function AgentLiveStreaming() {
 
         const live =
           tokenData?.joinLive;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
         if (!live) {
@@ -233,6 +277,7 @@ export default function AgentLiveStreaming() {
         setIsLive(true);
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         alert(
           "Live started successfully"
         );
@@ -244,12 +289,17 @@ export default function AgentLiveStreaming() {
             error?.graphQLErrors?.[0]
               ?.message ||
 =======
+=======
+>>>>>>> Stashed changes
         refetchScheduledLives();
       } catch (error) {
         console.log(error);
 
         alert(
           error?.message ||
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             "Failed to start live"
         );
@@ -257,18 +307,27 @@ export default function AgentLiveStreaming() {
     };
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
   /* ==========================
       END LIVE
   ========================== */
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   const handleEndLive =
     async () => {
       try {
         if (cameraTrack) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           cameraTrack.stop();
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
           cameraTrack.close();
@@ -276,7 +335,10 @@ export default function AgentLiveStreaming() {
 
         if (micTrack) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           micTrack.stop();
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
           micTrack.close();
@@ -284,6 +346,7 @@ export default function AgentLiveStreaming() {
 
         await client.leave();
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         if (streamId) {
           await endLive({
@@ -313,6 +376,8 @@ export default function AgentLiveStreaming() {
     };
 
 =======
+=======
+>>>>>>> Stashed changes
         await endLive({
           variables: {
             streamId,
@@ -332,6 +397,9 @@ export default function AgentLiveStreaming() {
       SCHEDULE LIVE
   ========================== */
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   const handleSchedule =
     async () => {
@@ -342,7 +410,13 @@ export default function AgentLiveStreaming() {
           !scheduleTime
         ) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           alert("Fill all fields");
+=======
+          alert(
+            "Please fill all fields"
+          );
+>>>>>>> Stashed changes
 =======
           alert(
             "Please fill all fields"
@@ -357,7 +431,11 @@ export default function AgentLiveStreaming() {
           ).toISOString();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         await scheduleLive({
+=======
+        await scheduleLiveMutation({
+>>>>>>> Stashed changes
 =======
         await scheduleLiveMutation({
 >>>>>>> Stashed changes
@@ -368,8 +446,11 @@ export default function AgentLiveStreaming() {
         });
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         await refetch();
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         setScheduleTitle("");
@@ -377,6 +458,11 @@ export default function AgentLiveStreaming() {
         setScheduleTime("");
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+        refetchScheduledLives();
+
+>>>>>>> Stashed changes
 =======
         refetchScheduledLives();
 
@@ -386,6 +472,7 @@ export default function AgentLiveStreaming() {
         );
       } catch (error) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         console.error(error);
 
         alert(
@@ -393,15 +480,21 @@ export default function AgentLiveStreaming() {
             error?.graphQLErrors?.[0]
               ?.message ||
 =======
+=======
+>>>>>>> Stashed changes
         console.log(error);
 
         alert(
           error?.message ||
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             "Failed to schedule live"
         );
       }
     };
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
   return (
@@ -439,6 +532,26 @@ export default function AgentLiveStreaming() {
   }, [cameraTrack, micTrack]);
 
   return (
+=======
+
+  /* ==========================
+      CLEANUP
+  ========================== */
+
+  useEffect(() => {
+    return () => {
+      if (cameraTrack)
+        cameraTrack.close();
+
+      if (micTrack)
+        micTrack.close();
+
+      client.leave();
+    };
+  }, [cameraTrack, micTrack]);
+
+  return (
+>>>>>>> Stashed changes
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="grid lg:grid-cols-3 gap-6">
         {/* LEFT SECTION */}
@@ -456,12 +569,16 @@ export default function AgentLiveStreaming() {
             ) : (
               <span className="px-4 py-2 bg-gray-200 rounded-full">
                 ⚫ OFFLINE
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
               </span>
             )}
           </div>
 
           <input
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
             className="w-full border rounded-lg p-3 mb-4"
             placeholder="Enter Live Title"
@@ -470,6 +587,8 @@ export default function AgentLiveStreaming() {
               setTitle(e.target.value)
             }
 =======
+=======
+>>>>>>> Stashed changes
             value={title}
             onChange={(e) =>
               setTitle(
@@ -478,21 +597,30 @@ export default function AgentLiveStreaming() {
             }
             placeholder="Enter Live Title"
             className="w-full border rounded-lg p-3 mb-4"
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
           />
 
           <div
             id="local-player"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             className="w-full h-[500px] rounded-xl overflow-hidden bg-black"
           />
 
           <div className="flex gap-4 mt-5">
 =======
+=======
+>>>>>>> Stashed changes
             className="w-full h-[500px] bg-black rounded-xl overflow-hidden"
           />
 
           <div className="mt-5">
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             {!isLive ? (
               <button
@@ -500,7 +628,11 @@ export default function AgentLiveStreaming() {
                   handleStartLive
                 }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 className="bg-red-600 text-white px-6 py-3 rounded-lg"
+=======
+                className="bg-red-600 text-white px-8 py-3 rounded-xl"
+>>>>>>> Stashed changes
 =======
                 className="bg-red-600 text-white px-8 py-3 rounded-xl"
 >>>>>>> Stashed changes
@@ -513,7 +645,11 @@ export default function AgentLiveStreaming() {
                   handleEndLive
                 }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 className="bg-black text-white px-6 py-3 rounded-lg"
+=======
+                className="bg-black text-white px-8 py-3 rounded-xl"
+>>>>>>> Stashed changes
 =======
                 className="bg-black text-white px-8 py-3 rounded-xl"
 >>>>>>> Stashed changes
@@ -525,10 +661,13 @@ export default function AgentLiveStreaming() {
         </div>
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow p-4">
             <h3 className="text-xl font-bold mb-4">
 =======
+=======
+>>>>>>> Stashed changes
         {/* RIGHT SECTION */}
 
         <div className="space-y-6">
@@ -536,15 +675,22 @@ export default function AgentLiveStreaming() {
 
           <div className="bg-white rounded-2xl shadow-lg p-5">
             <h3 className="font-bold text-xl mb-4">
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
               Schedule Live
             </h3>
 
             <input
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               value={
                 scheduleTitle
               }
+=======
+              value={scheduleTitle}
+>>>>>>> Stashed changes
 =======
               value={scheduleTitle}
 >>>>>>> Stashed changes
@@ -560,9 +706,13 @@ export default function AgentLiveStreaming() {
             <input
               type="date"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               value={
                 scheduleDate
               }
+=======
+              value={scheduleDate}
+>>>>>>> Stashed changes
 =======
               value={scheduleDate}
 >>>>>>> Stashed changes
@@ -577,9 +727,13 @@ export default function AgentLiveStreaming() {
             <input
               type="time"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               value={
                 scheduleTime
               }
+=======
+              value={scheduleTime}
+>>>>>>> Stashed changes
 =======
               value={scheduleTime}
 >>>>>>> Stashed changes
@@ -593,7 +747,10 @@ export default function AgentLiveStreaming() {
 
             <button
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               disabled={scheduling}
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
               onClick={
@@ -601,6 +758,7 @@ export default function AgentLiveStreaming() {
               }
               className="w-full bg-blue-600 text-white py-3 rounded-lg"
             >
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
               {scheduling
                 ? "Scheduling..."
@@ -616,6 +774,8 @@ export default function AgentLiveStreaming() {
             {scheduledLives.length ===
             0 ? (
 =======
+=======
+>>>>>>> Stashed changes
               Schedule Live
             </button>
           </div>
@@ -634,6 +794,9 @@ export default function AgentLiveStreaming() {
               </p>
             ) : scheduledLives.length ===
               0 ? (
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
               <p>
                 No scheduled lives
@@ -643,6 +806,7 @@ export default function AgentLiveStreaming() {
                 (live) => (
                   <div
                     key={live.id}
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                     className="border rounded-lg p-3 mb-3"
                   >
@@ -671,6 +835,8 @@ export default function AgentLiveStreaming() {
                     <p className="text-sm text-blue-600 mt-1">
                       {live.status}
 =======
+=======
+>>>>>>> Stashed changes
                     className="border rounded-xl p-4 mb-3"
                   >
                     <div className="flex justify-between">
@@ -693,6 +859,9 @@ export default function AgentLiveStreaming() {
                     <p className="text-sm">
                       ⏰{" "}
                      {new Date(Number(live.scheduledAt)).toLocaleTimeString()}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                     </p>
                   </div>
@@ -702,21 +871,33 @@ export default function AgentLiveStreaming() {
           </div>
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <div className="bg-white rounded-xl shadow p-4">
             <h3 className="text-xl font-bold mb-4">
 =======
+=======
+>>>>>>> Stashed changes
           {/* STATS */}
 
           <div className="bg-white rounded-2xl shadow-lg p-5">
             <h3 className="font-bold text-xl mb-4">
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
               Statistics
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               <div className="bg-gray-100 p-3 rounded-lg">
                 <p>Total Viewers</p>
+=======
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p>Total Viewers</p>
+
+>>>>>>> Stashed changes
 =======
               <div className="bg-gray-100 p-4 rounded-lg">
                 <p>Total Viewers</p>
@@ -727,6 +908,7 @@ export default function AgentLiveStreaming() {
                 </h2>
               </div>
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
               <div className="bg-gray-100 p-3 rounded-lg">
                 <p>Status</p>
@@ -739,6 +921,11 @@ export default function AgentLiveStreaming() {
               <div className="bg-gray-100 p-4 rounded-lg">
                 <p>Live Status</p>
 
+=======
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p>Live Status</p>
+
+>>>>>>> Stashed changes
                 <h2
                   className={`text-xl font-bold ${
                     isLive
@@ -749,6 +936,9 @@ export default function AgentLiveStreaming() {
                   {isLive
                     ? "🔴 LIVE"
                     : "⚫ OFFLINE"}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 </h2>
               </div>

@@ -273,8 +273,11 @@ export const REFRESH_TOKEN = gql`
 `;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // ================= LIVE STREAMING =================
 =======
+=======
+>>>>>>> Stashed changes
 export const JOIN_LIVE = gql`
   query JoinLive(
     $channelName: String!
@@ -291,6 +294,60 @@ export const JOIN_LIVE = gql`
     }
   }
 `;
+<<<<<<< Updated upstream
+=======
+
+export const START_LIVE = gql`
+  mutation StartLive($title: String!) {
+    startLive(title: $title) {
+      id
+      astrologerId
+      title
+      channelName
+      status
+      createdAt
+    }
+  }
+`;
+
+export const END_LIVE = gql`
+  mutation EndLive($streamId: String!) {
+    endLive(streamId: $streamId)
+  }
+`;
+
+export const SCHEDULE_LIVE = gql`
+  mutation ScheduleLive(
+    $title: String!
+    $scheduledAt: String!
+  ) {
+    scheduleLive(
+      title: $title
+      scheduledAt: $scheduledAt
+    ) {
+      id
+      title
+      channelName
+      status
+      scheduledAt
+      createdAt
+    }
+  }
+`;
+export const GET_MY_SCHEDULED_LIVES = gql`
+  query GetMyScheduledLives {
+    getMyScheduledLives {
+      id
+      title
+      channelName
+      status
+      scheduledAt
+      createdAt
+    }
+  }
+`;
+
+>>>>>>> Stashed changes
 
 >>>>>>> Stashed changes
 export const START_LIVE = gql`
