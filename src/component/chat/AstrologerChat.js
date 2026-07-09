@@ -188,7 +188,7 @@ const AstrologerChat = () => {
             description:
               "Marriage prospects look promising in the upcoming year. Would you like a detailed kundli match analysis?",
           },
-          // --- Career & Finance ---
+         
           {
             id: 10,
             title: "career guidance",
@@ -1015,7 +1015,7 @@ const AstrologerChat = () => {
             </div>
           )}
           <div className="flex items-center gap-2 relative">
-            <div className="flex  items-center w-full border border-gray-300 overflow-hidden rounded-full h-13 shadow inp-attach ps-2 pe-3">
+            <div className="flex  items-center w-full border border-gray-300  rounded-full h-13 shadow inp-attach ps-2 pe-3">
               <textarea
                 ref={messageInputRef}
                 value={message}
@@ -1050,7 +1050,7 @@ const AstrologerChat = () => {
                     </svg>
                   </button>
                   {showCannedDropdown && (
-                    <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                    <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-1000 max-h-40 overflow-y-auto">
                       {cannedMessages.length > 0 ? (
                         cannedMessages.map((msg) => (
                           <div

@@ -24,15 +24,11 @@
       "static/css/app/dashboard/layout.css",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/dashboard/earnings/page": [
+    "/astrologerchat/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/earnings/page.js"
-    ],
-    "/dashboard/wallet/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/wallet/page.js"
+      "static/css/app/astrologerchat/page.css",
+      "static/chunks/app/astrologerchat/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",
