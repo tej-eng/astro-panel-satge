@@ -26,6 +26,7 @@ const GET_ASTROLOGER_WALLET_TRANSACTIONS = gql`
       data {
         id
         type
+        sessionId
         amount
         coins
         description
@@ -186,7 +187,7 @@ export default function WalletTransactions() {
             <thead className="bg-purple-400">
               <tr>
                 <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                  Transaction ID
+                   ID
                 </th>
 
                 <th className="p-4 text-left text-sm font-semibold text-gray-700">
@@ -220,8 +221,10 @@ export default function WalletTransactions() {
                     key={item.id}
                     className="border-t text-xs hover:bg-gray-50 transition"
                   >
-                    <td className="p-4 text-xs font-medium text-gray-700">
-                      {item.id?.slice(0, 8)}
+                    <td className="p-4 flex flex-col text-xs font-medium text-gray-700">
+                      <span>SessionID : {item.sessionId?.slice(0, 8)}</span>
+
+                      <span>TXN Id : {item.id?.slice(0, 8)}</span>
                     </td>
 
                     <td className="p-4">
@@ -235,9 +238,9 @@ export default function WalletTransactions() {
                       >
                         {item.type === "CHAT_EARNING" ||
                         item.type === "CALL_EARNING" ? (
-                          <ArrowDownCircle className="w-3 h-3" />
+                          <ArrowDownCircle className="w-2 h-2" />
                         ) : (
-                          <ArrowUpCircle className="w-3 h-3" />
+                          <ArrowUpCircle className="w-2 h-2" />
                         )}
 
                         {item.type}

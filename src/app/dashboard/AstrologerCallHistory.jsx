@@ -223,23 +223,23 @@ export default function AstrologerCallHistory() {
               key={call.sessionId}
               className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
             >
-              <div className="p-5">
+              <div className="px-5 py-3">
                 {/* Header */}
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="text-sm">
-                      <span className="font-bold text-purple-700">
+                    <p className="text-xs">
+                      <span className="font-semibold text-purple-700">
                         Session :
                       </span>{" "}
                       <span className="text-gray-700">{call.sessionId}</span>
                     </p>
 
-                    <p className="mt-1">
+                    <p className="mt-1 text-xs">
                       <span className="font-bold text-purple-700">User :</span>{" "}
                       {call.userName}
                     </p>
 
-                    <p className="mt-1 text-sm">
+                    <p className="mt-1 text-xs">
                       <span className="font-bold text-purple-700">
                         Source :
                       </span>{" "}
@@ -250,7 +250,7 @@ export default function AstrologerCallHistory() {
                   <Phone className="text-purple-500" size={20} />
                 </div>
 
-                <p className="text-sm mb-2">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Date :</span>{" "}
                   {new Date(call.createdAt).toLocaleString()}
                 </p>
@@ -260,25 +260,23 @@ export default function AstrologerCallHistory() {
                   {call.durationMinutes} min
                 </p>
 
-                <p className="text-sm mb-2">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Rate :</span> ₹{" "}
                   {call.ratePerMin}/min
                 </p>
 
-                <p className="text-sm mb-2">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Earned :</span> ₹{" "}
                   {call.coinsEarned}
                 </p>
-
-                <p className="text-sm mb-2">
+       <div className="flex text-xs justify-between items-center mt-3">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">
                     Commission :
                   </span>{" "}
                   ₹ {call.commission}
                 </p>
-
-                <div className="flex justify-between items-center mt-5">
-                  <span
+                 <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       call.status === "COMPLETED"
                         ? "bg-green-100 text-green-700"
@@ -289,6 +287,9 @@ export default function AstrologerCallHistory() {
                   >
                     {call.status}
                   </span>
+</div>
+                <div className="grid grid-cols-3 gap-3 mt-3">
+                 
 
                   {/* <button
               onClick={() => handleDownloadRecording(call.sessionId)}
@@ -301,10 +302,10 @@ export default function AstrologerCallHistory() {
                       setSelectedOrderId(call.sessionId);
                       setShowModal(true);
                     }}
-                    className="flex items-center justify-center gap-2 border border-purple-500 text-purple-700 rounded-xl py-2 hover:bg-purple-50"
+                        className="flex items-center text-xs justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700  rounded-xl hover:bg-purple-50 transition"
                   >
                     <Activity size={16} />
-                    Suggest Remedy
+                     Remedy
                   </button>
                 </div>
                 {showModal && (
