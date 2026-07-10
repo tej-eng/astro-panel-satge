@@ -180,13 +180,13 @@ const filteredReviews = useMemo(() => {
             My Reviews
           </h1>
 
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 ">
             Customer feedback &
             ratingss
           </p>
         </div>
 
-        {/* SEARCH */}
+      
         <div className="relative w-full md:w-[350px]">
           <Search className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
 
@@ -199,15 +199,15 @@ const filteredReviews = useMemo(() => {
                 e.target.value
               )
             }
-            className="w-full bg-white border border-purple-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full bg-white border border-purple-200 rounded-full pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
       </div>
 
-      {/* STATS */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        {/* TOTAL */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+    
+    <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-8">
+    
+        <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
               Total Reviews
@@ -216,13 +216,13 @@ const filteredReviews = useMemo(() => {
             <MessageSquare className="w-5 h-5 text-purple-500" />
           </div>
 
-          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+          <h2 className="text-2xl font-bold text-[#4b1d74] mt-2">
          {reviewsData?.totalCount || 0}
           </h2>
         </div>
 
         {/* AVG RATING */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+        <div className="bg-purple-300 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
               Average Rating
@@ -231,7 +231,7 @@ const filteredReviews = useMemo(() => {
             <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
           </div>
 
-          <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+          <h2 className="text-2xl font-bold text-[#4b1d74] mt-2">
             {filteredReviews.length >
             0
               ? (
@@ -247,8 +247,8 @@ const filteredReviews = useMemo(() => {
           </h2>
         </div>
 
-        {/* CURRENT PAGE */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+      
+        <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
               Current Page
@@ -257,7 +257,7 @@ const filteredReviews = useMemo(() => {
             <CalendarDays className="w-5 h-5 text-purple-500" />
           </div>
 
-       <h2 className="text-3xl font-bold text-[#4b1d74] mt-3">
+       <h2 className="text-2xl font-bold text-[#4b1d74] mt-2">
   {reviewsData?.currentPage || 1}
 </h2>
         </div>

@@ -30,6 +30,7 @@ const GET_ASTROLOGER_EARNINGS = gql`
         amount
         coins
         description
+        sessionId
         createdAt
       }
     }
@@ -38,125 +39,84 @@ const GET_ASTROLOGER_EARNINGS = gql`
 
 export default function AstrologerEarnings() {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] =
-    useState("ALL");
+  const [typeFilter, setTypeFilter] = useState("ALL");
 
   // APOLLO QUERY
-  const { data, loading, error } = useQuery(
-    GET_ASTROLOGER_EARNINGS,
-    {
-      fetchPolicy: "network-only",
-    }
-  );
+  const { data, loading, error } = useQuery(GET_ASTROLOGER_EARNINGS, {
+    fetchPolicy: "network-only",
+  });
 
-  const earnings =
-    data?.getAstrologerEarnings;
+  const earnings = data?.getAstrologerEarnings;
 
   // SEARCH + FILTER
   const filteredTransactions = useMemo(() => {
     if (!earnings?.transactions) return [];
 
-    return earnings.transactions.filter(
-      (item) => {
-        const matchesSearch =
-          item?.description
-            ?.toLowerCase()
-            .includes(search.toLowerCase()) ||
-          item?.id
-            ?.toLowerCase()
-            .includes(search.toLowerCase());
+    return earnings.transactions.filter((item) => {
+      const matchesSearch =
+        item?.description?.toLowerCase().includes(search.toLowerCase()) ||
+        item?.id?.toLowerCase().includes(search.toLowerCase());
 
-        const matchesType =
-          typeFilter === "ALL" ||
-          item.type === typeFilter;
+      const matchesType = typeFilter === "ALL" || item.type === typeFilter;
 
-        return (
-          matchesSearch && matchesType
-        );
-      }
-    );
+      return matchesSearch && matchesType;
+    });
   }, [earnings, search, typeFilter]);
 
   const summary = earnings?.summary;
 
   if (error) {
-    return (
-      <div className="p-6 text-red-500">
-        Error loading earnings
-      </div>
-    );
+    return <div className="p-6 text-red-500">Error loading earnings</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+    <div className="min-h-screen bg-[#f7f3fb] p-4 md:p-6">
+      <div className="mb-4">
+        <h1 className="text-2xl md:text-2xl font-bold text-gray-800">
           Astrologer Earnings
         </h1>
-
-        <p className="text-gray-500 mt-1">
-          Track earnings, withdrawals &
-          session revenue
-        </p>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
-        {/* TOTAL EARNINGS */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
+        <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Total Earnings
-            </span>
+            <span className="text-sm text-gray-500">Total Earnings</span>
 
             <Wallet className="w-5 h-5 text-green-600" />
           </div>
 
           <h2 className="text-2xl font-bold mt-3 text-gray-800">
-            ₹
-            {summary?.totalEarnings || 0}
+            ₹{summary?.totalEarnings || 0}
           </h2>
         </div>
 
-        {/* WITHDRAWN */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <div className="bg-violet-300 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Withdrawn
-            </span>
+            <span className="text-sm text-gray-500">Withdrawn</span>
 
             <ArrowUpCircle className="w-5 h-5 text-red-500" />
           </div>
 
           <h2 className="text-2xl font-bold mt-3 text-gray-800">
-            ₹
-            {summary?.totalWithdrawn || 0}
+            ₹{summary?.totalWithdrawn || 0}
           </h2>
         </div>
 
-        {/* CURRENT BALANCE */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Current Balance
-            </span>
+            <span className="text-sm text-gray-500">Current Balance</span>
 
             <ArrowDownCircle className="w-5 h-5 text-blue-500" />
           </div>
 
           <h2 className="text-2xl font-bold mt-3 text-gray-800">
-            ₹
-            {summary?.currentBalance || 0}
+            ₹{summary?.currentBalance || 0}
           </h2>
         </div>
 
-        {/* TOTAL SESSIONS */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Sessions
-            </span>
+            <span className="text-sm text-gray-500">Sessions</span>
 
             <MessageSquare className="w-5 h-5 text-purple-500" />
           </div>
@@ -166,25 +126,20 @@ export default function AstrologerEarnings() {
           </h2>
         </div>
 
-        {/* CHAT MINUTES */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Chat Minutes
-            </span>
+            <span className="text-sm text-gray-500">Chat Minutes</span>
 
             <Clock className="w-5 h-5 text-orange-500" />
           </div>
 
           <h2 className="text-2xl font-bold mt-3 text-gray-800">
-            {summary?.totalChatMinutes ||
-              0}
+            {summary?.totalChatMinutes || 0}
           </h2>
         </div>
       </div>
 
-      {/* SEARCH + FILTER */}
-      <div className="bg-white rounded-2xl shadow-sm border p-4 mb-5">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-300 p-4 mb-5">
         <div className="flex flex-col md:flex-row gap-4">
           {/* SEARCH */}
           <div className="relative flex-1">
@@ -194,51 +149,38 @@ export default function AstrologerEarnings() {
               type="text"
               placeholder="Search by description or transaction ID..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              className="w-full border rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
             />
           </div>
 
           {/* FILTER */}
           <select
             value={typeFilter}
-            onChange={(e) =>
-              setTypeFilter(e.target.value)
-            }
-            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="border border-gray-300 text-xs rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
           >
-            <option value="ALL">
-              All Types
-            </option>
+            <option value="ALL">All Types</option>
 
-            <option value="CREDIT">
-              Credit
-            </option>
+            <option value="CREDIT">Credit</option>
 
-            <option value="DEBIT">
-              Debit
-            </option>
+            <option value="DEBIT">Debit</option>
           </select>
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
-            <thead className="bg-gray-100">
+            <thead className="bg-purple-400">
               <tr>
                 <th className="text-left p-4 text-sm font-semibold text-gray-700">
-                  Transaction ID
+                  ID
                 </th>
 
                 <th className="text-left p-4 text-sm font-semibold text-gray-700">
                   Type
                 </th>
-
-               
 
                 <th className="text-left p-4 text-sm font-semibold text-gray-700">
                   Amount
@@ -257,68 +199,46 @@ export default function AstrologerEarnings() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan={6} className="text-center py-10 text-gray-500">
                     Loading earnings...
                   </td>
                 </tr>
-              ) : filteredTransactions.length >
-                0 ? (
-                filteredTransactions.map(
-                  (item) => (
-                    <tr
-                      key={item.id}
-                      className="border-t hover:bg-gray-50 transition"
-                    >
-                      {/* ID */}
-                      <td className="p-4 text-sm font-medium text-gray-700">
-                        {item.id}
-                      </td>
+              ) : filteredTransactions.length > 0 ? (
+                filteredTransactions.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-t text-xs hover:bg-gray-50 transition"
+                  >
+                    <td className="px-4 py-2 flex flex-col gap-1 text-xs font-medium text-gray-700">
+                       <span>Session ID : {item.sessionId?.slice(0, 8)} </span>
+                      <span>Transaction ID : {item.id?.slice(0, 8)} </span>
+                      
+                    </td>
 
-                      {/* TYPE */}
-                      <td className="p-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            item.type ===
-                            "CREDIT"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {item.type}
-                        </span>
-                      </td>
+                    <td className="px-4 py-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs  ${
+                          item.type === "CREDIT"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {item.type}
+                      </span>
+                    </td>
 
-                      {/* AMOUNT */}
-                     
+                    <td className="px-4 py-2 font-semibold text-gray-700">₹ {item.coins}</td>
 
-                      {/* COINS */}
-                      <td className="p-4 text-gray-700">
-                        {item.coins}
-                      </td>
+                    <td className="px-4 py-2 text-gray-600">{item.description}</td>
 
-                      {/* DESCRIPTION */}
-                      <td className="p-4 text-gray-600">
-                        {item.description}
-                      </td>
-
-                      {/* DATE */}
-                      <td className="p-4 text-gray-500 text-sm">
-                        {new Date(
-                          item.createdAt
-                        ).toLocaleString()}
-                      </td>
-                    </tr>
-                  )
-                )
+                    <td className="px-4 py-2 text-gray-500 text-xs">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan={6} className="text-center py-10 text-gray-500">
                     No transactions found
                   </td>
                 </tr>

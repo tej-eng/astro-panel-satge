@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
+import { useLazyQuery } from "@apollo/client/react";
 
 const GET_CURRENT_ASTROLOGER = gql`
   query GetCurrentAstrologer {
@@ -17,18 +17,14 @@ const GET_CURRENT_ASTROLOGER = gql`
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
 
-  const { loading, data, error } = useQuery(
-  GET_CURRENT_ASTROLOGER,
-  {
-    fetchPolicy: "network-only",
-    errorPolicy: "all",   // <-- add this
-    context: {
-      fetchOptions: {
-        credentials: "include",
-      },
-    },
-  }
-);
+  const [getCurrentAstrologer, { loading, data, error }] =
+    useLazyQuery(GET_CURRENT_ASTROLOGER, {
+      fetchPolicy: "network-only",
+    });
+
+  useEffect(() => {
+    getCurrentAstrologer();
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -36,15 +32,11 @@ export default function ProtectedRoute({ children }) {
         router.replace("/");
       }
     }
-  }, [loading, error, data, router]);
+  }, [loading, error, data]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <>Loading...</>;
 
-  if (error || !data?.getCurrentAstrologer) {
-    return null;
-  }
+  if (error || !data?.getCurrentAstrologer) return null;
 
   return children;
 }

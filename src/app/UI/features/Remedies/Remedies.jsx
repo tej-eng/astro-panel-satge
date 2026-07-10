@@ -42,7 +42,7 @@ const Remedies = () => {
   };
 
   return (
-    <div className="w-full p-5">
+    <div className="w-full bg-[#f7f3fb] p-5">
       {/* Header */}
       <div className="flex justify-center mb-6">
         <h2 className="bg-purple-900 text-yellow-400 px-6 py-2 rounded-lg font-semibold">
@@ -63,7 +63,7 @@ const Remedies = () => {
                 sessionId: e.target.value,
               }))
             }
-            className="border p-2 rounded"
+            className="w-full border text-xs border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
           />
 
           <input
@@ -75,7 +75,7 @@ const Remedies = () => {
                 startDate: e.target.value,
               }))
             }
-            className="border p-2 rounded"
+            className="w-full border text-xs border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
           />
 
           <input
@@ -87,12 +87,12 @@ const Remedies = () => {
                 endDate: e.target.value,
               }))
             }
-            className="border p-2 rounded"
+            className="w-full border text-xs border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
           />
 
           <button
             onClick={handleSearch}
-            className="bg-indigo-600 text-white rounded px-4"
+            className="bg-indigo-600 text-white rounded-full px-4"
           >
             Search
           </button>

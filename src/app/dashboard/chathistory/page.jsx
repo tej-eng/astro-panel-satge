@@ -135,61 +135,57 @@ export default function AstrologerChatHistory() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-[#f7f3fb] p-4 md:p-6">
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
            Chat History
         </h1>
-
-        <p className="text-gray-500 mt-1">
-          
-        </p>
       </div>
 
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
       
-        <div className="bg-white rounded-2xl border shadow-sm p-5">
+        <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Chats</p>
 
             <MessageCircle className="w-5 h-5 text-blue-500" />
           </div>
 
-          <h2 className="text-3xl font-bold mt-3 text-gray-800">
+          <h2 className="text-2xl font-bold mt-2 text-gray-800">
             {chatHistory?.totalCount || 0}
           </h2>
         </div>
 
-        <div className="bg-white rounded-2xl border shadow-sm p-5">
+        <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Current Page</p>
 
             <CalendarDays className="w-5 h-5 text-purple-500" />
           </div>
 
-          <h2 className="text-3xl font-bold mt-3 text-gray-800">
+          <h2 className="text-2xl font-bold mt-2 text-gray-800">
             {chatHistory?.currentPage || 1}
           </h2>
         </div>
 
        
-        <div className="bg-white rounded-2xl border shadow-sm p-5">
+        <div className="bg-purple-300 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Pages</p>
 
             <Clock3 className="w-5 h-5 text-orange-500" />
           </div>
 
-          <h2 className="text-3xl font-bold mt-3 text-gray-800">
+          <h2 className="text-2xl font-bold mt-2 text-gray-800">
             {chatHistory?.totalPages || 1}
           </h2>
         </div>
       </div>
 
    
-      <div className="bg-white rounded-2xl border shadow-sm p-4 mb-5">
+      <div className="bg-white rounded-full border-gray-300  shadow-2xl  p-4 mb-5">
         <div className="flex flex-col md:flex-row gap-4">
           {/* SEARCH */}
           <div className="relative flex-1">
@@ -200,7 +196,7 @@ export default function AstrologerChatHistory() {
               placeholder="Search by user, mobile, room ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full border rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
             />
           </div>
 
@@ -208,7 +204,7 @@ export default function AstrologerChatHistory() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black min-w-[140px]"
+            className="border-gray-300 border text-xs  shadow-2xl  rounded-full px-4 py-2.5 outline-none focus:ring-1 focus:ring-black min-w-[140px]"
           >
             <option value="ALL">All Status</option>
             <option value="COMPLETED">COMPLETED</option>
@@ -221,7 +217,7 @@ export default function AstrologerChatHistory() {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-black min-w-[140px]"
+            className="border-gray-300 border text-xs  rounded-full px-4 py-2.5 outline-none focus:ring-1 focus:ring-black min-w-[140px]"
           >
             <option value="ALL">All Sources</option>
             <option value="WEB">Web</option>
@@ -235,7 +231,7 @@ export default function AstrologerChatHistory() {
       {/* TABLE */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {loading ? (
-          <div className="col-span-full text-center py-10">
+          <div className="col-span-full text-center py-8">
             Loading chat history...
           </div>
         ) : filteredChats.length > 0 ? (
@@ -244,24 +240,24 @@ export default function AstrologerChatHistory() {
               key={chat.sessionId}
               className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
             >
-              <div className="p-5">
-                {/* TOP */}
-                <div className="flex justify-between items-start mb-3">
+              <div className="px-5 py-3">
+              
+                <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="text-sm">
-                      <span className="font-bold text-purple-700">
-                        Order ID :
+                    <p className="text-xs">
+                      <span className="font-semibold text-purple-700">
+                        Session ID :
                       </span>{" "}
-                      <span className="text-gray-600">{chat.sessionId}</span>
+                      <span className="text-gray-600 ">{chat.sessionId?.slice(0,8)}</span>
                     </p>
 
-                    <p className="mt-1">
+                    <p className="mt-1 text-xs">
                       <span className="font-bold text-purple-700">Name :</span>{" "}
                       <span className="text-gray-700">{chat.userName}</span>
                     </p>
 
                     {/* ✅ Display Source */}
-                    <p className="mt-1 text-sm">
+                    <p className="mt-1 text-xs">
                       <span className="font-bold text-purple-700">
                         Source :
                       </span>{" "}
@@ -274,29 +270,29 @@ export default function AstrologerChatHistory() {
                   <Eye size={18} className="text-gray-400" />
                 </div>
 
-                <p className="text-sm mb-1">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Date :</span>{" "}
                   {new Date(chat.createdAt).toLocaleString()}
                 </p>
 
-                <p className="text-sm mb-1">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">
                     Birth Place :
                   </span>{" "}
                   {chat.birthPlace || "-"}
                 </p>
 
-                <p className="text-sm mb-1">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Earning :</span> ₹{" "}
                   {chat.coinsEarned}
                 </p>
 
-                <p className="text-sm mb-1">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Duration :</span>{" "}
                   {chat.durationMinutes} min
                 </p>
 
-                <div className="flex justify-between items-center mt-3">
+                <div className="flex text-xs justify-between items-center mt-3">
                   <div className="flex items-center gap-1">
                     <span className="font-bold text-purple-700">Rating:</span>
 
@@ -315,16 +311,16 @@ export default function AstrologerChatHistory() {
                 </div>
 
                 {/* REVIEW */}
-                <div className="mt-5 bg-purple-50 border border-purple-100 rounded-xl p-4 min-h-[90px]">
+                <div className="mt-5 text-xs bg-purple-50 border border-purple-100 rounded-xl px-4 py-2  min-h-[90px]">
                   <p className="font-bold text-purple-700 mb-2">Review :</p>
 
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     {chat.reviewComment || "No review available."}
                   </p>
                 </div>
 
                 {/* BUTTONS */}
-                <div className="grid grid-cols-2 gap-3 mt-5">
+                <div className="grid grid-cols-3 gap-3 mt-3">
                   {chat.status === "COMPLETED" && (
                     <>
                       <button
@@ -332,30 +328,30 @@ export default function AstrologerChatHistory() {
                           setSelectedOrderId(chat.sessionId);
                           setShowModal(true);
                         }}
-                        className="flex items-center justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700 rounded-md hover:bg-purple-50 transition"
+                        className="flex items-center text-xs justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700  rounded-xl hover:bg-purple-50 transition"
                       >
                         <Activity className="w-4 h-4" />
-                        Suggest Remedy
+                         Remedy
                       </button>
                       <button
                         onClick={() => {
                           setSelectedSession(chat.sessionId);
                           setOpenModal(true);
                         }}
-                        className="border border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
+                        className="border text-xs border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
                       >
                         <Eye size={16} />
-                        View Chat
+                         Chat
                       </button>
                     </>
                   )}
 
                   <button
                     onClick={() => getKundli(chat.roomId)}
-                    className="bg-purple-600 text-white rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-purple-700"
+                    className="bg-purple-600 text-white rounded-xl py-2 text-xs flex items-center justify-center gap-2 hover:bg-purple-700"
                   >
                     <FileText size={16} />
-                    Open Kundli
+                     Kundli
                   </button>
                 </div>
               </div>
