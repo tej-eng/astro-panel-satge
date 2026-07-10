@@ -120,9 +120,7 @@ const AstrologerChat = () => {
     skip: !roomId,
     fetchPolicy: "network-only",
   });
-  // console.log("----------------------------", data);
-  const FetchChat_message = data?.getSessionMessages?.data || [];
-  console.log(FetchChat_message);
+
 
   // GraphQL query for remedies
   const {
@@ -357,6 +355,11 @@ const AstrologerChat = () => {
     }
     return null;
   };
+
+  useEffect(() => {
+  console.log("REMEDY DATA", remedyData);
+  console.log("REMEDY ERROR", remedyError);
+}, [remedyData, remedyError]);
 
   const [endTime, setEndTime] = useState(getEndTime());
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -1015,7 +1018,7 @@ const AstrologerChat = () => {
             </div>
           )}
           <div className="flex items-center gap-2 relative">
-            <div className="flex  items-center w-full border border-gray-300 overflow-hidden rounded-full h-13 shadow inp-attach ps-2 pe-3">
+            <div className="flex  items-center w-full border border-gray-300  rounded-full h-13 shadow inp-attach ps-2 pe-3">
               <textarea
                 ref={messageInputRef}
                 value={message}
@@ -1050,7 +1053,7 @@ const AstrologerChat = () => {
                     </svg>
                   </button>
                   {showCannedDropdown && (
-                    <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                    <div className="absolute bottom-10 left-0 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-1000 max-h-40 overflow-y-auto">
                       {cannedMessages.length > 0 ? (
                         cannedMessages.map((msg) => (
                           <div
@@ -1121,6 +1124,13 @@ const AstrologerChat = () => {
                     </div>
                   )}
                 </div>
+                <input
+  ref={fileInputRef}
+  type="file"
+  accept="image/*"
+  hidden
+  onChange={handleImageChange}
+/>
                 <button
                   type="button"
                   className="p-1 text-xs text-white bg-purple-400 rounded-full flex items-center gap-1"

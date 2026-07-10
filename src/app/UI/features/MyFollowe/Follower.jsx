@@ -6,36 +6,31 @@ import { GET_ASTROLOGER_FOLLOWERS } from "@/app/utils/panelQueries";
 import { useQuery } from "@apollo/client/react";
 
 export default function Followers() {
-const astroUser =
-  typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("astro_user"))
-    : null;
+  const astroUser =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("astro_user"))
+      : null;
 
-const astrologerId = astroUser?.id;
+  const astrologerId = astroUser?.id;
 
-  const { data, loading, error } = useQuery(
-    GET_ASTROLOGER_FOLLOWERS,
-    {
-      variables: {
-        astrologerId,
-        page: 1,
-        limit: 20,
-      },
-      skip: !astrologerId,
-      fetchPolicy: "network-only",
-    }
-  );
-const totalFollowers =
-  data?.getAstrologerFollowers?.total || 0;
+  const { data, loading, error } = useQuery(GET_ASTROLOGER_FOLLOWERS, {
+    variables: {
+      astrologerId,
+      page: 1,
+      limit: 20,
+    },
+    skip: !astrologerId,
+    fetchPolicy: "network-only",
+  });
+  const totalFollowers = data?.getAstrologerFollowers?.total || 0;
 
-console.log("astroUser", astroUser);
-console.log("astrologerId", astrologerId);
-Object.keys(localStorage).forEach(key => {
-  console.log(key, localStorage.getItem(key));
-});
+  console.log("astroUser", astroUser);
+  console.log("astrologerId", astrologerId);
+  Object.keys(localStorage).forEach((key) => {
+    console.log(key, localStorage.getItem(key));
+  });
 
-  const followers =
-    data?.getAstrologerFollowers?.followers || [];
+  const followers = data?.getAstrologerFollowers?.followers || [];
 
   const filteredData = useFilteredSearch(followers, [
     "user.name",
@@ -45,19 +40,15 @@ Object.keys(localStorage).forEach(key => {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error loading followers</p>;
 
-
-
   return (
     <div
-      className={`${styles["astro-follower"]} flex flex-col justify-center items-center sm:gap-4 py-2 sm:py-5`}
+      className={`${styles["astro-follower"]} flex flex-col bg-[#f7f3fb]  justify-center items-center sm:gap-4 py-2 sm:py-3`}
     >
-      <div className="flex justify-self-center">
-        <h2 className={`${styles["wallet-head"]} text-center`}>
-          My Followerss
-        </h2>
-          <p className="text-sm text-gray-600">
-    Total Followers: {totalFollowers}
-  </p>
+      <div className={`${styles["wallet-head"]} flex flex-col gap-2 text-center`}>
+        <h2 className={` text-center`}>My Followers</h2>
+        <p className="text-xs bg-yellow-500 px-3 py-1 text-violet-900 rounded-full">
+          Total Followers: {totalFollowers}
+        </p>
       </div>
 
       <div
@@ -78,32 +69,21 @@ Object.keys(localStorage).forEach(key => {
               <div
                 className={`${styles["f-card-con"]} flex flex-col items-start justify-between`}
               >
-                <h3
-                  className={`${styles["top-fll"]} text-black mb-0`}
-                >
+                <h3 className={`${styles["top-fll"]} text-black mb-0`}>
                   {follower.user?.name || "No Name"}
                 </h3>
 
-                <small
-                  className={`${styles["top-fll"]} text-black`}
-                >
+                <small className={`${styles["top-fll"]} text-black`}>
                   User ID: {follower.user?.id}
                 </small>
 
-                <small
-                  className={`${styles["top-fll"]} text-black`}
-                >
+                <small className={`${styles["top-fll"]} text-black`}>
                   {/* {follower.user?.countryCode}
                   {follower.user?.mobile} */}
                 </small>
 
-                <small
-                  className={`${styles["top-fll"]} text-black`}
-                >
-                  Followed:{" "}
-                  {new Date(
-                    follower.createdAt
-                  ).toLocaleDateString()}
+                <small className={`${styles["top-fll"]} text-black`}>
+                  Followed: {new Date(follower.createdAt).toLocaleDateString()}
                 </small>
               </div>
             </div>
