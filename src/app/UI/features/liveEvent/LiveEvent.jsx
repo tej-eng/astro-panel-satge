@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useLazyQuery } from "@apollo/client/react";
 
 import AgoraChat from "agora-chat";
+console.log(
+  "AGORA CHAT APP KEY:",
+  process.env.NEXT_PUBLIC_AGORA_CHAT_APPKEY
+);
 
 const chatClient = new AgoraChat.connection({
   appKey: process.env.NEXT_PUBLIC_AGORA_CHAT_APPKEY,
