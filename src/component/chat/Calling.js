@@ -234,7 +234,7 @@ const Calling = () => {
 
     socket.on("call_reject_auto", (data) => {
       // if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
-        cleanupCall();
+      cleanupCall();
       // }
     });
 
@@ -296,7 +296,6 @@ const Calling = () => {
 
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     ringtoneRef.current?.pause();
-    
   };
 
   const callCancel = () => {
@@ -310,149 +309,155 @@ const Calling = () => {
     <>
       <audio ref={ringtoneRef} src="/sounds/ringtone.mp3" preload="auto" loop />
       <audio ref={remoteAudioRef} autoPlay playsInline />
-
-      <AnimatePresence mode="wait">
-        {/* Ringing Screen */}
-        {callState === "ringing" && (
-          <motion.div
-            key="ringing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 gap-12 flex items-center justify-center"
-          >
-            <div className="text-center">
+      
+          <AnimatePresence mode="wait">
+            {/* Ringing Screen */}
+            {callState === "ringing" && (
               <motion.div
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ repeat: Infinity, duration: 1.8 }}
-                className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-violet-600 flex items-center justify-center text-7xl font-bold shadow-2xl"
-              >
-                {callerName[0]}
+                key="ringing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] bg-black/95 gap-12 flex items-center justify-center"
+               >
+                <div className="text-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-violet-600 flex items-center justify-center text-7xl font-bold shadow-2xl"
+                  >
+                    {callerName[0]}
+                  </motion.div>
+
+                  <h1 className="text-4xl font-semibold text-white mt-10">
+                    Incoming Call
+                  </h1>
+                  <p className="text-2xl text-purple-300 mt-4">{callerName}</p>
+
+                  <div className="flex justify-center gap-12 mt-16">
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={callCancel}
+                      className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
+                    >
+                      <PhoneOff size={42} className="text-white" />
+                    </motion.button>
+
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleAccept}
+                      className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"
+                    >
+                      <Phone size={42} className="text-white" />
+                    </motion.button>
+                  </div>
+                </div>
               </motion.div>
+            )}
 
-              <h1 className="text-4xl font-semibold text-white mt-10">
-                Incoming Call
-              </h1>
-              <p className="text-2xl text-purple-300 mt-4">{callerName}</p>
-
-              <div className="flex justify-center gap-12 mt-16">
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={callCancel}
-                  className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
-                >
-                  <PhoneOff size={42} className="text-white" />
-                </motion.button>
-
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleAccept}
-                  className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"
-                >
-                  <Phone size={42} className="text-white" />
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Connecting Screen */}
-        {callState === "connecting" && (
-          <motion.div
-            key="connecting"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] gap-12 bg-gradient-to-br from-gray-950 to-black flex flex-col items-center justify-center text-white"
-          >
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-6">
-              <User size={60} />
-            </div>
-            <h2 className="text-3xl font-medium">Connecting...</h2>
-            <p className="text-gray-400 mt-3">Please wait</p>
-          </motion.div>
-        )}
-
-        {/* Connected Call Screen */}
-        {callState === "connected" && (
-          <motion.div
-            key="connected"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-[100] bg-gradient-to-br from-gray-950 via-purple-950 to-black flex flex-col items-center justify-center text-white"
-          >
-            <div className="flex flex-col items-center">
-                 <div className="flex items-center gap-3">
-          {/* <img
-            src="/ds-img/a.jpg"
-            alt={astroData?.astrologer?.name}
-            width={50}
-            height={50}
-            className="rounded-full object-cover"
-          /> */}
-
-          {/* <h2 className="text-xl">{astroData?.astrologer?.name}</h2> */}
-        </div>
+            {/* Connecting Screen */}
+            {callState === "connecting" && (
               <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2.5, repeat: Infinity }}
-                className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-500 flex items-center justify-center text-2xl font-bold shadow-2xl border-4 border-white/30"
+                key="connecting"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] gap-12 bg-gradient-to-br from-gray-950 to-black flex flex-col items-center justify-center text-white"
               >
-                {callerName}
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-6">
+                  <User size={60} />
+                </div>
+                <h2 className="text-3xl font-medium">Connecting...</h2>
+                <p className="text-gray-400 mt-3">Please wait</p>
               </motion.div>
+            )}
 
-              {/* <h2 className="text-4xl font-semibold mt-8">{callerName}</h2> */}
-              <div className="flex items-center gap-2 mt-4 text-green-400">
-                <span className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                Connected
-              </div>
-            </div>
+            {/* Connected Call Screen */}
+            {callState === "connected" && (
+              
+              <motion.div
+                key="connected"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-[100]  bg-gradient-to-br from-gray-950 via-purple-950 to-black flex flex-col items-center justify-center text-white"
+               >
+                   <div className="md:w-3/5 overflow-hidden w-full shadow-lg rounded-3xl  flex flex-col md:h-[95vh] h-[100vh]">
+        <div className="flex flex-col w-full  rounded-3xl shadow-xl items-center justify-between py-10    h-full bg-gray-900 text-white">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-3">
+                    {/* <img
+                      src="/ds-img/a.jpg"
+                      alt={astroData?.astrologer?.name}
+                      width={50}
+                      height={50}
+                      className="rounded-full object-cover"
+                    /> */}
 
-            <div className="mt-12 flex items-center gap-3 text-3xl font-mono">
-              <Clock size={32} />
-              {formatTime(callTime)}
-            </div>
+                    {/* <h2 className="text-xl">{astroData?.astrologer?.name}</h2> */}
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                    className="px-4 py-2 rounded-full bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-500 flex items-center justify-center text-2xl font-bold shadow-2xl border-4 border-white/30"
+                  >
+                    {callerName}
+                  </motion.div>
 
-            <div className="flex items-end justify-center gap-1 h-20 mt-4">
-              {waveHeights.map((height, index) => (
-                <div
-                  key={index}
-                  className="w-2 bg-green-400 rounded-full transition-all duration-75"
-                  style={{
-                    height: `${height}px`,
-                  }}
-                />
-              ))}
-            </div>
+                  {/* <h2 className="text-4xl font-semibold mt-8">{callerName}</h2> */}
+                  <div className="flex items-center gap-2 mt-4 text-green-400">
+                    <span className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                    Connected
+                  </div>
+                </div>
 
-            <div className=" flex gap-8">
-              <motion.button
-                whileTap={{ scale: 0.85 }}
-                onClick={toggleMute}
-                className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl transition-all ${
-                  isMuted
-                    ? "bg-yellow-500 text-black"
-                    : "bg-zinc-800 hover:bg-zinc-700"
-                }`}
-              >
-                {isMuted ? <MicOff /> : <Mic />}
-              </motion.button>
+                <div className="mt-12 flex items-center gap-3 text-xl font-mono">
+                   Time Left : {""}
+                  {formatTime(callTime)}
+                </div>
 
-              <motion.button
-                whileTap={{ scale: 0.85 }}
-                onClick={handleEndCall}
-                className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-2xl"
-              >
-                <PhoneOff size={42} />
-              </motion.button>
-            </div>
+                <div className="flex items-end justify-center gap-1 h-20 mt-4">
+                  {waveHeights.map((height, index) => (
+                    <div
+                      key={index}
+                      className="w-2 bg-green-400 rounded-full transition-all duration-75"
+                      style={{
+                        height: `${height}px`,
+                      }}
+                    />
+                  ))}
+                </div>
 
-            <p className="absolute bottom-6 text-xs text-gray-500">
-              This call may be recorded for quality purposes
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <div className=" flex gap-8">
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={toggleMute}
+                    className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl transition-all ${
+                      isMuted
+                        ? "bg-yellow-500 text-black"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    {isMuted ? <MicOff /> : <Mic />}
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={handleEndCall}
+                    className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-2xl"
+                  >
+                    <PhoneOff size={42} />
+                  </motion.button>
+                </div>
+
+                <p className="absolute bottom-6 text-xs text-gray-500">
+                  This call may be recorded for quality purposes
+                </p>
+                </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+    
     </>
   );
 };
