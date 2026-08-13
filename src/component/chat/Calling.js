@@ -20,6 +20,9 @@ const Calling = () => {
   const [callTime, setCallTime] = useState(0);
   const [callerName, setCallerName] = useState("Client");
   const hasEndedRef = useRef(false);
+  const isUnmountingRef = useRef(false);
+  const isCallActiveRef = useRef(false);
+  const currentRequestRef = useRef(null);
   const [waveHeights, setWaveHeights] = useState(Array(20).fill(10));
   // const remoteAudio = useRef(null);
 
@@ -70,24 +73,45 @@ const Calling = () => {
 
   // ====================== CALL TIMER ======================
   useEffect(() => {
-    let interval;
+    if (callState !== "connected") return;
 
-    if (callState === "connected" && callTime > 0) {
-      interval = setInterval(() => {
-        setCallTime((prev) => prev - 1);
-      }, 1000);
+    if (callTime <= 0) {
+      if (
+        isCallActiveRef.current &&
+        !hasEndedRef.current &&
+        !isUnmountingRef.current
+      ) {
+        hasEndedRef.current = true;
+
+        console.log("⏰ Call time expired");
+
+        socket?.emit("call_ended_by_astrologer", {
+          roomId: currentRequest?.room_id,
+          astroId,
+        });
+
+        isCallActiveRef.current = false;
+
+        cleanupCall();
+      }
+
+      return;
     }
 
-    // AUTO END CALL
-    if (callTime <= 0 && !hasEndedRef.current) {
-      hasEndedRef.current = true;
-      handleEndCall();
-    }
+    const interval = setInterval(() => {
+      setCallTime((prev) => {
+        if (prev <= 1) {
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
-      if (interval) clearInterval(interval);
+      clearInterval(interval);
     };
-  }, [callState, callTime]);
+  }, [callState, callTime, socket, astroId, currentRequest]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -175,7 +199,9 @@ const Calling = () => {
 
     return pc;
   };
-
+  useEffect(() => {
+    currentRequestRef.current = currentRequest;
+  }, [currentRequest]);
   // ====================== SOCKET EVENTS ======================
   useEffect(() => {
     if (!socket) return;
@@ -193,12 +219,22 @@ const Calling = () => {
 
     socket.on("offer", async (data) => {
       try {
-        if (data.room_id !== currentRequest?.room_id) return;
+        if (data.room_id !== currentRequestRef.current?.room_id) {
+          return;
+        }
+
         const pc = createPeerConnection(data.room_id);
+
         await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
         const answer = await pc.createAnswer();
+
         await pc.setLocalDescription(answer);
-        socket.emit("answer", { room_id: data.room_id, answer });
+
+        socket.emit("answer", {
+          room_id: data.room_id,
+          answer,
+        });
       } catch (err) {
         console.error("❌ Offer Error:", err);
       }
@@ -221,14 +257,36 @@ const Calling = () => {
     });
 
     socket.on("call_ended_by_user", (data) => {
-      if (JSON.parse(data)?.room_id === currentRequest?.room_id) {
-        cleanupCall();
+      try {
+        const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+
+        if (parsedData?.room_id === currentRequest?.room_id) {
+          console.log("📞 Call ended by user");
+
+          hasEndedRef.current = true;
+          isCallActiveRef.current = false;
+
+          cleanupCall();
+        }
+      } catch (error) {
+        console.error("call_ended_by_user parse error:", error);
       }
     });
 
     socket.on("call_cancel_by_user", (data) => {
-      if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
-        cleanupCall();
+      try {
+        const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+
+        if (parsedData?.roomId === currentRequest?.room_id) {
+          console.log("❌ Call cancelled by user");
+
+          hasEndedRef.current = true;
+          isCallActiveRef.current = false;
+
+          cleanupCall();
+        }
+      } catch (error) {
+        console.error("call_cancel_by_user parse error:", error);
       }
     });
 
@@ -250,17 +308,27 @@ const Calling = () => {
   // ====================== HANDLERS ======================
   const handleAccept = async () => {
     if (!currentRequest?.room_id) return;
+
     const roomId = currentRequest.room_id;
 
+    hasEndedRef.current = false;
+    isUnmountingRef.current = false;
+    isCallActiveRef.current = true;
+
     ringtoneRef.current?.pause();
+
     socket?.emit("join_call", { roomId });
 
     setTimeout(() => {
-      socket?.emit("callAcceptedByAstrologer", { roomId, astroId, callTime });
+      socket?.emit("callAcceptedByAstrologer", {
+        roomId,
+        astroId,
+        callTime,
+      });
+
       setCallState("connecting");
     }, 400);
   };
-
   const toggleMute = () => {
     if (!localStreamRef.current) return;
     const track = localStreamRef.current.getAudioTracks()[0];
@@ -271,10 +339,31 @@ const Calling = () => {
   };
 
   const handleEndCall = () => {
+    if (isUnmountingRef.current) {
+      console.log("🚫 Ignoring handleEndCall because component is unmounting");
+      return;
+    }
+
+    if (!isCallActiveRef.current) {
+      console.log("🚫 Call already inactive");
+      return;
+    }
+
+    if (hasEndedRef.current) {
+      console.log("🚫 Call already ended");
+      return;
+    }
+
+    hasEndedRef.current = true;
+    isCallActiveRef.current = false;
+
+    console.log("📞 Ending call by astrologer");
+
     socket?.emit("call_ended_by_astrologer", {
       roomId: currentRequest?.room_id,
-      astroId: astroId,
+      astroId,
     });
+
     cleanupCall();
   };
 
@@ -299,90 +388,129 @@ const Calling = () => {
   };
 
   const callCancel = () => {
+    if (!currentRequest?.room_id) return;
+
+    const roomId = currentRequest.room_id;
+
+    hasEndedRef.current = true;
+    isCallActiveRef.current = false;
+
     cleanupCall();
+
     socket?.emit("call_cancel_by_astrologer", {
-      roomId: currentRequest?.room_id,
+      roomId,
     });
   };
+
+  useEffect(() => {
+    return () => {
+      console.log("🔄 Calling component unmounted / page refreshed");
+
+      isUnmountingRef.current = true;
+      isCallActiveRef.current = false;
+
+      // IMPORTANT:
+      // Do NOT call handleEndCall() here.
+      // Do NOT emit call_ended_by_astrologer here.
+
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+        });
+
+        localStreamRef.current = null;
+      }
+
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = null;
+      }
+
+      ringtoneRef.current?.pause();
+    };
+  }, []);
 
   return (
     <>
       <audio ref={ringtoneRef} src="/sounds/ringtone.mp3" preload="auto" loop />
       <audio ref={remoteAudioRef} autoPlay playsInline />
-      
-          <AnimatePresence mode="wait">
-            {/* Ringing Screen */}
-            {callState === "ringing" && (
+
+      <AnimatePresence mode="wait">
+        {/* Ringing Screen */}
+        {callState === "ringing" && (
+          <motion.div
+            key="ringing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 gap-12 flex items-center justify-center"
+          >
+            <div className="text-center">
               <motion.div
-                key="ringing"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] bg-black/95 gap-12 flex items-center justify-center"
-               >
-                <div className="text-center">
-                  <motion.div
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.8 }}
-                    className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-violet-600 flex items-center justify-center text-7xl font-bold shadow-2xl"
-                  >
-                    {callerName[0]}
-                  </motion.div>
-
-                  <h1 className="text-4xl font-semibold text-white mt-10">
-                    Incoming Call
-                  </h1>
-                  <p className="text-2xl text-purple-300 mt-4">{callerName}</p>
-
-                  <div className="flex justify-center gap-12 mt-16">
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={callCancel}
-                      className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
-                    >
-                      <PhoneOff size={42} className="text-white" />
-                    </motion.button>
-
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleAccept}
-                      className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"
-                    >
-                      <Phone size={42} className="text-white" />
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Connecting Screen */}
-            {callState === "connecting" && (
-              <motion.div
-                key="connecting"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] gap-12 bg-gradient-to-br from-gray-950 to-black flex flex-col items-center justify-center text-white"
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ repeat: Infinity, duration: 1.8 }}
+                className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-violet-600 flex items-center justify-center text-7xl font-bold shadow-2xl"
               >
-                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-6">
-                  <User size={60} />
-                </div>
-                <h2 className="text-3xl font-medium">Connecting...</h2>
-                <p className="text-gray-400 mt-3">Please wait</p>
+                {callerName[0]}
               </motion.div>
-            )}
 
-            {/* Connected Call Screen */}
-            {callState === "connected" && (
-              
-              <motion.div
-                key="connected"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-[100]  bg-gradient-to-br from-gray-950 via-purple-950 to-black flex flex-col items-center justify-center text-white"
-               >
-                   <div className="md:w-3/5 overflow-hidden w-full shadow-lg rounded-3xl  flex flex-col md:h-[95vh] h-[100vh]">
-        <div className="flex flex-col w-full  rounded-3xl shadow-xl items-center justify-between py-10    h-full bg-gray-900 text-white">
+              <h1 className="text-4xl font-semibold text-white mt-10">
+                Incoming Call
+              </h1>
+              <p className="text-2xl text-purple-300 mt-4">{callerName}</p>
+
+              <div className="flex justify-center gap-12 mt-16">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={callCancel}
+                  className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700"
+                >
+                  <PhoneOff size={42} className="text-white" />
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleAccept}
+                  className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"
+                >
+                  <Phone size={42} className="text-white" />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Connecting Screen */}
+        {callState === "connecting" && (
+          <motion.div
+            key="connecting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] gap-12 bg-gradient-to-br from-gray-950 to-black flex flex-col items-center justify-center text-white"
+          >
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-6">
+              <User size={60} />
+            </div>
+            <h2 className="text-3xl font-medium">Connecting...</h2>
+            <p className="text-gray-400 mt-3">Please wait</p>
+          </motion.div>
+        )}
+
+        {/* Connected Call Screen */}
+        {callState === "connected" && (
+          <motion.div
+            key="connected"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[100]  bg-gradient-to-br from-gray-950 via-purple-950 to-black flex flex-col items-center justify-center text-white"
+          >
+            <div className="md:w-3/5 overflow-hidden w-full shadow-lg rounded-3xl  flex flex-col md:h-[95vh] h-[100vh]">
+              <div className="flex flex-col w-full  rounded-3xl shadow-xl items-center justify-between py-10    h-full bg-gray-900 text-white">
                 <div className="flex flex-col items-center">
                   <div className="flex items-center gap-3">
                     {/* <img
@@ -411,7 +539,7 @@ const Calling = () => {
                 </div>
 
                 <div className="mt-12 flex items-center gap-3 text-xl font-mono">
-                   Time Left : {""}
+                  Time Left : {""}
                   {formatTime(callTime)}
                 </div>
 
@@ -452,12 +580,11 @@ const Calling = () => {
                 <p className="absolute bottom-6 text-xs text-gray-500">
                   This call may be recorded for quality purposes
                 </p>
-                </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-    
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
