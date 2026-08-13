@@ -5,6 +5,13 @@ import { PhoneOff, Phone, Mic, MicOff, Clock, User } from "lucide-react";
 import SocketContext from "../SocketClient";
 
 const Calling = () => {
+  useEffect(() => {
+    console.log("📞 CALLING COMPONENT MOUNTED");
+
+    return () => {
+      console.log("❌ CALLING COMPONENT UNMOUNTED");
+    };
+  }, []);
   const socket = useContext(SocketContext);
 
   // Refs
@@ -20,19 +27,21 @@ const Calling = () => {
   const [callTime, setCallTime] = useState(0);
   const [callerName, setCallerName] = useState("Client");
   const hasEndedRef = useRef(false);
-  const isUnmountingRef = useRef(false);
   const isCallActiveRef = useRef(false);
+  const isUnmountingRef = useRef(false);
   const currentRequestRef = useRef(null);
   const [waveHeights, setWaveHeights] = useState(Array(20).fill(10));
   // const remoteAudio = useRef(null);
-
+  useEffect(() => {
+    currentRequestRef.current = currentRequest;
+  }, [currentRequest]);
   // voice waves
   // voice waves
   useEffect(() => {
+    if (callState !== "connected") return;
     if (!remoteAudioRef.current?.srcObject) return;
 
     const audioContext = new AudioContext();
-
     const analyser = audioContext.createAnalyser();
 
     analyser.fftSize = 64;
@@ -43,9 +52,9 @@ const Calling = () => {
 
     source.connect(analyser);
 
-    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-    const dataArray = new Uint8Array(bufferLength);
+    let animationFrameId;
 
     const animate = () => {
       analyser.getByteFrequencyData(dataArray);
@@ -56,21 +65,22 @@ const Calling = () => {
 
       setWaveHeights(normalized);
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
 
     return () => {
+      cancelAnimationFrame(animationFrameId);
       audioContext.close();
     };
-  }, [remoteAudioRef.current?.srcObject]);
+  }, [callState]);
 
   const astroId =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("astro_user") || "{}")?.id
       : null;
-
+  const activeCallKey = astroId ? `activeAstrologerCall_${astroId}` : null;
   // ====================== CALL TIMER ======================
   useEffect(() => {
     if (callState !== "connected") return;
@@ -81,18 +91,9 @@ const Calling = () => {
         !hasEndedRef.current &&
         !isUnmountingRef.current
       ) {
-        hasEndedRef.current = true;
-
         console.log("⏰ Call time expired");
 
-        socket?.emit("call_ended_by_astrologer", {
-          roomId: currentRequest?.room_id,
-          astroId,
-        });
-
-        isCallActiveRef.current = false;
-
-        cleanupCall();
+        handleEndCall();
       }
 
       return;
@@ -100,18 +101,13 @@ const Calling = () => {
 
     const interval = setInterval(() => {
       setCallTime((prev) => {
-        if (prev <= 1) {
-          return 0;
-        }
-
+        if (prev <= 1) return 0;
         return prev - 1;
       });
     }, 1000);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [callState, callTime, socket, astroId, currentRequest]);
+    return () => clearInterval(interval);
+  }, [callState, callTime]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -122,6 +118,10 @@ const Calling = () => {
   // ====================== INITIALIZE MIC ======================
   const initMedia = async () => {
     try {
+      if (localStreamRef.current) {
+        return localStreamRef.current;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -129,10 +129,39 @@ const Calling = () => {
           autoGainControl: true,
         },
       });
+
       localStreamRef.current = stream;
+
+      return stream;
     } catch (err) {
       console.error("❌ Mic access failed:", err);
+      return null;
     }
+  };
+
+  const reconnectCall = async (roomId) => {
+    if (!roomId || !socket) return;
+
+    const stream = await initMedia();
+
+    if (!stream) {
+      console.error("❌ Unable to restore microphone");
+      return;
+    }
+
+    // Make sure previous connection doesn't exist
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    socket.emit("join_call", {
+      roomId,
+    });
+
+    setCallState("connecting");
+
+    console.log("🔄 Rejoining call:", roomId);
   };
 
   // ====================== CREATE PEER CONNECTION ======================
@@ -199,9 +228,70 @@ const Calling = () => {
 
     return pc;
   };
-  useEffect(() => {
-    currentRequestRef.current = currentRequest;
-  }, [currentRequest]);
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!socket) return;
+  if (!activeCallKey) return;
+
+  console.log("🔑 Active call key:", activeCallKey);
+
+  const savedCall = localStorage.getItem(activeCallKey);
+
+  console.log("💾 Saved call:", savedCall);
+
+  if (!savedCall) {
+    console.log("❌ No active call found");
+    return;
+  }
+
+    try {
+      const call = JSON.parse(savedCall);
+
+      if (
+        !call?.roomId ||
+        call.status !== "active" ||
+        call.astroId !== astroId
+      ) {
+        localStorage.removeItem(activeCallKey);
+        return;
+      }
+
+      const elapsedSeconds = Math.floor((Date.now() - call.startedAt) / 1000);
+
+      const remainingTime = Math.max(call.callTime - elapsedSeconds, 0);
+
+      if (remainingTime <= 0) {
+        localStorage.removeItem(activeCallKey);
+        return;
+      }
+
+      const restoredRequest = {
+        room_id: call.roomId,
+        userName: call.callerName,
+        callTime: remainingTime,
+      };
+
+      currentRequestRef.current = restoredRequest;
+
+      setCurrentRequest(restoredRequest);
+      setCallerName(call.callerName);
+      setCallTime(remainingTime);
+
+      hasEndedRef.current = false;
+      isCallActiveRef.current = true;
+      isUnmountingRef.current = false;
+
+      console.log("🔄 Restoring active call:", {
+        roomId: call.roomId,
+        remainingTime,
+      });
+
+      reconnectCall(call.roomId);
+    } catch (error) {
+      console.error("❌ Failed to restore active call:", error);
+      localStorage.removeItem(activeCallKey);
+    }
+  }, [socket, astroId, activeCallKey]);
   // ====================== SOCKET EVENTS ======================
   useEffect(() => {
     if (!socket) return;
@@ -209,11 +299,20 @@ const Calling = () => {
 
     socket.on("incoming_call", (data) => {
       if (data.receiverId !== astroId) return;
+
       console.log("📞 Incoming call:", data);
+
+      hasEndedRef.current = false;
+      isCallActiveRef.current = false;
+      isUnmountingRef.current = false;
+
+      currentRequestRef.current = data;
+
       setCurrentRequest(data);
       setCallerName(data.userName || "Client");
       setCallState("ringing");
       setCallTime(data.callTime * 60 || 0);
+
       ringtoneRef.current?.play().catch(() => {});
     });
 
@@ -241,18 +340,18 @@ const Calling = () => {
     });
 
     socket.on("ice-candidate", async (data) => {
-      console.log("🧊 ICE Candidate received:", data?.room_id);
-
-      if (data?.room_id === currentRequest?.room_id) {
-        try {
-          if (peerConnectionRef.current && data.candidate) {
-            await peerConnectionRef.current.addIceCandidate(
-              new RTCIceCandidate(data.candidate),
-            );
-          }
-        } catch (err) {
-          console.error("❌ ICE Error:", err);
+      try {
+        if (data?.room_id !== currentRequestRef.current?.room_id) {
+          return;
         }
+
+        if (peerConnectionRef.current && data.candidate) {
+          await peerConnectionRef.current.addIceCandidate(
+            new RTCIceCandidate(data.candidate),
+          );
+        }
+      } catch (err) {
+        console.error("❌ ICE Error:", err);
       }
     });
 
@@ -260,12 +359,10 @@ const Calling = () => {
       try {
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-        if (parsedData?.room_id === currentRequest?.room_id) {
-          console.log("📞 Call ended by user");
-
+        if (parsedData?.room_id === currentRequestRef.current?.room_id) {
           hasEndedRef.current = true;
           isCallActiveRef.current = false;
-
+          localStorage.removeItem(activeCallKey);
           cleanupCall();
         }
       } catch (error) {
@@ -277,11 +374,11 @@ const Calling = () => {
       try {
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-        if (parsedData?.roomId === currentRequest?.room_id) {
-          console.log("❌ Call cancelled by user");
-
+        if (parsedData?.roomId === currentRequestRef.current?.room_id) {
           hasEndedRef.current = true;
           isCallActiveRef.current = false;
+
+          localStorage.removeItem(activeCallKey);
 
           cleanupCall();
         }
@@ -290,10 +387,13 @@ const Calling = () => {
       }
     });
 
-    socket.on("call_reject_auto", (data) => {
-      // if (JSON.parse(data)?.roomId === currentRequest?.room_id) {
+    socket.on("call_reject_auto", () => {
+      hasEndedRef.current = true;
+      isCallActiveRef.current = false;
+
+      localStorage.removeItem(activeCallKey);
+
       cleanupCall();
-      // }
     });
 
     return () => {
@@ -302,33 +402,52 @@ const Calling = () => {
       socket.off("ice-candidate");
       socket.off("call_ended_by_user");
       socket.off("call_cancel_by_user");
+      socket.off("call_reject_auto");
     };
-  }, [socket, astroId, currentRequest]);
+  }, [socket, astroId]);
 
   // ====================== HANDLERS ======================
   const handleAccept = async () => {
-    if (!currentRequest?.room_id) return;
+    const roomId = currentRequestRef.current?.room_id;
 
-    const roomId = currentRequest.room_id;
+    if (!roomId || !socket || !astroId) return;
 
     hasEndedRef.current = false;
     isUnmountingRef.current = false;
     isCallActiveRef.current = true;
 
+    const duration = callTime;
+
+    const activeCall = {
+      roomId,
+      astroId,
+      callerName: currentRequestRef.current?.userName || "Client",
+      callTime: duration,
+      startedAt: Date.now(),
+      status: "active",
+    };
+
+    localStorage.setItem(activeCallKey, JSON.stringify(activeCall));
+
     ringtoneRef.current?.pause();
 
-    socket?.emit("join_call", { roomId });
+    socket.emit("join_call", { roomId });
 
     setTimeout(() => {
-      socket?.emit("callAcceptedByAstrologer", {
+      if (isUnmountingRef.current || !isCallActiveRef.current) {
+        return;
+      }
+
+      socket.emit("callAcceptedByAstrologer", {
         roomId,
         astroId,
-        callTime,
+        callTime: duration,
       });
 
       setCallState("connecting");
     }, 400);
   };
+
   const toggleMute = () => {
     if (!localStreamRef.current) return;
     const track = localStreamRef.current.getAudioTracks()[0];
@@ -340,12 +459,12 @@ const Calling = () => {
 
   const handleEndCall = () => {
     if (isUnmountingRef.current) {
-      console.log("🚫 Ignoring handleEndCall because component is unmounting");
+      console.log("🚫 Component unmounting - no end event");
       return;
     }
 
     if (!isCallActiveRef.current) {
-      console.log("🚫 Call already inactive");
+      console.log("🚫 No active call");
       return;
     }
 
@@ -354,13 +473,21 @@ const Calling = () => {
       return;
     }
 
+    const roomId = currentRequestRef.current?.room_id;
+
+    if (!roomId || !astroId) {
+      console.log("🚫 Missing roomId / astroId");
+      return;
+    }
+
     hasEndedRef.current = true;
     isCallActiveRef.current = false;
 
-    console.log("📞 Ending call by astrologer");
+    // Remove persisted call
+    localStorage.removeItem(activeCallKey);
 
     socket?.emit("call_ended_by_astrologer", {
-      roomId: currentRequest?.room_id,
+      roomId,
       astroId,
     });
 
@@ -388,36 +515,37 @@ const Calling = () => {
   };
 
   const callCancel = () => {
-    if (!currentRequest?.room_id) return;
+    const roomId = currentRequestRef.current?.room_id;
 
-    const roomId = currentRequest.room_id;
+    if (!roomId || !socket) return;
 
     hasEndedRef.current = true;
     isCallActiveRef.current = false;
 
+    localStorage.removeItem(activeCallKey);
+
     cleanupCall();
 
-    socket?.emit("call_cancel_by_astrologer", {
+    socket.emit("call_cancel_by_astrologer", {
       roomId,
     });
   };
-
   useEffect(() => {
     return () => {
-      console.log("🔄 Calling component unmounted / page refreshed");
+      console.log("🔄 Calling component unmounted");
 
+      // VERY IMPORTANT:
+      // Never emit call_ended_by_astrologer here
       isUnmountingRef.current = true;
       isCallActiveRef.current = false;
 
-      // IMPORTANT:
-      // Do NOT call handleEndCall() here.
-      // Do NOT emit call_ended_by_astrologer here.
-
+      // Stop WebRTC
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
 
+      // Stop microphone
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => {
           track.stop();
@@ -426,14 +554,15 @@ const Calling = () => {
         localStreamRef.current = null;
       }
 
+      // Stop remote audio
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = null;
       }
 
+      // Stop ringtone
       ringtoneRef.current?.pause();
     };
   }, []);
-
   return (
     <>
       <audio ref={ringtoneRef} src="/sounds/ringtone.mp3" preload="auto" loop />
