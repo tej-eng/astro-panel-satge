@@ -191,8 +191,10 @@ export const GET_ASTROLOGER_CHAT_HISTORY = gql`
         rating
         reviewComment
         status
+        ratePerMin
         durationMinutes
         coinsEarned
+        commission
         source
         createdAt
       }
