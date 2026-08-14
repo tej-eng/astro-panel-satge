@@ -40,8 +40,10 @@ const GET_ASTROLOGER_EARNINGS = gql`
 export default function AstrologerEarnings() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
 
-  // APOLLO QUERY
+  const limit = 10;
+
   const { data, loading, error } = useQuery(GET_ASTROLOGER_EARNINGS, {
     fetchPolicy: "network-only",
   });
@@ -62,6 +64,14 @@ export default function AstrologerEarnings() {
       return matchesSearch && matchesType;
     });
   }, [earnings, search, typeFilter]);
+  const totalPages = Math.ceil(filteredTransactions.length / limit);
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return filteredTransactions.slice(startIndex, endIndex);
+  }, [filteredTransactions, page]);
 
   const summary = earnings?.summary;
 
@@ -149,7 +159,10 @@ export default function AstrologerEarnings() {
               type="text"
               placeholder="Search by description or transaction ID..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(1);
+              }}
               className="w-full border border-gray-300  shadow-2xl  rounded-full pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
             />
           </div>
@@ -157,7 +170,10 @@ export default function AstrologerEarnings() {
           {/* FILTER */}
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="border border-gray-300 text-xs rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-black"
           >
             <option value="ALL">All Types</option>
@@ -203,16 +219,15 @@ export default function AstrologerEarnings() {
                     Loading earnings...
                   </td>
                 </tr>
-              ) : filteredTransactions.length > 0 ? (
-                filteredTransactions.map((item) => (
+              ) : paginatedTransactions.length > 0 ? (
+                paginatedTransactions.map((item) => (
                   <tr
                     key={item.id}
                     className="border-t text-xs hover:bg-gray-50 transition"
                   >
                     <td className="px-4 py-2 flex flex-col gap-1 text-xs font-medium text-gray-700">
-                       <span>Session ID : {item.sessionId?.slice(0, 8)} </span>
+                      <span>Session ID : {item.sessionId?.slice(0, 8)} </span>
                       <span>Transaction ID : {item.id?.slice(0, 8)} </span>
-                      
                     </td>
 
                     <td className="px-4 py-2">
@@ -227,9 +242,13 @@ export default function AstrologerEarnings() {
                       </span>
                     </td>
 
-                    <td className="px-4 py-2 font-semibold text-gray-700">₹ {item.amount}</td>
+                    <td className="px-4 py-2 font-semibold text-gray-700">
+                      ₹ {item.amount}
+                    </td>
 
-                    <td className="px-4 py-2 text-gray-600">{item.description}</td>
+                    <td className="px-4 py-2 text-gray-600">
+                      {item.description}
+                    </td>
 
                     <td className="px-4 py-2 text-gray-500 text-xs">
                       {new Date(item.createdAt).toLocaleString()}
@@ -247,6 +266,42 @@ export default function AstrologerEarnings() {
           </table>
         </div>
       </div>
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 p-5">
+          <button
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border rounded-lg disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                key={pageNumber}
+                onClick={() => setPage(pageNumber)}
+                className={`w-10 h-10 border rounded-lg ${
+                  page === pageNumber
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-700"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
+
+          <button
+            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-4 py-2 border rounded-lg disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

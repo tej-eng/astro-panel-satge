@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 export default function AstrologerChatHistory() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [sourceFilter, setSourceFilter] = useState("ALL"); 
+  const [sourceFilter, setSourceFilter] = useState("ALL");
   const [openModal, setOpenModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -43,7 +43,7 @@ export default function AstrologerChatHistory() {
 
   const [page, setPage] = useState(1);
 
-  const limit = 10;
+  const limit = 12;
   const router = useRouter();
 
   const getKundli = (roomId) => {
@@ -51,12 +51,11 @@ export default function AstrologerChatHistory() {
     router.push(`/dashboard/chathistory/kundli/${roomId}`);
   };
 
-  
   const { data, loading, error } = useQuery(GET_ASTROLOGER_CHAT_HISTORY, {
     variables: {
       page,
       limit,
-      source: sourceFilter !== "ALL" ? sourceFilter : undefined, 
+      source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     },
     fetchPolicy: "network-only",
   });
@@ -139,13 +138,11 @@ export default function AstrologerChatHistory() {
       {/* HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-           Chat History
+          Chat History
         </h1>
       </div>
 
-      
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
-      
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Chats</p>
@@ -170,7 +167,6 @@ export default function AstrologerChatHistory() {
           </h2>
         </div>
 
-       
         <div className="bg-purple-300 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Pages</p>
@@ -184,7 +180,6 @@ export default function AstrologerChatHistory() {
         </div>
       </div>
 
-   
       <div className="bg-white rounded-full border-gray-300  shadow-2xl  p-4 mb-5">
         <div className="flex flex-col md:flex-row gap-4">
           {/* SEARCH */}
@@ -241,14 +236,15 @@ export default function AstrologerChatHistory() {
               className="bg-white rounded-2xl border border-purple-200 shadow-sm overflow-hidden"
             >
               <div className="px-5 py-3">
-              
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <p className="text-xs">
                       <span className="font-semibold text-purple-700">
                         Session ID :
                       </span>{" "}
-                      <span className="text-gray-600 ">{chat.sessionId?.slice(0,8)}</span>
+                      <span className="text-gray-600 font-semibold">
+                        {chat.sessionId?.slice(0, 8)}
+                      </span>
                     </p>
 
                     <p className="mt-1 text-xs">
@@ -266,8 +262,6 @@ export default function AstrologerChatHistory() {
                       </span>
                     </p>
                   </div>
-
-                  <Eye size={18} className="text-gray-400" />
                 </div>
 
                 <p className="text-xs mb-1">
@@ -281,15 +275,24 @@ export default function AstrologerChatHistory() {
                   </span>{" "}
                   {chat.birthPlace || "-"}
                 </p>
-
+                <p className="text-xs mb-1">
+                  <span className="font-bold text-purple-700">Rate :</span> ₹{" "}
+                  {chat.ratePerMin}/min
+                </p>
                 <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Earning :</span> ₹{" "}
-                  {chat.coinsEarned}
+                  {chat.commission}
                 </p>
 
                 <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Duration :</span>{" "}
-                  {chat.durationMinutes} min
+                  {chat.durationMinutes < 60
+                    ? `${chat.durationMinutes} sec`
+                    : `${Math.floor(chat.durationMinutes / 60)} min${
+                        chat.durationMinutes % 60
+                          ? ` ${chat.durationMinutes % 60} sec`
+                          : ""
+                      }`}
                 </p>
 
                 <div className="flex text-xs justify-between items-center mt-3">
@@ -331,7 +334,7 @@ export default function AstrologerChatHistory() {
                         className="flex items-center text-xs justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700  rounded-xl hover:bg-purple-50 transition"
                       >
                         <Activity className="w-4 h-4" />
-                         Remedy
+                        Remedy
                       </button>
                       <button
                         onClick={() => {
@@ -341,7 +344,7 @@ export default function AstrologerChatHistory() {
                         className="border text-xs border-blue-400 text-blue-500 rounded-xl py-2 flex items-center justify-center gap-2 hover:bg-blue-50"
                       >
                         <Eye size={16} />
-                         Chat
+                        Chat
                       </button>
                     </>
                   )}
@@ -351,7 +354,7 @@ export default function AstrologerChatHistory() {
                     className="bg-purple-600 text-white rounded-xl py-2 text-xs flex items-center justify-center gap-2 hover:bg-purple-700"
                   >
                     <FileText size={16} />
-                     Kundli
+                    Kundli
                   </button>
                 </div>
               </div>

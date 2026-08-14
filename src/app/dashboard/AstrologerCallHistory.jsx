@@ -110,16 +110,13 @@ export default function AstrologerCallHistory() {
 
   return (
     <div className="min-h-screen bg-[#f7f3fb] p-4 md:p-6">
-   
       <div className="mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
           Call History
         </h1>
       </div>
 
-  
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-4">
-      
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Calls</p>
@@ -131,7 +128,6 @@ export default function AstrologerCallHistory() {
           </h2>
         </div>
 
-       
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Current Page</p>
@@ -143,10 +139,6 @@ export default function AstrologerCallHistory() {
           </h2>
         </div>
 
-       
-        
-
-  
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Amount Earned</p>
@@ -162,10 +154,8 @@ export default function AstrologerCallHistory() {
         </div>
       </div>
 
-    
       <div className="bg-white  rounded-full border-gray-300 border shadow-sm p-4 mb-5">
         <div className="flex flex-col md:flex-row gap-4">
-     
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
 
@@ -231,7 +221,9 @@ export default function AstrologerCallHistory() {
                       <span className="font-semibold text-purple-700">
                         Session :
                       </span>{" "}
-                      <span className="text-gray-700">{call.sessionId}</span>
+                      <span className="text-gray-700 font-semibold">
+                        {call.sessionId.slice(0, 8)}
+                      </span>
                     </p>
 
                     <p className="mt-1 text-xs">
@@ -255,9 +247,15 @@ export default function AstrologerCallHistory() {
                   {new Date(call.createdAt).toLocaleString()}
                 </p>
 
-                <p className="text-sm mb-2">
+                <p className="text-xs mb-1">
                   <span className="font-bold text-purple-700">Duration :</span>{" "}
-                  {call.durationMinutes} min
+                  {call.durationMinutes < 60
+                    ? `${call.durationMinutes} sec`
+                    : `${Math.floor(call.durationMinutes / 60)} min${
+                        call.durationMinutes % 60
+                          ? ` ${call.durationMinutes % 60} sec`
+                          : ""
+                      }`}
                 </p>
 
                 <p className="text-xs mb-1">
@@ -265,18 +263,12 @@ export default function AstrologerCallHistory() {
                   {call.ratePerMin}/min
                 </p>
 
-                <p className="text-xs mb-1">
-                  <span className="font-bold text-purple-700">Earned :</span> ₹{" "}
-                  {call.coinsEarned}
-                </p>
-       <div className="flex text-xs justify-between items-center mt-3">
-                <p className="text-xs mb-1">
-                  <span className="font-bold text-purple-700">
-                    Commission :
-                  </span>{" "}
-                  ₹ {call.commission}
-                </p>
-                 <span
+                <div className="flex text-xs justify-between items-center mt-3">
+                  <p className="text-xs mb-1">
+                    <span className="font-bold text-purple-700">Earning :</span>{" "}
+                    ₹ {call.commission}
+                  </p>
+                  <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       call.status === "COMPLETED"
                         ? "bg-green-100 text-green-700"
@@ -287,10 +279,8 @@ export default function AstrologerCallHistory() {
                   >
                     {call.status}
                   </span>
-</div>
+                </div>
                 <div className="grid grid-cols-3 gap-3 mt-3">
-                 
-
                   {/* <button
               onClick={() => handleDownloadRecording(call.sessionId)}
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm"
@@ -302,10 +292,10 @@ export default function AstrologerCallHistory() {
                       setSelectedOrderId(call.sessionId);
                       setShowModal(true);
                     }}
-                        className="flex items-center text-xs justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700  rounded-xl hover:bg-purple-50 transition"
+                    className="flex items-center text-xs justify-center gap-1 flex-1 py-1.5 px-2 text-xs font-medium border border-purple-500 text-purple-700  rounded-xl hover:bg-purple-50 transition"
                   >
                     <Activity size={16} />
-                     Remedy
+                    Remedy
                   </button>
                 </div>
                 {showModal && (
@@ -400,6 +390,59 @@ export default function AstrologerCallHistory() {
           </div>
         )}
       </div>
+      {/* PAGINATION */}
+{callHistory?.totalPages > 1 && (
+  <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+    {/* Previous */}
+    <button
+      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+      disabled={page === 1 || loading}
+      className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+        page === 1 || loading
+          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+          : "bg-white text-purple-700 border-purple-300 hover:bg-purple-50"
+      }`}
+    >
+      Previous
+    </button>
+
+    {/* Page Numbers */}
+    {Array.from(
+      { length: callHistory.totalPages },
+      (_, index) => index + 1
+    ).map((pageNumber) => (
+      <button
+        key={pageNumber}
+        onClick={() => setPage(pageNumber)}
+        disabled={loading}
+        className={`w-10 h-10 rounded-lg border text-sm font-medium transition ${
+          page === pageNumber
+            ? "bg-purple-600 text-white border-purple-600"
+            : "bg-white text-gray-700 border-gray-300 hover:bg-purple-50"
+        }`}
+      >
+        {pageNumber}
+      </button>
+    ))}
+
+    {/* Next */}
+    <button
+      onClick={() =>
+        setPage((prev) =>
+          Math.min(prev + 1, callHistory.totalPages)
+        )
+      }
+      disabled={page === callHistory.totalPages || loading}
+      className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+        page === callHistory.totalPages || loading
+          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+          : "bg-white text-purple-700 border-purple-300 hover:bg-purple-50"
+      }`}
+    >
+      Next
+    </button>
+  </div>
+)}
     </div>
   );
 }
