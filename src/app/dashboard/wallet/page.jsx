@@ -249,7 +249,7 @@ export default function WalletTransactions() {
 
                     <td className="p-4">
                       <div className="flex items-center gap-1 text-yellow-600 font-semibold">
-                        ₹ {item.coins}
+                        ₹ {item.amount}
                       </div>
                     </td>
 

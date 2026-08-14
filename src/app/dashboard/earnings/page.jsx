@@ -227,7 +227,7 @@ export default function AstrologerEarnings() {
                       </span>
                     </td>
 
-                    <td className="px-4 py-2 font-semibold text-gray-700">₹ {item.coins}</td>
+                    <td className="px-4 py-2 font-semibold text-gray-700">₹ {item.amount}</td>
 
                     <td className="px-4 py-2 text-gray-600">{item.description}</td>
 
