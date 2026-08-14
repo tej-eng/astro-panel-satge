@@ -23,28 +23,6 @@
       "static/chunks/main-app.js",
       "static/css/app/dashboard/layout.css",
       "static/chunks/app/dashboard/layout.js"
-    ],
-    "/dashboard/[...slug]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/[...slug]/page.css",
-      "static/chunks/app/dashboard/[...slug]/page.js"
-    ],
-    "/dashboard/setting/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/setting/page.css",
-      "static/chunks/app/dashboard/setting/page.js"
-    ],
-    "/dashboard/wallet/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/wallet/page.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
     ]
   }
 }
