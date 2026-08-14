@@ -228,21 +228,21 @@ const Calling = () => {
 
     return pc;
   };
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  if (!socket) return;
-  if (!activeCallKey) return;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!socket) return;
+    if (!activeCallKey) return;
 
-  console.log("🔑 Active call key:", activeCallKey);
+    console.log("🔑 Active call key:", activeCallKey);
 
-  const savedCall = localStorage.getItem(activeCallKey);
+    const savedCall = localStorage.getItem(activeCallKey);
 
-  console.log("💾 Saved call:", savedCall);
+    console.log("💾 Saved call:", savedCall);
 
-  if (!savedCall) {
-    console.log("❌ No active call found");
-    return;
-  }
+    if (!savedCall) {
+      console.log("❌ No active call found");
+      return;
+    }
 
     try {
       const call = JSON.parse(savedCall);
@@ -528,6 +528,7 @@ useEffect(() => {
 
     socket.emit("call_cancel_by_astrologer", {
       roomId,
+      astroId,
     });
   };
   useEffect(() => {
