@@ -146,7 +146,7 @@ const ChatRequest = () => {
   const handleAccept = () => {
     const { room_id } = currentRequest;
 
-    socket.emit("chat_accepted_astrologer", { room_id }, (response) => {});
+    socket.emit("chat_accepted_astrologer", { room_id , astroId, userId}, (response) => {});
 
     setIsModalOpen(false);
     setAcceptChat(true);
