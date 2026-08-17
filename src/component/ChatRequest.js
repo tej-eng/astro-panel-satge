@@ -143,14 +143,61 @@ const ChatRequest = () => {
     };
   }, [socket, currentRequest]);
 
+  // const handleAccept = () => {
+  //   const { room_id } = currentRequest;
+
+  //   socket.emit("chat_accepted_astrologer", {"room_id": room_id ,"astroId": astroId, "userId":userId}, (response) => {});
+
+  //   setIsModalOpen(false);
+  //   setAcceptChat(true);
+  // };
+
   const handleAccept = () => {
-    const { room_id } = currentRequest;
+  if (!currentRequest) {
+    console.error("No current chat request found");
+    return;
+  }
 
-    socket.emit("chat_accepted_astrologer", {"room_id": room_id ,"astroId": astroId, "userId":userId}, (response) => {});
+  const roomId = currentRequest.room_id;
 
-    setIsModalOpen(false);
-    setAcceptChat(true);
-  };
+  const astroUser = JSON.parse(
+    localStorage.getItem("astro_user") || "{}"
+  );
+
+  const astroId = astroUser?.id;
+  const userId = currentRequest?.user_id;
+
+  if (!roomId || !astroId || !userId) {
+    console.error("Missing chat accept data:", {
+      roomId,
+      astroId,
+      userId,
+      currentRequest,
+    });
+    return;
+  }
+
+  console.log("Accepting chat:", {
+    room_id: roomId,
+    astroId,
+    userId,
+  });
+
+  socket.emit(
+    "chat_accepted_astrologer",
+    {
+      room_id: roomId,
+      astroId: astroId,
+      userId: userId,
+    },
+    (response) => {
+      console.log("chat_accepted_astrologer response:", response);
+    }
+  );
+
+  setIsModalOpen(false);
+  setAcceptChat(true);
+};
 
   const handleReject = async () => {
     const { room_id, astro_id } = currentRequest;
