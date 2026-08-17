@@ -19,7 +19,14 @@ const Calling = () => {
   const remoteAudioRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const stopRingtone = () => {
+    const ringtone = ringtoneRef.current;
 
+    if (ringtone) {
+      ringtone.pause();
+      ringtone.currentTime = 0;
+    }
+  };
   // States
   const [callState, setCallState] = useState("idle");
   const [currentRequest, setCurrentRequest] = useState(null);
@@ -313,7 +320,13 @@ const Calling = () => {
       setCallState("ringing");
       setCallTime(data.callTime * 60 || 0);
 
-      ringtoneRef.current?.play().catch(() => {});
+      if (ringtoneRef.current) {
+        ringtoneRef.current.currentTime = 0;
+
+        ringtoneRef.current.play().catch((err) => {
+          console.warn("🔇 Call ringtone play failed:", err.message);
+        });
+      }
     });
 
     socket.on("offer", async (data) => {
@@ -362,6 +375,7 @@ const Calling = () => {
         if (parsedData?.room_id === currentRequestRef.current?.room_id) {
           hasEndedRef.current = true;
           isCallActiveRef.current = false;
+          stopRingtone();
           localStorage.removeItem(activeCallKey);
           cleanupCall();
         }
@@ -377,7 +391,7 @@ const Calling = () => {
         if (parsedData?.roomId === currentRequestRef.current?.room_id) {
           hasEndedRef.current = true;
           isCallActiveRef.current = false;
-
+          stopRingtone();
           localStorage.removeItem(activeCallKey);
 
           cleanupCall();
@@ -390,7 +404,7 @@ const Calling = () => {
     socket.on("call_reject_auto", () => {
       hasEndedRef.current = true;
       isCallActiveRef.current = false;
-
+      stopRingtone();
       localStorage.removeItem(activeCallKey);
 
       cleanupCall();
@@ -429,7 +443,7 @@ const Calling = () => {
 
     localStorage.setItem(activeCallKey, JSON.stringify(activeCall));
 
-    ringtoneRef.current?.pause();
+    stopRingtone();
 
     socket.emit("join_call", { roomId });
 
@@ -512,6 +526,7 @@ const Calling = () => {
 
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     ringtoneRef.current?.pause();
+    stopRingtone();
   };
 
   const callCancel = () => {
@@ -523,7 +538,7 @@ const Calling = () => {
     isCallActiveRef.current = false;
 
     localStorage.removeItem(activeCallKey);
-
+    stopRingtone();
     cleanupCall();
 
     socket.emit("call_cancel_by_astrologer", {
@@ -566,7 +581,7 @@ const Calling = () => {
   }, []);
   return (
     <>
-      <audio ref={ringtoneRef} src="/sounds/ringtone.mp3" preload="auto" loop />
+      <audio ref={ringtoneRef} src="/sounds/sound2.mp3" preload="auto" loop />
       <audio ref={remoteAudioRef} autoPlay playsInline />
 
       <AnimatePresence mode="wait">

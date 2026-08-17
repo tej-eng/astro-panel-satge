@@ -11,6 +11,36 @@ import { getCoordinates } from "../../utils/getCordinates";
 const ChatRequest = () => {
   const router = useRouter();
   const audioRef = useRef(null);
+  const stopRingtone = () => {
+    const audio = audioRef.current;
+
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+  const handleEnableRingtone = async () => {
+  try {
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    // Browser ko user gesture ke through audio unlock karna
+    audio.currentTime = 0;
+    await audio.play();
+
+    // Abhi koi request nahi hai, isliye ringtone immediately stop
+    audio.pause();
+    audio.currentTime = 0;
+
+    setUserInteracted(true);
+    localStorage.setItem("userInteracted", "true");
+
+    console.log("🔊 Ringtone enabled successfully");
+  } catch (error) {
+    console.error("❌ Failed to enable ringtone:", error);
+  }
+};
 
   const socket = useContext(SocketContext);
   const [chatRequests, setChatRequests] = useState([]);
@@ -21,7 +51,10 @@ const ChatRequest = () => {
   const [message, setMessage] = useState("");
   const [reject, setReject] = useState(false);
   const [autoReject, setAutoReject] = useState(false);
-
+const currentRequestRef = useRef(null);
+useEffect(() => {
+  currentRequestRef.current = currentRequest;
+}, [currentRequest]);
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -55,49 +88,52 @@ const ChatRequest = () => {
     console.log("Listening for chat requests for astroId:", astroId);
     socket.on("new_chat_request", (data) => {
       if (data.astro_id == astroId) {
+        console.log("📞 New chat request:", data);
+
         if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+
           audioRef.current.play().catch((err) => {
             console.warn("🔇 Audio play failed:", err.message);
           });
         }
-        setTimeout(() => {
-          setChatRequests((prevRequests) => [...prevRequests, data]);
-          setCurrentRequest(data);
-          setIsModalOpen(true);
-        }, 10);
+
+        setChatRequests((prevRequests) => [...prevRequests, data]);
+        setCurrentRequest(data);
+        setIsModalOpen(true);
       }
     });
-   socket.on("chat_started_astrologer", async (data) => {
-  if (data.roomid !== currentRequest?.room_id) return;
+    socket.on("chat_started_astrologer", async (data) => {
+      if (data.roomid !== currentRequestRef.current?.room_id) return;
+const request = currentRequestRef.current;
+      const coords = await getCoordinates(currentRequest.location);
 
-  const coords = await getCoordinates(currentRequest.location);
+      const chatParams = {
+        userName: currentRequest.userName,
+        roomId: currentRequest.room_id,
+        chattime: currentRequest.maximum_time?.toString(),
+        userId: currentRequest.user_id,
+        place: currentRequest.location,
+        time: currentRequest.timeOfBirth?.toString(),
+        bod: currentRequest.dateOfBirth,
 
-  const chatParams = {
-    userName: currentRequest.userName,
-    roomId: currentRequest.room_id,
-    chattime: currentRequest.maximum_time?.toString(),
-    userId: currentRequest.user_id,
-    place: currentRequest.location,
-    time: currentRequest.timeOfBirth?.toString(),
-    bod: currentRequest.dateOfBirth,
+        lat: coords?.lat,
+        lon: coords?.lon,
 
-    lat: coords?.lat,
-    lon: coords?.lon,
+        gender: currentRequest.gender,
+        occupationuser: currentRequest.occupation,
+        userimage: currentRequest.user_image || "",
+      };
 
-    gender: currentRequest.gender,
-    occupationuser: currentRequest.occupation,
-    userimage: currentRequest.user_image || "",
-  };
+      const encrypted = encryptParams(chatParams);
+      console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", chatParams);
 
-  const encrypted = encryptParams(chatParams);
-  console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", chatParams);
-  
-
-  router.push(`/astrologerchat?data=${encrypted}`);
-});
+      router.push(`/astrologerchat?data=${encrypted}`);
+    });
 
     socket.on("chat_rejected_astrologer", async (data) => {
-      if (data.roomid === currentRequest.room_id) {
+      if (data.roomid === currentRequestRef.current?.room_id) {
+        stopRingtone();
         setAcceptChat(false);
         setReject(true);
 
@@ -108,6 +144,7 @@ const ChatRequest = () => {
     });
 
     socket.on("chat_cancel_by_user", async (data) => {
+      stopRingtone();
       // if (data.roomid === currentRequest.room_id) {
       setIsModalOpen(false);
       setAcceptChat(false);
@@ -116,7 +153,8 @@ const ChatRequest = () => {
     });
 
     socket.on("chat_reject_auto", async (data) => {
-      if (data.roomId === currentRequest?.room_id) {
+      if (data.roomId === currentRequestRef.current?.room_id) {
+        stopRingtone();
         setIsModalOpen(false);
         setAutoReject(true);
         setAcceptChat(false);
@@ -135,13 +173,15 @@ const ChatRequest = () => {
       }
     });
     return () => {
+      stopRingtone();
       socket.off("new_chat_request");
       socket.off("chat_started_astrologer");
       socket.off("chat_reject_auto");
       socket.off("chat_rejected_astrologer");
       socket.off("chat_transfer");
+       socket.off("chat_cancel_by_user");
     };
-  }, [socket, currentRequest]);
+  }, [socket]);
 
   // const handleAccept = () => {
   //   const { room_id } = currentRequest;
@@ -153,55 +193,59 @@ const ChatRequest = () => {
   // };
 
   const handleAccept = () => {
-  if (!currentRequest) {
+    const request = currentRequestRef.current;
+
+  if (!request) {
     console.error("No current chat request found");
     return;
   }
 
-  const roomId = currentRequest.room_id;
+    const roomId = currentRequest.room_id;
 
-  const astroUser = JSON.parse(
-    localStorage.getItem("astro_user") || "{}"
-  );
+    const astroUser = JSON.parse(localStorage.getItem("astro_user") || "{}");
 
-  const astroId = astroUser?.id;
-  const userId = currentRequest?.user_id;
+    const astroId = astroUser?.id;
+    const userId = currentRequest?.user_id;
 
-  if (!roomId || !astroId || !userId) {
-    console.error("Missing chat accept data:", {
-      roomId,
+    if (!roomId || !astroId || !userId) {
+      console.error("Missing chat accept data:", {
+        roomId,
+        astroId,
+        userId,
+        currentRequest,
+      });
+      return;
+    }
+
+    console.log("Accepting chat:", {
+      room_id: roomId,
       astroId,
       userId,
-      currentRequest,
     });
-    return;
-  }
+ stopRingtone();
+    socket.emit(
+      "chat_accepted_astrologer",
+      {
+        room_id: roomId,
+        astroId: astroId,
+        userId: userId,
+      },
+      (response) => {
+        console.log("chat_accepted_astrologer response:", response);
+      },
+    );
 
-  console.log("Accepting chat:", {
-    room_id: roomId,
-    astroId,
-    userId,
-  });
+    setIsModalOpen(false);
+    setAcceptChat(true);
+  };
 
-  socket.emit(
-    "chat_accepted_astrologer",
-    {
-      room_id: roomId,
-      astroId: astroId,
-      userId: userId,
-    },
-    (response) => {
-      console.log("chat_accepted_astrologer response:", response);
-    }
-  );
+ const handleReject = () => {
+  const request = currentRequestRef.current;
 
-  setIsModalOpen(false);
-  setAcceptChat(true);
-};
+  if (!request) return;
 
-  const handleReject = async () => {
-    const { room_id, astro_id } = currentRequest;
-
+  const { room_id, astro_id } = request;
+ stopRingtone();
     socket.emit(
       "chat_rejected_astrologer",
       { room_id, astro_id },
@@ -214,14 +258,14 @@ const ChatRequest = () => {
   return (
     <>
       <div>
-        <audio ref={audioRef} src="/sounds/sound2.mp3" preload="auto" />
+        <audio ref={audioRef} src="/sounds/sound2.mp3" preload="auto" loop />
 
         {!userInteracted && (
           <PopUp
             title="Enable Ringtone Notifications "
             buttontype={1}
             buttonname="Enable Notifications"
-            onClick={() => setUserInteracted(true)}
+            onClick={handleEnableRingtone}
           />
         )}
 
@@ -246,7 +290,6 @@ const ChatRequest = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-             
             />
 
             {/* Modal box */}
