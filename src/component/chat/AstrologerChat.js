@@ -550,23 +550,90 @@ const AstrologerChat = () => {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  // const handleMessageChange = (e) => {
+  //   setMessage(e.target.value);
+  //   socket.emit("typing", {
+  //     room_id: roomId,
+  //     typing: e.target.value.length > 0,
+  //     user_name: "Astrologer",
+  //   });
+
+  //   clearTimeout(typingTimeoutRef.current);
+  //   typingTimeoutRef.current = setTimeout(() => {
+  //     socket.emit("typing", {
+  //       room_id: roomId,
+  //       typing: false,
+  //       user_name: "Astrologer",
+  //     });
+  //   }, 2000);
+  // };
+
   const handleMessageChange = (e) => {
-    setMessage(e.target.value);
+  const value = e.target.value;
+
+  setMessage(value);
+
+  // -----------------------------------------
+  // Clear previous typing timeout
+  // -----------------------------------------
+  if (typingTimeoutRef.current) {
+    clearTimeout(typingTimeoutRef.current);
+  }
+
+  // -----------------------------------------
+  // If message is empty
+  // -----------------------------------------
+  if (!value.trim()) {
     socket.emit("typing", {
       room_id: roomId,
-      typing: e.target.value.length > 0,
+      typing: false,
       user_name: "Astrologer",
     });
 
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing", {
-        room_id: roomId,
-        typing: false,
-        user_name: "Astrologer",
-      });
-    }, 2000);
-  };
+    console.log("⌨️ TYPING FALSE - EMPTY MESSAGE", {
+      room_id: roomId,
+      typing: false,
+      user_name: "Astrologer",
+    });
+
+    return;
+  }
+
+  // -----------------------------------------
+  // User started typing
+  // -----------------------------------------
+  socket.emit("typing", {
+    room_id: roomId,
+    typing: true,
+    user_name: "Astrologer",
+  });
+
+  console.log("⌨️ TYPING TRUE", {
+    room_id: roomId,
+    typing: true,
+    user_name: "Astrologer",
+    messageLength: value.length,
+  });
+
+  // -----------------------------------------
+  // Stop typing after 2 seconds
+  // -----------------------------------------
+  typingTimeoutRef.current = setTimeout(() => {
+    socket.emit("typing", {
+      room_id: roomId,
+      typing: false,
+      user_name: "Astrologer",
+    });
+
+    console.log("⌨️ TYPING FALSE - TIMEOUT", {
+      room_id: roomId,
+      typing: false,
+      user_name: "Astrologer",
+    });
+
+    typingTimeoutRef.current = null;
+  }, 2000);
+};
 
   const sendMessage = async () => {
     if (!message.trim() && !imageFile) return;
