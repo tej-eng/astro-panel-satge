@@ -383,6 +383,7 @@ const AstrologerChat = () => {
       if (remainingMs <= 0) {
         setTimeLeft(0);
         handleTimerEnd();
+        handleConfirmEndChat(true);
         if (typeof window !== "undefined") {
           localStorage.removeItem(`endTime_${roomId}`);
         }
