@@ -174,6 +174,15 @@ socket.on("new_chat_request", (data) => {
       // }
     });
 
+    socket.on("chat_cancel_by_admin", async (data) => {
+      stopRingtone();
+      // if (data.roomid === currentRequest.room_id) {
+      setIsModalOpen(false);
+      setAcceptChat(false);
+
+      // }
+    });
+
     socket.on("chat_reject_auto", async (data) => {
       if (data.roomId === currentRequestRef.current?.room_id) {
         stopRingtone();
@@ -202,6 +211,7 @@ socket.on("new_chat_request", (data) => {
       socket.off("chat_rejected_astrologer");
       socket.off("chat_transfer");
       socket.off("chat_cancel_by_user");
+      socket.off("chat_cancel_by_admin");
     };
   }, [socket]);
 
