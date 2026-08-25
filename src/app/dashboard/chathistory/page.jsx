@@ -55,6 +55,8 @@ export default function AstrologerChatHistory() {
     variables: {
       page,
       limit,
+            status: statusFilter === "ALL" ? null : statusFilter,
+
       source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     },
     fetchPolicy: "network-only",
