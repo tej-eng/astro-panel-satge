@@ -20,14 +20,8 @@ export const GET_OFFERS = gql`
 `;
 
 export const UPDATE_OFFER_STATUS = gql`
-  mutation UpdateOfferStatus(
-    $offerId: String!
-    $isActive: Boolean!
-  ) {
-    updateOfferStatus(
-      offerId: $offerId
-      isActive: $isActive
-    ) {
+  mutation UpdateOfferStatus($offerId: String!, $isActive: Boolean!) {
+    updateOfferStatus(offerId: $offerId, isActive: $isActive) {
       success
       message
     }
@@ -52,14 +46,8 @@ export const GET_REMEDIES = gql`
 `;
 
 export const SEND_REMEDY = gql`
-  mutation SendRemedy(
-    $sessionId: String!
-    $remedyText: String!
-  ) {
-    sendRemedy(
-      sessionId: $sessionId
-      remedyText: $remedyText
-    ) {
+  mutation SendRemedy($sessionId: String!, $remedyText: String!) {
+    sendRemedy(sessionId: $sessionId, remedyText: $remedyText) {
       success
       message
     }
@@ -86,12 +74,8 @@ export const GET_SESSION_REMEDIES = gql`
 `;
 
 export const GET_KUNDALI = gql`
-  query GetKundali(
-    $requestSessionId: String!
-  ) {
-    getKundali(
-      requestSessionId: $requestSessionId
-    ) {
+  query GetKundali($requestSessionId: String!) {
+    getKundali(requestSessionId: $requestSessionId) {
       status
       userId
       requestType
@@ -118,12 +102,12 @@ export const GET_ASTROLOGER_FOLLOWERS = gql`
         userId
         astrologerId
         createdAt
-        
+
         user {
           id
           name
           mobile
-          
+
           countryCode
         }
       }
@@ -142,11 +126,7 @@ export const GET_ASTROLOGER_CALL_HISTORY = gql`
     $status: SessionStatus
   ) {
     getAstrologerCallHistory(
-      filter: {
-        page: $page
-        limit: $limit
-        status: $status
-      }
+      filter: { page: $page, limit: $limit, status: $status }
     ) {
       success
       totalCount
@@ -176,13 +156,18 @@ export const GET_ASTROLOGER_CALL_HISTORY = gql`
 `;
 
 export const GET_ASTROLOGER_CHAT_HISTORY = gql`
-  query GetAstrologerChatHistory($page: Int!, $limit: Int!) {
-    getAstrologerChatHistory(filter: { page: $page, limit: $limit }) {
+  query GetAstrologerChatHistory(
+    $page: Int!
+    $limit: Int!
+    $status: SessionStatus
+  ) {
+    getAstrologerChatHistory(
+      filter: { page: $page, limit: $limit, status: $status }
+    ) {
       success
       totalCount
       currentPage
       totalPages
-
       data {
         sessionId
         roomId
@@ -201,8 +186,6 @@ export const GET_ASTROLOGER_CHAT_HISTORY = gql`
     }
   }
 `;
-
-
 
 export const TOGGLE_ASTROLOGER_SERVICE = gql`
   mutation ToggleAstrologerService(
@@ -234,37 +217,37 @@ export const GET_ASTROLOGER_SERVICES = gql`
 
 export const GetAstrologerAnalytics = gql`
   query GetAstrologerAnalytics($astrologerId: String!) {
-  getAstrologerAnalytics(astrologerId: $astrologerId) {
-    totalEarnings
-    totalFollowers
-    totalChats
-    totalCalls
-    averageRating
+    getAstrologerAnalytics(astrologerId: $astrologerId) {
+      totalEarnings
+      totalFollowers
+      totalChats
+      totalCalls
+      averageRating
 
-    monthlyData {
-      month
-      earnings
-      chats
-      calls
+      monthlyData {
+        month
+        earnings
+        chats
+        calls
+      }
     }
   }
-}
 `;
 
 export const GetAstrologerNotices = gql`
- query GetAstrologerNotices {
-  getAstrologerNotices {
-    id
-    title
-    description
-    targetType
-    isPinned
-    isActive
-    startDate
-    endDate
-    createdAt
+  query GetAstrologerNotices {
+    getAstrologerNotices {
+      id
+      title
+      description
+      targetType
+      isPinned
+      isActive
+      startDate
+      endDate
+      createdAt
+    }
   }
-}
 `;
 export const REFRESH_TOKEN = gql`
   mutation {
@@ -274,16 +257,9 @@ export const REFRESH_TOKEN = gql`
   }
 `;
 
-
 export const JOIN_LIVE = gql`
-  query JoinLive(
-    $channelName: String!
-    $role: String!
-  ) {
-    joinLive(
-      channelName: $channelName
-      role: $role
-    ) {
+  query JoinLive($channelName: String!, $role: String!) {
+    joinLive(channelName: $channelName, role: $role) {
       token
       uid
       appId
@@ -312,14 +288,8 @@ export const END_LIVE = gql`
 `;
 
 export const SCHEDULE_LIVE = gql`
-  mutation ScheduleLive(
-    $title: String!
-    $scheduledAt: String!
-  ) {
-    scheduleLive(
-      title: $title
-      scheduledAt: $scheduledAt
-    ) {
+  mutation ScheduleLive($title: String!, $scheduledAt: String!) {
+    scheduleLive(title: $title, scheduledAt: $scheduledAt) {
       id
       title
       channelName
@@ -341,4 +311,3 @@ export const GET_MY_SCHEDULED_LIVES = gql`
     }
   }
 `;
-
