@@ -61,7 +61,7 @@ export default function Followers() {
           >
             <div className="flex flex-col items-center justify-between h-full">
               <div
-                className={`${styles["f-img"]} flex items-center justify-center w-15 h-15 md:w-20 md:h-20 rounded-full bg-gray-200`}
+                className={`${styles["f-img"]} flex items-center justify-center w-15 h-15 md:w-20 md:h-20 rounded-full bg-gray-300`}
               >
                 👤
               </div>
@@ -74,7 +74,7 @@ export default function Followers() {
                 </h3>
 
                 <small className={`${styles["top-fll"]} text-black`}>
-                  User ID: {follower.user?.id}
+                  User ID: {follower.user?.id?.slice(0,8)}
                 </small>
 
                 <small className={`${styles["top-fll"]} text-black`}>

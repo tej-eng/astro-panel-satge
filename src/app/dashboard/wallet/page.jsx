@@ -98,7 +98,7 @@ export default function WalletTransactions() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Total Transactions</p>
@@ -111,7 +111,7 @@ export default function WalletTransactions() {
           </h2>
         </div>
 
-        <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
+        {/* <div className="bg-violet-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">Current Page</p>
 
@@ -121,7 +121,7 @@ export default function WalletTransactions() {
           <h2 className="text-2xl font-bold mt-2 text-gray-800">
             {walletTransactions?.currentPage || 1}
           </h2>
-        </div>
+        </div> */}
 
         <div className="bg-purple-200 rounded-2xl border border-gray-300  shadow-2xl px-5 py-2">
           <div className="flex items-center justify-between">
@@ -181,28 +181,28 @@ export default function WalletTransactions() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px]">
+          <table className="w-full ">
             <thead className="bg-purple-400">
               <tr>
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
                    ID
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
                   Type
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
                   Amount
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
                   Description
                 </th>
 
-                <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
                   Date
                 </th>
               </tr>
@@ -219,7 +219,7 @@ export default function WalletTransactions() {
                 filteredTransactions.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-t text-xs hover:bg-gray-50 transition"
+                    className="border-t border-gray-200 text-xs hover:bg-gray-50 transition"
                   >
                     <td className="p-4 flex flex-col text-xs font-medium text-gray-700">
                       <span>SessionID : {item.sessionId?.slice(0, 8)}</span>
