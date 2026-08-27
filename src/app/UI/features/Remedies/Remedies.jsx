@@ -109,32 +109,36 @@ const Remedies = () => {
             {remedies.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-lg shadow-md border p-4 min-h-[170px]"
+                className="bg-white rounded-lg shadow-md border border-gray-300  p-4 min-h-[170px]"
               >
                 <div className="text-sm text-gray-600">
-                  Order ID:
-                  <span className="ml-2 font-medium">{item.sessionId}</span>
+                  ID:
+                  <span className="ml-2 font-medium">
+                    {item.sessionId.slice(0, 8)}
+                  </span>
                 </div>
 
-                <hr className="my-2" />
+                <hr className="my-1" />
 
-                <div className="text-sm">
-                  <span className="font-semibold">Type:</span>{" "}
-                  {item.sessionType}
+                <div className="flex items-center justify-between">
+                  {/* <div className="text-sm">
+                    <span className="font-">Type:</span>{" "}
+                    {item.sessionType}
+                  </div> */}
+
+                  <div className="text-[10px] text-purple-600 mt-1">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </div>
                 </div>
 
-                <div className="text-xs text-purple-600 mt-1">
-                  {new Date(item.createdAt).toLocaleString()}
-                </div>
-
-                <div className="mt-3">
-                  <h4 className="font-semibold">Description:</h4>
+                <div className="mt-2">
+                  {/* <h4 className="font-semibold">Description:</h4> */}
 
                   <p
                     className="text-sm mt-1 break-words whitespace-pre-wrap overflow-hidden line-clamp-4"
-                    title={item.remedyText}
+                    title={item.remedyText?.replace(/<[^>]*>/g, "")}
                   >
-                    {item.remedyText}
+                    {item.remedyText?.replace(/<[^>]*>/g, "")}
                   </p>
                 </div>
               </div>

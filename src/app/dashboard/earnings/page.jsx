@@ -185,28 +185,28 @@ export default function AstrologerEarnings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-ggray-300 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead className="bg-purple-400">
               <tr>
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
+                <th className="text-left p-3 text-sm font-semibold text-gray-700">
                   ID
                 </th>
 
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
+                <th className="text-left p-3 text-sm font-semibold text-gray-700">
                   Type
                 </th>
 
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
+                <th className="text-left p-3 text-sm font-semibold text-gray-700">
                   Amount
                 </th>
 
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
+                <th className="text-left p-3 text-sm font-semibold text-gray-700">
                   Description
                 </th>
 
-                <th className="text-left p-4 text-sm font-semibold text-gray-700">
+                <th className="text-left p-3 text-sm font-semibold text-gray-700">
                   Date
                 </th>
               </tr>
@@ -223,7 +223,7 @@ export default function AstrologerEarnings() {
                 paginatedTransactions.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-t text-xs hover:bg-gray-50 transition"
+                    className="border-t border-gray-200 text-xs hover:bg-gray-50 transition"
                   >
                     <td className="px-4 py-2 flex flex-col gap-1 text-xs font-medium text-gray-700">
                       <span>Session ID : {item.sessionId?.slice(0, 8)} </span>
