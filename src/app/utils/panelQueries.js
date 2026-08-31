@@ -134,6 +134,7 @@ export const GET_ASTROLOGER_CALL_HISTORY = gql`
       totalPages
 
       data {
+      userId
         sessionId
         roomId
         userName
@@ -169,6 +170,7 @@ export const GET_ASTROLOGER_CHAT_HISTORY = gql`
       currentPage
       totalPages
       data {
+      userId
         sessionId
         roomId
         userName
