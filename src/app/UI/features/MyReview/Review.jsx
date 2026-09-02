@@ -19,6 +19,7 @@ const GET_ASTROLOGER_REVIEWS = gql`
       limit
 
       data {
+        userName
         id
         sessionId
         sessionType
@@ -208,19 +209,22 @@ export default function AstrologerReviews() {
                   {/* TOP */}
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-[#4b1d74] text-lg">
+                      <h3 className="font-semibold text-[#4b1d74] text-sm">
                         {review.sessionType}
                       </h3>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        ID: {review.sessionId.slice(0,8)}
+                           <p className="text-[10px] font-semibold text-gray-500 mt-1">
+                       {review.userName}
                       </p>
 
-                      <p className="text-xs text-gray-500">
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        ID: {review.sessionId.slice(0, 8)}
+                      </p>
+
+                      <p className="text-[10px] flex  text-gray-500">
                         Status: {review.sessionStatus}
                       </p>
 
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-[10px] text-gray-500 mt-1">
                         {new Date(review.createdAt).toLocaleString()}
                       </p>
                     </div>
@@ -233,11 +237,11 @@ export default function AstrologerReviews() {
 
                   {/* COMMENT */}
                   <div className="mt-2">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">
+                    <p className="text-[10px] font-semibold text-gray-700 mb-2">
                       Comment
                     </p>
 
-                    <div className="bg-gray-50 border border-gray-100 shadow-xl rounded-xl p-2 text-gray-700 text-xs min-h-[70px]">
+                    <div className="bg-gray-50 border overflow-y-scroll border-gray-100 shadow-xl rounded-xl p-2 text-gray-700 text-[10px] min-h-17">
                       {review.comment}
                     </div>
                   </div>
@@ -245,42 +249,42 @@ export default function AstrologerReviews() {
                   {/* REPLY */}
                   {review.reply ? (
                     <div className="mt-2">
-                      <p className="text-xs font-semibold text-[#4b1d74] mb-2">
+                      <p className="text-[10px]  text-[#4b1d74] mb-2">
                         Your Reply
                       </p>
 
-                      <div className="bg-purple-50 border  border-purple-100 rounded-xl p-2 text-xs text-gray-700">
+                      <div className="bg-purple-50 border  border-purple-100 rounded-xl p-2 text-[10px] text-gray-700">
                         {review.reply}
                       </div>
                     </div>
                   ) : (
                     <div className="mt-2">
-                      <p className="text-xs font- text-[#4b1d74] mb-1">
+                      <p className="text-[10px] font- text-[#4b1d74] mb-1">
                         Reply
                       </p>
 
-                      <textarea
-                        rows={3}
-                        placeholder="Write your reply..."
-                        value={replyInputs[review.id] || ""}
-                        onChange={(e) =>
-                          setReplyInputs((prev) => ({
-                            ...prev,
-                            [review.id]: e.target.value,
-                          }))
-                        }
-                        className="w-full border border-purple-100 rounded-xl p-2 outline-none focus:ring-2 focus:ring-purple-500 text-xs resize-none"
-                      />
+                      <div className="flex border border-purple-100 rounded-xl p-2 outline-none focus:ring-1">
+                        <textarea
+                          rows={3}
+                          placeholder="Write your reply..."
+                          value={replyInputs[review.id] || ""}
+                          onChange={(e) =>
+                            setReplyInputs((prev) => ({
+                              ...prev,
+                              [review.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full  focus:ring-purple-500 text-[10px] placeholder:text-[10px] resize-none"
+                        />
 
-                      <button
-                        onClick={() => handleReply(review.id)}
-                        disabled={replying}
-                        className="mt-2 flex items-center gap-2 bg-[#6d35a3] hover:bg-[#572987] text-white px-3 py-1 rounded-xl text-xs transition"
-                      >
-                        <Send className="w-3 h-3" />
-
-                        {replying ? "Replying..." : "Send Reply"}
-                      </button>
+                        <button
+                          onClick={() => handleReply(review.id)}
+                          disabled={replying}
+                          className="mt-2 flex items-center gap-2 bg-[#6d35a3] hover:bg-[#572987] text-white px-3 py-1 rounded-xl text-xs transition"
+                        >
+                          <Send className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
