@@ -244,7 +244,7 @@ const HomeMainCards = () => {
       {cards.map((card, index) => (
         <div
           key={index}
-          className="bg-gradient-to-br from-purple-300 overflow-y-scroll to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
+          className="bg-gradient-to-br h-85 from-purple-300 overflow-y-scroll to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
         >
           <span className="text-xl font-bold text-purple-950 mb-3 block">
             {card.title}
