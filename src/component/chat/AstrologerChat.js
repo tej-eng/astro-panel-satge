@@ -519,7 +519,7 @@ const AstrologerChat = () => {
 
     socket.on("typing", (data) => {
       if (data.user_name !== "Astrologer") {
-        setTypingStatus(data.typing ? `${data.user_name} is typing...` : "");
+        setTypingStatus(data.typing ? `typing...` : "");
       }
     });
 
