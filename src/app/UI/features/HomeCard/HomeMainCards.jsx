@@ -150,39 +150,8 @@ const HomeMainCards = () => {
             <p className="text-red-500">Failed to load content.</p>
           ) : (
             <div className="text-sm">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: `${dosDontData?.dos?.slice(0, 200)}...`,
-                }}
-              />
-            </div>
-          )}
-        </>
-      ),
-
-      button: {
-        label: "View All",
-        onClick: () => router.push("/dashboard/dosDonts"),
-      },
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          className="bg-gradient-to-br from-purple-300 overflow-y-scroll to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
-        >
-          <span className="text-xl font-bold text-purple-950 mb-3 block">
-            {card.title}
-          </span>
-
-          <div className="text-base text-gray-800 leading-relaxed mb-4 min-h-35">
-            {/* {card.content}
-             */}
-            <p>
-              {" "}
+                 <p>
+        
               1. Do not share your personal details, such as contact numbers or
               social media usernames, with any customer.
             </p>
@@ -241,15 +210,42 @@ const HomeMainCards = () => {
             <p>
               *नोट: यदि ध्वनि एस्ट्रो को किसी भी नीति के उल्लंघन का पता चलता है,
               तो सख्त कार्रवाई की जाएगी।*
-            </p>{" "}
+            </p>
+            </div>
+          )}
+        </>
+      ),
+
+      button: {
+        label: "View All",
+        onClick: () => router.push("/dashboard/dosDonts"),
+      },
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {cards.map((card, index) => (
+        <div
+          key={index}
+          className="bg-gradient-to-br from-purple-300 overflow-y-scroll to-purple-400 rounded-2xl shadow-lg p-6 transition-transform duration-300 hover:-translate-y-1"
+        >
+          <span className="text-xl font-bold text-purple-950 mb-3 block">
+            {card.title}
+          </span>
+
+          <div className="text-base text-gray-800 leading-relaxed mb-4 min-h-35">
+            {card.content}
+            
+   
           </div>
 
-          {/* <button
+          <button
             onClick={card.button.onClick}
             className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-5 py-2 rounded-lg shadow-md transition duration-200 flex place-self-center"
           >
             {card.button.label}
-          </button> */}
+          </button>
         </div>
       ))}
     </div>
