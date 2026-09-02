@@ -55,7 +55,7 @@ export default function AstrologerChatHistory() {
     variables: {
       page,
       limit,
-            status: statusFilter === "ALL" ? null : statusFilter,
+      status: statusFilter === "ALL" ? null : statusFilter,
 
       source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     },
@@ -370,20 +370,20 @@ export default function AstrologerChatHistory() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-[#0000009a] bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-550 bg-[#0000009a] bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="text-[1rem] justify-self-center font-semibold mb-4">
-              Suggest Remedy for Order ID:
+            <div className="text-sm justify-self-center  mb-3">
+              Order ID:
               {selectedOrderId}
             </div>
 
             <div className="mb-4">
-              <h4 className="font-medium mb-2">Select Existing Remedy</h4>
+              <h4 className="text-xs mb-2">Select Existing Remedy</h4>
 
               {remediesLoading ? (
                 <p>Loading remedies...</p>
               ) : (
-                <div className="max-h-[200px] overflow-y-auto border rounded">
+                <div className="max-h-50 overflow-y-auto border border-gray-300 shadow-xl rounded-xl">
                   {remediesData?.getRemedies?.data
                     ?.filter((item) => item.isActive)
                     ?.map((remedy) => (
@@ -393,16 +393,18 @@ export default function AstrologerChatHistory() {
                           setSelectedRemedy(remedy);
                           setRemedyText(remedy.description);
                         }}
-                        className={`p-3 border-b cursor-pointer hover:bg-gray-100 ${
+                        className={`p-2 border-b cursor-pointer hover:bg-gray-100 ${
                           selectedRemedy?.id === remedy.id
                             ? "bg-indigo-100"
                             : ""
                         }`}
                       >
-                        <div className="font-medium">{remedy.title}</div>
+                        <div className="font-medium text-sm">
+                          {remedy.title}
+                        </div>
 
-                        <div className="text-sm text-gray-600">
-                          {remedy.description}
+                        <div className="text-xs text-gray-600">
+                          {remedy.description?.replace(/<[^>]*>/g, "")}
                         </div>
                       </div>
                     ))}
@@ -411,14 +413,14 @@ export default function AstrologerChatHistory() {
             </div>
 
             <div className="mb-4">
-              <label className="font-medium block mb-2">
+              <label className=" block mb-2 text-xs ">
                 Or Write New Remedy
               </label>
 
               <textarea
                 disabled={submitting}
-                className="w-full border p-2 rounded"
-                rows={4}
+                className="w-full border border-gray-300 p-2 rounded-xl shadow-xl"
+                rows={3}
                 placeholder="Enter remedy..."
                 value={remedyText}
                 onChange={(e) => setRemedyText(e.target.value)}
@@ -432,7 +434,7 @@ export default function AstrologerChatHistory() {
                   setRemedyText("");
                   setSelectedRemedy(null);
                 }}
-                className="bg-gray-300 px-4 py-2 rounded"
+                className="bg-gray-300 px-4 py-1 text-xs rounded-full"
               >
                 Cancel
               </button>
@@ -440,7 +442,7 @@ export default function AstrologerChatHistory() {
               <button
                 onClick={handleSubmitRemedy}
                 disabled={submitting}
-                className="bg-indigo-600 text-white px-4 py-2 rounded"
+                className="bg-indigo-600 text-white px-4 py-1 text-xs rounded-full"
               >
                 {submitting ? "Submitting..." : "Send Remedy"}
               </button>
