@@ -41,7 +41,7 @@ export default function SessionMessagesModal({ open, onClose, sessionId }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-500 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl">
         {/* HEADER */}
         <div className="flex items-center justify-between border-b px-6 py-4">
